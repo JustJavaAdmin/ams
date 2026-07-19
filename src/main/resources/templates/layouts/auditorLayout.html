@@ -16,14 +16,6 @@
             </div>
         </div>
         <nav class="flex-1 px-2 space-y-1">
-            <!-- Dashboard -->
-            <a th:href="@{/auditor/dashboard}"
-               class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
-               th:classappend="${activeTab == 'dashboard'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">
-                <span class="material-symbols-outlined mr-3">dashboard</span>
-                <span class="font-body-md text-body-md">Dashboard</span>
-            </a>
-
             <!-- Audit Log Explorer -->
             <a th:href="@{/auditor/auditLogExplorer}"
                class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"

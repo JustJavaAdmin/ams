@@ -8,10 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/cfo")
 public class CfoController {
 
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        return "cfo/dashboard";
-    }
+
 
     @GetMapping("/approvalsHub")
     public String approvalsHub() {

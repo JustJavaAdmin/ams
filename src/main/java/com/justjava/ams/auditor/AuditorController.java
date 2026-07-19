@@ -10,10 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @PreAuthorize("hasRole('ROLE_AUDITOR')")
 public class AuditorController {
 
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        return "auditor/dashboard";
-    }
+
 
     @GetMapping("/auditLogExplorer")
     public String auditLogExplorer() {

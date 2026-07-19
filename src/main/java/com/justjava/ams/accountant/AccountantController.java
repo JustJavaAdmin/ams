@@ -21,12 +21,7 @@ public class AccountantController {
     private final FixedAssetService fixedAssetService;
     private final ChartOfAccountsService chartOfAccountsService;
 
-    @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-        model.addAttribute("organizationCount", organizationRepository.count());
-        model.addAttribute("organizations", organizationRepository.findAll());
-        return "accountant/dashboard";
-    }
+
 
     @GetMapping("/manualJournal")
     public String manualJournal(Model model) {

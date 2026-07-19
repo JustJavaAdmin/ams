@@ -20,13 +20,7 @@ public class FinanceAdminController {
     private final OrganizationSettingsService organizationSettingsService;
     private final ModuleControlService moduleControlService;
 
-    @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-        // Load summary data for Finance Admin dashboard
-        model.addAttribute("organizationCount", organizationRepository.count());
-        model.addAttribute("organizations", organizationRepository.findAll());
-        return "financeAdmin/dashboard";
-    }
+
 
     @GetMapping("/organizationSetup")
     public String organizationSetup(Model model) {

@@ -24,13 +24,13 @@ public class HomeController {
         if (authenticationManager.isAdmin()) {
             return "redirect:/admin/users";
         } else if (authenticationManager.isAccountant()) {
-            return "redirect:/accountant/dashboard";
+            return "redirect:/accountant/manualJournal";
         } else if (authenticationManager.isAuditor()) {
-            return "redirect:/auditor/dashboard";
+            return "redirect:/auditor/auditLogExplorer";
         } else if (authenticationManager.isCfo()) {
-            return "redirect:/cfo/dashboard";
+            return "redirect:/cfo/approvalsHub";
         } else if (authenticationManager.isFinanceAdmin()) {
-            return "redirect:/financeAdmin/dashboard";
+            return "redirect:/financeAdmin/organizationSetup";
         }
 
         model.addAttribute("title", "Accounting Management System");
