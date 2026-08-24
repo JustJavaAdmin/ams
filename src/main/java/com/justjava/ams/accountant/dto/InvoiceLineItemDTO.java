@@ -12,6 +12,9 @@ public class InvoiceLineItemDTO {
 
     private Long id;
     private Long invoiceId;
+    private Long chartAccountId;
+    private String accountCode;
+    private String accountName;
     private String description;
     private BigDecimal quantity;
     private BigDecimal unitPrice;

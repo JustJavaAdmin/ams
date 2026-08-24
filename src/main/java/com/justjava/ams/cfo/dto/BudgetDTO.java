@@ -4,6 +4,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -23,8 +24,13 @@ public class BudgetDTO {
     private BigDecimal spentAmount;
     private String status;
     private Boolean approved;
+    private Long approvalRequestId;
+    private Long approvalRuleId;
+    private String approvalRuleName;
+    private Integer requiredApprovals;
     private String departmentName;
     private String notes;
+    private List<BudgetLineDTO> lines;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

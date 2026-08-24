@@ -404,6 +404,132 @@
 </div>
 
 <script>
+    let currentOrgId = null;
+
+    function formatBudgetCurrency(value) {
+        return 'NGN ' + new Intl.NumberFormat('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(Number(value || 0));
+    }
+
+    async function budgetApiJson(url) {
+        const response = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || response.statusText);
+        }
+        return response.json();
+    }
+
+    function budgetEscapeHtml(str) {
+        const d = document.createElement('div');
+        d.appendChild(document.createTextNode(str ?? ''));
+        return d.innerHTML;
+    }
+
+    function metricValue(labelText) {
+        const label = Array.from(document.querySelectorAll('p'))
+            .find(p => p.textContent.trim() === labelText);
+        return label ? label.nextElementSibling : null;
+    }
+
+    function setBudgetMetric(label, value) {
+        const el = metricValue(label);
+        if (el) el.textContent = value;
+    }
+
+    async function loadBudgetDashboard() {
+        const orgs = await budgetApiJson('/api/organizations');
+        if (!orgs || !orgs.length) {
+            renderBudgetError('Create an organization before configuring budgets.');
+            return;
+        }
+        currentOrgId = currentOrgId || orgs[0].id;
+        const dashboard = await budgetApiJson(`/api/cfo/budgets/org/${currentOrgId}/dashboard?year=${new Date().getFullYear()}`);
+        renderBudgetDashboard(dashboard);
+    }
+
+    function renderBudgetError(message) {
+        setBudgetMetric('Total Treasury Cap', '-');
+        setBudgetMetric('Actual Expenditures', '-');
+        setBudgetMetric('Total Variance', '-');
+        const tbody = document.querySelector('table tbody');
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="py-8 px-4 text-center text-secondary">${budgetEscapeHtml(message)}</td></tr>`;
+        }
+    }
+
+    function renderBudgetDashboard(dashboard) {
+        setBudgetMetric('Total Treasury Cap', formatBudgetCurrency(dashboard.allocatedAmount));
+        setBudgetMetric('Actual Expenditures', formatBudgetCurrency(dashboard.spentAmount));
+        setBudgetMetric('Total Variance', formatBudgetCurrency(dashboard.remainingAmount));
+
+        const utilizationHint = Array.from(document.querySelectorAll('p'))
+            .find(p => p.textContent.trim() === 'Actual Expenditures')
+            ?.parentElement?.querySelector('.mt-2 span:last-child');
+        if (utilizationHint) utilizationHint.textContent = `${dashboard.utilizationPercent || 0}% of active budget`;
+
+        const varianceHint = Array.from(document.querySelectorAll('p'))
+            .find(p => p.textContent.trim() === 'Total Variance')
+            ?.parentElement?.querySelector('.mt-2 span:last-child');
+        if (varianceHint) {
+            varianceHint.textContent = Number(dashboard.remainingAmount || 0) < 0
+                ? 'Budget overrun detected'
+                : 'Available budget remaining';
+        }
+
+        const tbody = document.querySelector('table tbody');
+        const rows = dashboard.lines || [];
+        if (tbody) {
+            tbody.innerHTML = rows.length ? rows.map(line => {
+                const utilization = Number(line.utilizationPercent || 0);
+                const statusClass = line.status === 'EXCEEDED' ? 'text-error' : 'text-primary';
+                const barClass = line.status === 'EXCEEDED' ? 'bg-error' : 'bg-primary';
+                return `
+                    <tr class="hover:bg-surface-container-low transition-colors">
+                        <td class="py-5 px-4">
+                            <div class="flex flex-col">
+                                <span class="font-body-md text-body-md text-primary font-semibold">${budgetEscapeHtml(line.accountName)}</span>
+                                <span class="text-[11px] text-secondary font-mono">${budgetEscapeHtml(line.accountCode)}</span>
+                            </div>
+                        </td>
+                        <td class="py-5 px-4 font-body-md text-body-md text-secondary italic">${budgetEscapeHtml(line.departmentCode || 'Account allocation')}</td>
+                        <td class="py-5 px-4 font-label-md text-label-md text-primary text-right font-bold">${formatBudgetCurrency(line.allocatedAmount)}</td>
+                        <td class="py-5 px-4 font-label-md text-label-md ${statusClass} text-right">${formatBudgetCurrency(line.spentAmount)}</td>
+                        <td class="py-5 px-4 font-label-md text-label-md ${statusClass} text-right">${formatBudgetCurrency(line.remainingAmount)}</td>
+                        <td class="py-5 px-4">
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex justify-between items-center text-[10px] font-bold ${statusClass} uppercase">
+                                    <span>${budgetEscapeHtml(line.status)}</span>
+                                    <span>${utilization}%</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                                    <div class="variance-progress h-full ${barClass}" style="width: ${Math.min(utilization, 100)}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>`;
+            }).join('') : '<tr><td colspan="6" class="py-8 px-4 text-center text-secondary">No active budget lines for this year.</td></tr>';
+        }
+
+        const alertContainer = Array.from(document.querySelectorAll('h3'))
+            .find(h3 => h3.textContent.trim() === 'Budget Alerts')
+            ?.closest('.bg-surface-container-lowest')
+            ?.querySelector('.space-y-4');
+        if (alertContainer) {
+            const alerts = dashboard.alerts || [];
+            alertContainer.innerHTML = alerts.length ? alerts.map(alert => `
+                <div class="p-3 border-l-4 ${alert.severity === 'EXCEEDED' ? 'border-error bg-error-container/10' : 'border-secondary-container bg-secondary-container/10'} flex justify-between items-center">
+                    <div class="flex flex-col">
+                        <span class="font-body-md text-body-md text-primary font-bold">${budgetEscapeHtml(alert.severity)}</span>
+                        <span class="font-body-sm text-body-sm text-secondary">${budgetEscapeHtml(alert.message)}</span>
+                    </div>
+                    <span class="font-label-md text-label-md ${alert.severity === 'EXCEEDED' ? 'text-error' : 'text-secondary'} px-2 py-1 rounded">${budgetEscapeHtml(alert.severity)}</span>
+                </div>`).join('') : '<div class="p-3 border-l-4 border-secondary-container bg-secondary-container/10 text-secondary">No budget alerts.</div>';
+        }
+    }
+
     // Micro-interaction for Variance Progress Bars
     document.addEventListener('DOMContentLoaded', () => {
         const bars = document.querySelectorAll('.variance-progress');
@@ -414,6 +540,7 @@
                 bar.style.width = finalWidth;
             }, 300);
         });
+        loadBudgetDashboard().catch(err => renderBudgetError(err.message));
     });
 
     // General UI Action Scale Transitions

@@ -305,6 +305,50 @@
                 </aside>
 
             </div>
+
+            <!-- Chart of accounts bulk import -->
+            <div id="coaImportSection" class="hidden mt-gutter">
+                <div class="bg-surface-container-lowest border border-surface-container-highest rounded-xl p-card-padding shadow-sm">
+                    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
+                        <div>
+                            <h3 class="font-headline-sm text-headline-sm text-primary">Bulk Upload Accounts</h3>
+                            <p class="text-secondary font-body-sm uppercase tracking-wider mt-1">CSV Preview Before Commit</p>
+                        </div>
+                        <a href="/api/financeAdmin/imports/templates/chart-of-accounts" class="inline-flex items-center justify-center gap-2 border border-outline-variant text-on-surface font-body-sm font-semibold px-4 py-2 rounded-lg hover:bg-surface-container-low transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">download</span>
+                            Template
+                        </a>
+                    </div>
+
+                    <form id="coaImportForm" class="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-3 items-center">
+                        <input id="coaImportFile" type="file" accept=".csv,text/csv" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-2.5 px-4 text-body-md">
+                        <label class="inline-flex items-center gap-2 text-body-sm font-semibold text-on-surface">
+                            <input id="coaImportUpdateExisting" type="checkbox" class="rounded border-outline-variant">
+                            Update existing
+                        </label>
+                        <button id="coaImportValidateBtn" type="submit" class="bg-primary text-on-primary font-body-sm font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+                            <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                            Validate
+                        </button>
+                    </form>
+
+                    <div id="coaImportPreview" class="hidden mt-5 border border-surface-container-high rounded-lg p-4 bg-surface-container-low">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                            <p id="coaImportSummary" class="text-body-sm font-semibold text-on-surface"></p>
+                            <div class="flex flex-wrap gap-2">
+                                <a id="coaImportErrorsLink" href="#" class="hidden inline-flex items-center gap-1 text-body-sm font-semibold underline">
+                                    Error report
+                                </a>
+                                <button id="coaImportConfirmBtn" type="button" class="bg-primary text-on-primary font-body-sm font-bold py-2 px-4 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity">
+                                    <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                                    Confirm Import
+                                </button>
+                            </div>
+                        </div>
+                        <div id="coaImportErrors" class="hidden mt-4 text-body-sm text-on-error-container"></div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 </div>
@@ -367,6 +411,25 @@
         return body;
     }
 
+    async function apiForm(url, formData) {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+
+        let body = null;
+        const ct = response.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+            try { body = await response.json(); } catch (_) { body = null; }
+        }
+
+        if (!response.ok) {
+            const msg = body?.message || body?.error || `Request failed (${response.status})`;
+            throw new Error(msg);
+        }
+        return body;
+    }
+
     // ===================== PAGE ALERT =====================
     function showAlert(msg, type = 'error') {
         const wrap = document.getElementById('pageAlert');
@@ -414,6 +477,7 @@
     let allAccounts = [];
     let pendingDeactivateId = null;
     let isRequestActive = false;
+    let pendingCoaImportId = null;
 
     // Type badge colour map (backend enum values)
     const TYPE_COLOR = {
@@ -444,6 +508,7 @@
                 currentOrgId = parseInt(stored);
                 document.getElementById('orgSelectorHint').classList.add('hidden');
                 setFormDisabled(false);
+                document.getElementById('coaImportSection').classList.remove('hidden');
                 await loadAccounts();
             } else if (orgs.length > 0) {
                 select.value = orgs[0].id;
@@ -451,6 +516,7 @@
                 sessionStorage.setItem('ams.selectedOrganizationId', currentOrgId);
                 document.getElementById('orgSelectorHint').classList.add('hidden');
                 setFormDisabled(false);
+                document.getElementById('coaImportSection').classList.remove('hidden');
                 await loadAccounts();
             } else {
                 select.innerHTML = '<option value="">No organizations found</option>';
@@ -459,6 +525,7 @@
                 sessionStorage.removeItem('ams.selectedOrganizationId');
                 resetForm();
                 setFormDisabled(true);
+                document.getElementById('coaImportSection').classList.add('hidden');
                 document.getElementById('orgSelectorHint').classList.remove('hidden');
                 setTableEmptyState('Create an organization in Organization Setup first.');
             }
@@ -476,6 +543,7 @@
             sessionStorage.setItem('ams.selectedOrganizationId', currentOrgId);
             resetForm();
             setFormDisabled(false);
+            document.getElementById('coaImportSection').classList.remove('hidden');
             document.getElementById('orgSelectorHint').classList.add('hidden');
             await loadAccounts();
         } else {
@@ -483,6 +551,7 @@
             document.getElementById('searchInput').value = '';
             resetForm();
             setFormDisabled(true);
+            document.getElementById('coaImportSection').classList.add('hidden');
             document.getElementById('orgSelectorHint').classList.remove('hidden');
             setTableEmptyState('Select an organization to view accounts.');
         }
@@ -778,6 +847,92 @@
             isRequestActive = false;
             this.disabled = false;
             this.innerHTML = '<span class="material-symbols-outlined text-[18px]">block</span> Deactivate';
+        }
+    });
+
+    // ===================== CHART OF ACCOUNTS BULK IMPORT =====================
+    document.getElementById('coaImportForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (isRequestActive) return;
+
+        const file = document.getElementById('coaImportFile').files[0];
+        if (!currentOrgId) {
+            showAlert('Select an organization before uploading accounts.');
+            return;
+        }
+        if (!file) {
+            showAlert('Choose a CSV file to validate.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('organizationId', currentOrgId);
+        formData.append('updateExisting', document.getElementById('coaImportUpdateExisting').checked);
+        formData.append('file', file);
+
+        const btn = document.getElementById('coaImportValidateBtn');
+        isRequestActive = true;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">autorenew</span> Validating...';
+
+        try {
+            const preview = await apiForm('/api/financeAdmin/imports/chart-of-accounts/validate', formData);
+            renderCoaImportPreview(preview);
+        } catch (err) {
+            showAlert(err.message);
+        } finally {
+            isRequestActive = false;
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">upload_file</span> Validate';
+        }
+    });
+
+    function renderCoaImportPreview(preview) {
+        pendingCoaImportId = preview.importId;
+        const wrap = document.getElementById('coaImportPreview');
+        const summary = document.getElementById('coaImportSummary');
+        const confirmBtn = document.getElementById('coaImportConfirmBtn');
+        const errorsLink = document.getElementById('coaImportErrorsLink');
+        const errorsBox = document.getElementById('coaImportErrors');
+        const hasErrors = (preview.invalidRows || 0) > 0;
+
+        summary.textContent = `${preview.fileName}: ${preview.validRows} valid, ${preview.invalidRows} invalid, ${preview.totalRows} total rows.`;
+        confirmBtn.classList.toggle('hidden', hasErrors || preview.status !== 'VALIDATED');
+        errorsLink.classList.toggle('hidden', !hasErrors);
+        errorsLink.href = `/api/financeAdmin/imports/${preview.importId}/errors`;
+
+        const invalidRows = (preview.rows || []).filter(row => row.status === 'ERROR').slice(0, 5);
+        if (invalidRows.length > 0) {
+            errorsBox.classList.remove('hidden');
+            errorsBox.innerHTML = invalidRows.map(row => `<div>Row ${row.rowNumber}: ${escapeHtml(row.errorMessage)}</div>`).join('');
+        } else {
+            errorsBox.classList.add('hidden');
+            errorsBox.innerHTML = '';
+        }
+        wrap.classList.remove('hidden');
+    }
+
+    document.getElementById('coaImportConfirmBtn').addEventListener('click', async function () {
+        if (!pendingCoaImportId || isRequestActive) return;
+
+        isRequestActive = true;
+        this.disabled = true;
+        this.innerHTML = '<span class="material-symbols-outlined animate-spin">autorenew</span> Importing...';
+
+        try {
+            const result = await apiJson(`/api/financeAdmin/imports/${pendingCoaImportId}/confirm`, { method: 'POST' });
+            showAlert(`Import completed. Created ${result.createdCount}, updated ${result.updatedCount}, failed ${result.failedCount}.`, 'success');
+            document.getElementById('coaImportFile').value = '';
+            document.getElementById('coaImportPreview').classList.add('hidden');
+            pendingCoaImportId = null;
+            resetForm();
+            await loadAccounts();
+        } catch (err) {
+            showAlert(err.message);
+        } finally {
+            isRequestActive = false;
+            this.disabled = false;
+            this.innerHTML = '<span class="material-symbols-outlined text-[18px]">check_circle</span> Confirm Import';
         }
     });
 

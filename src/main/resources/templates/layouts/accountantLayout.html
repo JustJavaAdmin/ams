@@ -26,11 +26,25 @@
                 <span class="font-body-md text-body-md">Purchase Invoices</span>
             </a>
 
+            <a th:href="@{/accountant/payablesAutomation}"
+               class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
+               th:classappend="${activeTab == 'payablesAutomation'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">
+                <span class="material-symbols-outlined mr-3">payments</span>
+                <span class="font-body-md text-body-md">Payables Automation</span>
+            </a>
+
             <a th:href="@{/accountant/customerInvoicing}"
                class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
                th:classappend="${activeTab == 'customerInvoicing'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">
                 <span class="material-symbols-outlined mr-3">description</span>
                 <span class="font-body-md text-body-md">Customer Invoices</span>
+            </a>
+
+            <a th:href="@{/accountant/receivablesCollections}"
+               class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
+               th:classappend="${activeTab == 'receivablesCollections'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">
+                <span class="material-symbols-outlined mr-3">support_agent</span>
+                <span class="font-body-md text-body-md">Receivables Collections</span>
             </a>
 
             <a th:href="@{/accountant/cashAndBank}"

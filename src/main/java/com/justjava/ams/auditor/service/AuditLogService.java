@@ -29,6 +29,9 @@ public class AuditLogService {
             "ManualJournal",
             "JournalLine",
             "GeneralLedger",
+            "BankReconciliation",
+            "BankStatementLine",
+            "ApprovalRule",
             // Stage 2 entity types
             "ModuleControl",
             "TrialBalance",

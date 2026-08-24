@@ -23,6 +23,11 @@ public class GeneralLedgerDTO {
     private String notes;
     private String status;
     private Long fiscalPeriodId;
+    private String sourceType;
+    private Long sourceId;
+    private String postingBatchId;
+    private String postedBy;
+    private LocalDateTime postedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

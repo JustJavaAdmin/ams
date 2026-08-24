@@ -53,6 +53,14 @@ public class ManualJournal {
 
 	private String approvedBy;
 
+	private Long approvalRequestId;
+
+	private Long approvalRuleId;
+
+	private String approvalRuleName;
+
+	private Integer requiredApprovals = 1;
+
 	@Column(columnDefinition = "TEXT")
 	private String rejectionReason;
 
@@ -65,6 +73,9 @@ public class ManualJournal {
 
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
+
+	@Version
+	private Long version;
 
 	@OneToMany(mappedBy = "manualJournal", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default

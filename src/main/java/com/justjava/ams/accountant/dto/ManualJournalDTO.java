@@ -23,6 +23,10 @@ public class ManualJournalDTO {
 	private String createdBy;
 	private String submittedBy;
 	private String approvedBy;
+	private Long approvalRequestId;
+	private Long approvalRuleId;
+	private String approvalRuleName;
+	private Integer requiredApprovals;
 	private String rejectionReason;
 	private LocalDateTime createdAt;
 	private LocalDateTime submittedAt;

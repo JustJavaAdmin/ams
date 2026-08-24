@@ -58,6 +58,18 @@ public class Budget {
     private Boolean approved = false;
 
     @Column
+    private Long approvalRequestId;
+
+    @Column
+    private Long approvalRuleId;
+
+    @Column
+    private String approvalRuleName;
+
+    @Column
+    private Integer requiredApprovals = 1;
+
+    @Column
     private String departmentName;
 
     @Column
@@ -77,6 +89,7 @@ public class Budget {
         APPROVED,
         ACTIVE,
         EXCEEDED,
+        REJECTED,
         CLOSED
     }
 }

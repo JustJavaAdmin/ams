@@ -23,6 +23,10 @@ public class PurchaseLineItem {
     @JoinColumn(name = "purchase_invoice_id", nullable = false)
     private PurchaseInvoice purchaseInvoice;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "chart_account_id")
+    private ChartOfAccounts chartAccount;
+
     @Column(nullable = false)
     private String description;
 

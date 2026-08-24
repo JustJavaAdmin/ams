@@ -9,6 +9,7 @@ import com.justjava.ams.common.entity.User;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "approval_requests")
@@ -31,6 +32,24 @@ public class ApprovalRequest {
 
     @Column(nullable = false)
     private Long entityId;
+
+    @Column
+    private String moduleType;
+
+    @Column
+    private String transactionType;
+
+    @Column
+    private Long approvalRuleId;
+
+    @Column
+    private String approvalRuleName;
+
+    @Column
+    private String approverRole;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal evaluatedAmount;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -241,6 +242,22 @@ public class ModuleControlService {
         if (!Boolean.TRUE.equals(module.getEnabled())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Module " + moduleType + " is not enabled");
         }
+    }
+
+    public void requireTransactionWithinLimit(Long organizationId, ModuleControl.ModuleType moduleType, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        moduleControlRepository.findByOrganizationIdAndModuleType(organizationId, moduleType)
+                .map(ModuleControl::getMaxTransactionAmountLimit)
+                .filter(limit -> limit != null && limit < Integer.MAX_VALUE)
+                .ifPresent(limit -> {
+                    if (amount.compareTo(BigDecimal.valueOf(limit.longValue())) > 0) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "Transaction amount exceeds " + moduleType + " limit of " + limit);
+                    }
+                });
     }
 
     private int createDefaultIfMissing(Organization organization, ModuleControl.ModuleType moduleType, boolean enabled) {

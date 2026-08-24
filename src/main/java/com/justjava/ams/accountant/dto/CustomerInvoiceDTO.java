@@ -14,6 +14,7 @@ public class CustomerInvoiceDTO {
 
     private Long id;
     private Long organizationId;
+    private Long customerId;
     private String invoiceNumber;
     private String customerName;
     private String customerEmail;
@@ -22,6 +23,10 @@ public class CustomerInvoiceDTO {
     private LocalDate invoiceDate;
     private LocalDate dueDate;
     private BigDecimal subtotal;
+    private Long taxJurisdictionId;
+    private String taxCode;
+    private BigDecimal taxRate;
+    private String taxCalculationType;
     private BigDecimal taxAmount;
     private BigDecimal totalAmount;
     private BigDecimal amountPaid;

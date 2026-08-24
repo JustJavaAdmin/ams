@@ -3,7 +3,7 @@ spring:
   datasource:
     url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/ams}
     username: ${JDBC_DATABASE_USERNAME:postgres}
-    password: ${JDBC_DATABASE_PASSWORD:alaopost}
+    password: ${JDBC_DATABASE_PASSWORD:020775Rashy!}
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 30000

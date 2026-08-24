@@ -132,6 +132,16 @@
         <div class="flex items-center gap-4">
             <h1 class="font-headline-sm text-headline-sm text-on-surface">Purchase Invoice</h1>
         </div>
+        <div class="flex items-center gap-3">
+            <a href="/accountant/payablesAutomation" class="h-10 px-3 rounded-lg border border-slate-200 bg-white text-slate-800 font-bold text-body-sm flex items-center gap-2 hover:border-black">
+                <span class="material-symbols-outlined text-[18px]">payments</span>
+                Payables Automation
+            </a>
+            <select id="organizationSelect" class="bg-white border border-slate-200 rounded-lg h-10 px-3 min-w-[220px]">
+                <option th:each="org : ${organizations}" th:value="${org.id}" th:text="${org.name}">Organization</option>
+            </select>
+            <span id="pageStatus" class="text-body-sm text-slate-500"></span>
+        </div>
     </header>
 
     <main class="p-outer-padding flex gap-gutter w-full">
@@ -233,7 +243,7 @@
                     <div class="space-y-1.5">
                         <label class="font-body-sm font-semibold text-slate-700">Vendor Account</label>
                         <div class="relative">
-                            <select class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 appearance-none focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md">
+                            <select id="vendorSelect" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 appearance-none focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md">
                                 <option>Oluwa Logistics Ltd (V-9082)</option>
                                 <option>GIG Logistics</option>
                                 <option>DHL Nigeria</option>
@@ -243,27 +253,25 @@
                     </div>
                     <div class="space-y-1.5">
                         <label class="font-body-sm font-semibold text-slate-700">Invoice Reference Number</label>
-                        <input class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" placeholder="Enter Reference" type="text" value="INV-2023-089">
+                        <input id="purchaseOrderNumber" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" placeholder="Enter Reference" type="text" value="INV-2023-089">
                     </div>
                     <div class="space-y-1.5">
                         <label class="font-body-sm font-semibold text-slate-700">Issue Date</label>
                         <div class="relative">
-                            <input class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" type="date" value="2023-08-24">
+                            <input id="purchaseDate" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" type="date" value="2023-08-24">
                         </div>
                     </div>
                     <div class="space-y-1.5">
                         <label class="font-body-sm font-semibold text-slate-700">Due Date</label>
                         <div class="relative">
-                            <input class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" type="date" value="2023-09-07">
+                            <input id="dueDate" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" type="date" value="2023-09-07">
                         </div>
                     </div>
                     <div class="space-y-1.5">
                         <label class="font-body-sm font-semibold text-slate-700">Tax Code Selector</label>
                         <div class="relative">
-                            <select class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 appearance-none focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md">
-                                <option>VAT-7.5 (Standard Output)</option>
-                                <option>VAT-0 (Zero Rated)</option>
-                                <option>NON-TAXABLE</option>
+                            <select id="taxJurisdictionSelect" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 appearance-none focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md">
+                                <option value="">No tax</option>
                             </select>
                             <span class="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                         </div>
@@ -301,14 +309,14 @@
                                     <input class="w-full border-none p-0 focus:ring-0 bg-transparent" type="text" value="Bulk Courier Services - Lagos Central">
                                 </td>
                                 <td class="p-3">
-                                    <select class="w-full border-none p-0 focus:ring-0 bg-transparent text-slate-600">
+                                    <select class="line-account-select w-full border-none p-0 focus:ring-0 bg-transparent text-slate-600">
                                         <option>Office Expenses: Logistics</option>
                                         <option>Delivery Charges</option>
                                         <option>Marketing Operations</option>
                                     </select>
                                 </td>
-                                <td class="p-3 text-center">1</td>
-                                <td class="p-3 text-right">45,000.00</td>
+                                <td class="p-3 text-center"><input class="qty-input w-16 text-center border-none p-0 bg-transparent" type="number" value="1"></td>
+                                <td class="p-3 text-right"><input class="unit-input w-28 text-right border-none p-0 bg-transparent" type="number" value="45000.00"></td>
                                 <td class="p-3 text-right font-bold">45,000.00</td>
                             </tr>
                             <tr>
@@ -316,14 +324,14 @@
                                     <input class="w-full border-none p-0 focus:ring-0 bg-transparent" type="text" value="International Document Clearance">
                                 </td>
                                 <td class="p-3">
-                                    <select class="w-full border-none p-0 focus:ring-0 bg-transparent text-slate-600">
+                                    <select class="line-account-select w-full border-none p-0 focus:ring-0 bg-transparent text-slate-600">
                                         <option>Office Expenses: Logistics</option>
                                         <option>Legal &amp; Documentation</option>
                                         <option>Misc Expenses</option>
                                     </select>
                                 </td>
-                                <td class="p-3 text-center">2</td>
-                                <td class="p-3 text-right">12,500.00</td>
+                                <td class="p-3 text-center"><input class="qty-input w-16 text-center border-none p-0 bg-transparent" type="number" value="2"></td>
+                                <td class="p-3 text-right"><input class="unit-input w-28 text-right border-none p-0 bg-transparent" type="number" value="12500.00"></td>
                                 <td class="p-3 text-right font-bold">25,000.00</td>
                             </tr>
                             </tbody>
@@ -337,11 +345,18 @@
                     </div>
                 </div>
                 <div class="flex justify-end gap-stack-md mt-gutter">
-                    <button class="px-6 h-11 rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">Save as Draft</button>
-                    <button class="px-8 h-11 rounded-lg bg-primary text-white font-bold hover:opacity-90 transition-all flex items-center gap-2 group">
-                        Post &amp; Route for Approval
+                    <button id="saveDraftBtn" class="px-6 h-11 rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">Save as Draft</button>
+                    <button id="postInvoiceBtn" class="px-8 h-11 rounded-lg bg-primary text-white font-bold hover:opacity-90 transition-all flex items-center gap-2 group">
+                        Submit, Approve &amp; Post
                         <span class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
                     </button>
+                </div>
+                <div class="mt-gutter border-t border-slate-100 pt-stack-md">
+                    <div class="flex items-center justify-between mb-stack-sm">
+                        <h3 class="font-headline-sm text-[16px] text-primary uppercase tracking-tight">Open Payables</h3>
+                        <button id="refreshInvoicesBtn" class="px-4 h-9 rounded-lg border border-slate-200 text-slate-600 font-semibold">Refresh</button>
+                    </div>
+                    <div id="invoiceList" class="divide-y divide-slate-100 text-body-sm"></div>
                 </div>
             </div>
         </section>
@@ -349,6 +364,34 @@
 </div>
 
 <script>
+    let currentOrgId = null;
+    let expenseAccounts = [];
+    let vendors = [];
+    let taxJurisdictions = [];
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
+    }
+
+    async function apiJson(url, options = {}) {
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || response.statusText);
+      }
+      if (response.status === 204) return null;
+      return response.json();
+    }
+
+    function setStatus(message, type = 'info') {
+      const el = document.getElementById('pageStatus');
+      el.textContent = message;
+      el.className = type === 'error' ? 'text-body-sm text-red-700' : 'text-body-sm text-slate-500';
+    }
+
     document.querySelectorAll('.ocr-highlight').forEach(highlight => {
       highlight.addEventListener('mouseenter', () => {
         highlight.classList.add('active');
@@ -381,7 +424,129 @@
       newRow.querySelectorAll('input').forEach(input => input.value = '');
       newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
       tbody.appendChild(newRow);
+      populateLineAccountSelects();
+      updateTotals();
     }
+
+    function populateLineAccountSelects() {
+      document.querySelectorAll('.line-account-select').forEach(select => {
+        const selected = select.value;
+        select.innerHTML = expenseAccounts.map(account => `<option value="${account.id}">${account.accountCode} - ${account.accountName}</option>`).join('');
+        if (selected) select.value = selected;
+      });
+    }
+
+    function populateTaxSelect() {
+      const select = document.getElementById('taxJurisdictionSelect');
+      const selected = select.value;
+      select.innerHTML = '<option value="">No tax</option>' + taxJurisdictions
+        .filter(tax => tax.calculationType === 'PERCENTAGE')
+        .map(tax => `<option value="${tax.id}">${tax.jurisdictionCode} - ${tax.jurisdictionName} (${tax.taxRate}%)</option>`)
+        .join('');
+      if (selected) select.value = selected;
+    }
+
+    function updateTotals() {
+      let subtotal = 0;
+      document.querySelectorAll('#invoice-items tr').forEach(row => {
+        const qty = Number(row.querySelector('.qty-input')?.value || 0);
+        const unit = Number(row.querySelector('.unit-input')?.value || 0);
+        const net = qty * unit;
+        const netCell = row.querySelector('td:last-child');
+        if (netCell) netCell.textContent = formatCurrency(net);
+        subtotal += net;
+      });
+      const footer = document.querySelector('tfoot td:last-child');
+      if (footer) footer.textContent = `₦ ${formatCurrency(subtotal)}`;
+    }
+
+    async function loadContext() {
+      currentOrgId = document.getElementById('organizationSelect').value;
+      if (!currentOrgId) return;
+      const [accounts, vendorRows, taxRows] = await Promise.all([
+        apiJson(`/api/accountant/chart-of-accounts/org/${currentOrgId}`),
+        apiJson(`/api/accountant/vendors/org/${currentOrgId}`),
+        apiJson(`/api/accountant/tax-jurisdictions/org/${currentOrgId}`)
+      ]);
+      expenseAccounts = (accounts || []).filter(account => account.accountType === 'EXPENSE');
+      vendors = vendorRows || [];
+      taxJurisdictions = taxRows || [];
+      document.getElementById('vendorSelect').innerHTML = vendors.map(vendor => `<option value="${vendor.id}">${vendor.vendorCode} - ${vendor.legalName}</option>`).join('');
+      populateLineAccountSelects();
+      populateTaxSelect();
+      updateTotals();
+      await loadInvoices();
+    }
+
+    function collectPayload() {
+      const vendor = vendors.find(row => String(row.id) === document.getElementById('vendorSelect').value);
+      const lineItems = Array.from(document.querySelectorAll('#invoice-items tr')).map(row => ({
+        chartAccountId: Number(row.querySelector('.line-account-select')?.value || 0) || null,
+        description: row.querySelector('input[type="text"]').value,
+        quantity: Number(row.querySelector('.qty-input')?.value || 0),
+        unitPrice: Number(row.querySelector('.unit-input')?.value || 0)
+      }));
+      const subtotal = lineItems.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
+      return {
+        vendorId: vendor ? vendor.id : null,
+        vendorName: vendor ? vendor.legalName : 'Unregistered Vendor',
+        purchaseOrderNumber: document.getElementById('purchaseOrderNumber').value || `AP-${Date.now()}`,
+        purchaseDate: document.getElementById('purchaseDate').value,
+        dueDate: document.getElementById('dueDate').value,
+        taxJurisdictionId: Number(document.getElementById('taxJurisdictionSelect').value || 0) || null,
+        lineItems
+      };
+    }
+
+    async function saveDraft() {
+      try {
+        setStatus('Saving draft...');
+        const invoice = await apiJson(`/api/accountant/purchase-invoices/org/${currentOrgId}`, {
+          method: 'POST',
+          body: JSON.stringify(collectPayload())
+        });
+        setStatus(`Draft ${invoice.purchaseOrderNumber} saved.`);
+        await loadInvoices();
+        return invoice;
+      } catch (err) {
+        setStatus(`Save failed: ${err.message}`, 'error');
+        throw err;
+      }
+    }
+
+    async function postInvoice() {
+      try {
+        const draft = await saveDraft();
+        await apiJson(`/api/accountant/purchase-invoices/${draft.id}/submit`, { method: 'PATCH' });
+        await apiJson(`/api/accountant/purchase-invoices/${draft.id}/approve`, { method: 'PATCH' });
+        await apiJson(`/api/accountant/purchase-invoices/${draft.id}/post`, { method: 'PATCH' });
+        setStatus(`Purchase invoice ${draft.purchaseOrderNumber} posted.`);
+        await loadInvoices();
+      } catch (err) {
+        setStatus(`Posting failed: ${err.message}`, 'error');
+      }
+    }
+
+    async function loadInvoices() {
+      const rows = await apiJson(`/api/accountant/reports/aged-payables/org/${currentOrgId}`) || [];
+      document.getElementById('invoiceList').innerHTML = rows.map(invoice => `
+        <div class="py-3 flex items-center justify-between gap-4">
+          <div>
+            <div class="font-semibold text-primary">${invoice.purchaseOrderNumber} · ${invoice.vendorName}</div>
+            <div class="text-slate-500">${invoice.status} · Due ${invoice.dueDate}</div>
+          </div>
+          <div class="font-semibold">₦ ${formatCurrency((invoice.totalAmount || 0) - (invoice.amountPaid || 0))}</div>
+        </div>
+      `).join('') || '<div class="py-3 text-slate-500">No open payables.</div>';
+    }
+
+    document.getElementById('invoice-items').addEventListener('input', updateTotals);
+    document.getElementById('taxJurisdictionSelect').addEventListener('change', updateTotals);
+    document.getElementById('organizationSelect').addEventListener('change', loadContext);
+    document.getElementById('saveDraftBtn').addEventListener('click', () => saveDraft().catch(() => {}));
+    document.getElementById('postInvoiceBtn').addEventListener('click', postInvoice);
+    document.getElementById('refreshInvoicesBtn').addEventListener('click', loadInvoices);
+    loadContext().catch(err => setStatus(`Load failed: ${err.message}`, 'error'));
 </script>
 </body>
 </html>

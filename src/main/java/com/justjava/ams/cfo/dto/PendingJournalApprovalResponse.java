@@ -23,5 +23,8 @@ public class PendingJournalApprovalResponse {
     private Long branchId;
     private BigDecimal totalDebits;
     private BigDecimal totalCredits;
+    private Long approvalRuleId;
+    private String approvalRuleName;
+    private Integer requiredApprovals;
     private String status;
 }

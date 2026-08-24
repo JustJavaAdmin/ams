@@ -4,9 +4,11 @@ import com.justjava.ams.accountant.dto.JournalLineDTO;
 import com.justjava.ams.accountant.dto.JournalSubmitRequest;
 import com.justjava.ams.accountant.dto.ManualJournalDTO;
 import com.justjava.ams.accountant.entity.ChartOfAccounts;
+import com.justjava.ams.accountant.entity.DepreciationJournalImport;
 import com.justjava.ams.accountant.entity.JournalLine;
 import com.justjava.ams.accountant.entity.ManualJournal;
 import com.justjava.ams.accountant.repository.ChartOfAccountsRepository;
+import com.justjava.ams.accountant.repository.DepreciationJournalImportRepository;
 import com.justjava.ams.accountant.repository.ManualJournalRepository;
 import com.justjava.ams.accountant.repository.JournalLineRepository;
 import com.justjava.ams.common.entity.Branch;
@@ -17,6 +19,10 @@ import com.justjava.ams.auditor.dto.AuditLogDTO;
 import com.justjava.ams.auditor.service.AuditLogService;
 import com.justjava.ams.cfo.dto.JournalApprovalRequest;
 import com.justjava.ams.cfo.dto.JournalRejectionRequest;
+import com.justjava.ams.financeAdmin.dto.ApprovalDecisionDTO;
+import com.justjava.ams.financeAdmin.dto.ApprovalEvaluationRequest;
+import com.justjava.ams.financeAdmin.entity.ModuleControl;
+import com.justjava.ams.financeAdmin.service.ApprovalWorkflowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -41,6 +47,8 @@ public class ManualJournalService {
     private final FiscalPeriodService fiscalPeriodService;
     private final AuditLogService auditLogService;
     private final GeneralLedgerService generalLedgerService;
+    private final ApprovalWorkflowService approvalWorkflowService;
+    private final DepreciationJournalImportRepository depreciationJournalImportRepository;
 
     public ManualJournalDTO createManualJournal(Long organizationId, ManualJournalDTO dto, String userName) {
         Organization organization = findOrganization(organizationId);
@@ -184,9 +192,27 @@ public class ManualJournalService {
         fiscalPeriodService.requireOpenPeriod(journal.getOrganization().getId(), journal.getJournalDate());
 
         String submittedBy = normalizeUserName(request != null ? request.getSubmittedBy() : null);
+        ApprovalDecisionDTO approvalDecision = approvalWorkflowService.submitForApproval(ApprovalEvaluationRequest.builder()
+                .organizationId(journal.getOrganization().getId())
+                .moduleType(ModuleControl.ModuleType.GENERAL_LEDGER)
+                .transactionType("MANUAL_JOURNAL")
+                .entityType("ManualJournal")
+                .entityId(journal.getId())
+                .amount(totalDebits(lines))
+                .branchId(journal.getBranch() != null ? journal.getBranch().getId() : null)
+                .departmentCode(firstDepartment(lines))
+                .accountTypes(lines.stream()
+                        .map(line -> line.getChartOfAccounts().getAccountType())
+                        .collect(java.util.stream.Collectors.toSet()))
+                .submittedBy(submittedBy)
+                .build());
         journal.setStatus(ManualJournal.JournalStatus.SUBMITTED);
         journal.setSubmittedBy(submittedBy);
         journal.setSubmittedAt(LocalDateTime.now());
+        journal.setApprovalRequestId(approvalDecision.getApprovalRequestId());
+        journal.setApprovalRuleId(approvalDecision.getApprovalRuleId());
+        journal.setApprovalRuleName(approvalDecision.getApprovalRuleName());
+        journal.setRequiredApprovals(approvalDecision.getRequiredApprovals());
 
         ManualJournal saved = manualJournalRepository.save(journal);
         try {
@@ -196,7 +222,7 @@ public class ManualJournalService {
                     .entityId(saved.getId())
                     .action("SUBMIT")
                     .newValue(saved.getStatus().toString())
-                    .description("Submitted for approval by " + submittedBy)
+                    .description("Submitted for approval by " + submittedBy + "; " + approvalDecision.getReason())
                     .build();
             auditLogService.createAuditLog(saved.getOrganization().getId(), log);
         } catch (Exception ex) {
@@ -230,6 +256,7 @@ public class ManualJournalService {
         journal.setStatus(ManualJournal.JournalStatus.APPROVED);
         journal.setApprovedBy(normalizedApproverName);
         journal.setApprovedAt(LocalDateTime.now());
+        approvalWorkflowService.approvePending("ManualJournal", journalId, request != null ? trimToNull(request.getApprovalNote()) : null);
 
         ManualJournal saved = manualJournalRepository.save(journal);
         // Audit: record approval
@@ -272,6 +299,9 @@ public class ManualJournalService {
 
         journal.setStatus(ManualJournal.JournalStatus.REJECTED);
         journal.setRejectionReason(rejectionReason);
+        if (journal.getApprovalRequestId() != null) {
+            approvalWorkflowService.rejectPending("ManualJournal", journalId, rejectionReason);
+        }
 
         ManualJournal saved = manualJournalRepository.save(journal);
         try {
@@ -300,6 +330,7 @@ public class ManualJournalService {
         if (!ManualJournal.JournalStatus.APPROVED.equals(journal.getStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Only APPROVED journals can be posted");
         }
+        approvalWorkflowService.requireApproved("ManualJournal", journalId);
 
         fiscalPeriodService.requireOpenPeriod(journal.getOrganization().getId(), journal.getJournalDate());
 
@@ -307,7 +338,18 @@ public class ManualJournalService {
         validateJournalIsBalanced(lines);
 
         String normalizedPostedBy = normalizeUserName(postedBy);
-        generalLedgerService.postJournalEntriesFromManualJournal(journalId, normalizedPostedBy);
+        DepreciationJournalImport depreciationImport = depreciationJournalImportRepository.findByManualJournalId(journalId).orElse(null);
+        if (depreciationImport != null) {
+            generalLedgerService.postDepreciationJournalEntriesFromManualJournal(
+                    journalId,
+                    depreciationImport.getId(),
+                    depreciationImport.getExternalBatchId(),
+                    normalizedPostedBy);
+            depreciationImport.setStatus(DepreciationJournalImport.ImportStatus.POSTED);
+            depreciationJournalImportRepository.save(depreciationImport);
+        } else {
+            generalLedgerService.postJournalEntriesFromManualJournal(journalId, normalizedPostedBy);
+        }
 
         journal.setStatus(ManualJournal.JournalStatus.POSTED);
         journal.setPostingDate(java.time.LocalDate.now());
@@ -397,6 +439,10 @@ public class ManualJournalService {
                 .createdBy(journal.getCreatedBy())
                 .submittedBy(journal.getSubmittedBy())
                 .approvedBy(journal.getApprovedBy())
+                .approvalRequestId(journal.getApprovalRequestId())
+                .approvalRuleId(journal.getApprovalRuleId())
+                .approvalRuleName(journal.getApprovalRuleName())
+                .requiredApprovals(journal.getRequiredApprovals() != null ? journal.getRequiredApprovals() : 1)
                 .rejectionReason(journal.getRejectionReason())
                 .createdAt(journal.getCreatedAt())
                 .submittedAt(journal.getSubmittedAt())
@@ -549,6 +595,21 @@ public class ManualJournalService {
         if (!hasDebitLine || !hasCreditLine || totalDebits.compareTo(totalCredits) != 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Journal must be balanced before approval");
         }
+    }
+
+    private BigDecimal totalDebits(List<JournalLine> lines) {
+        return lines.stream()
+                .map(line -> line.getDebitAmount() != null ? line.getDebitAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private String firstDepartment(List<JournalLine> lines) {
+        return lines.stream()
+                .map(JournalLine::getDepartmentCode)
+                .map(this::trimToNull)
+                .filter(value -> value != null)
+                .findFirst()
+                .orElse(null);
     }
 
     private void validateLineAmounts(JournalLineDTO dto) {

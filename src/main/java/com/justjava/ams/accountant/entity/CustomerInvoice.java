@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import com.justjava.ams.common.entity.Organization;
 import com.justjava.ams.common.entity.User;
+import com.justjava.ams.financeAdmin.entity.TaxJurisdiction;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,7 +14,9 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
-@Table(name = "customer_invoices")
+@Table(name = "customer_invoices", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"organization_id", "invoice_number"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,7 +31,11 @@ public class CustomerInvoice {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
-    @Column(unique = true, nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
+    @Column(nullable = false)
     private String invoiceNumber;
 
     @Column(nullable = false)
@@ -52,6 +59,19 @@ public class CustomerInvoice {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal subtotal = BigDecimal.ZERO;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tax_jurisdiction_id")
+    private TaxJurisdiction taxJurisdiction;
+
+    @Column
+    private String taxCode;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal taxRate;
+
+    @Column
+    private String taxCalculationType;
+
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal taxAmount = BigDecimal.ZERO;
 
@@ -64,6 +84,12 @@ public class CustomerInvoice {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private InvoiceStatus status = InvoiceStatus.DRAFT;
+
+    @Column
+    private LocalDate postedDate;
+
+    @Column
+    private String postedBy;
 
     @Column
     private String notes;
@@ -83,9 +109,15 @@ public class CustomerInvoice {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Version
+    private Long version;
+
     public enum InvoiceStatus {
         DRAFT,
+        APPROVED,
         SENT,
+        POSTED,
+        PARTIALLY_PAID,
         PAID,
         OVERDUE,
         CANCELLED

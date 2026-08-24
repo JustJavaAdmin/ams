@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Receivables Collections | AMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#000000",
+                        surface: "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container-lowest": "#ffffff",
+                        secondary: "#505f76",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "outline-variant": "#cfc4c5",
+                        error: "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a"
+                    },
+                    borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+                    spacing: { "card-padding": "24px", "outer-padding": "32px", gutter: "24px" },
+                    fontFamily: {
+                        "body-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "label-md": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f2f4f6; font-family: 'Hanken Grotesk', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; vertical-align: middle; }
+        input:focus, select:focus, textarea:focus { border-color: #000000 !important; outline: none !important; box-shadow: 0 0 0 2px #f2f4f6 !important; }
+        .tab-active { background: #000; color: #fff; }
+        .tab-idle { background: #fff; color: #191c1e; border-color: #cfc4c5; }
+    </style>
+</head>
+<body class="text-on-surface min-h-screen bg-surface flex">
+
+<aside th:replace="~{layouts/accountantLayout :: sidebar('receivablesCollections')}"></aside>
+
+<div class="flex-grow flex flex-col min-w-0">
+    <header class="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-50">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 w-full px-outer-padding py-4">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[28px]">support_agent</span>
+                <h1 class="text-headline-sm font-headline-sm text-primary">Receivables Collections</h1>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+                <select id="orgSelector" class="bg-white border border-outline-variant rounded-lg h-11 px-3 min-w-[240px] text-body-md">
+                    <option value="">Select organization...</option>
+                    <option th:each="org : ${organizations}" th:value="${org.id}" th:text="${org.name}"></option>
+                </select>
+                <span id="pageStatus" class="text-body-sm text-secondary min-w-[180px]"></span>
+            </div>
+        </div>
+    </header>
+
+    <main class="p-outer-padding max-w-[1500px] mx-auto w-full space-y-gutter">
+        <div id="pageAlert" class="hidden">
+            <div id="pageAlertInner" class="flex items-start gap-3 px-4 py-3 rounded-lg border text-body-sm font-semibold">
+                <span id="pageAlertIcon" class="material-symbols-outlined text-[18px] mt-0.5"></span>
+                <span id="pageAlertMsg"></span>
+            </div>
+        </div>
+
+        <section class="flex flex-wrap gap-2">
+            <button data-tab="cases" class="tab-btn tab-active border rounded-lg px-4 py-2 font-bold text-body-sm flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">playlist_add_check</span> Collections Queue
+            </button>
+            <button data-tab="statements" class="tab-btn tab-idle border rounded-lg px-4 py-2 font-bold text-body-sm flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">receipt</span> Customer Statements
+            </button>
+        </section>
+
+        <section id="casesPanel" class="tab-panel grid grid-cols-1 xl:grid-cols-3 gap-gutter items-start">
+            <div class="xl:col-span-1 bg-surface-container-lowest border border-outline-variant rounded-lg p-card-padding">
+                <div class="flex flex-col gap-3 mb-5">
+                    <div class="flex justify-between items-center gap-3">
+                        <h2 class="font-headline-sm text-headline-sm text-primary">Queue</h2>
+                        <button id="refreshCasesBtn" class="bg-white border border-outline-variant rounded-lg px-3 py-2 font-bold text-body-sm">Refresh</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input id="caseAsOfDate" type="date" class="bg-white border border-outline-variant rounded-lg p-2 text-body-sm">
+                        <button id="generateCasesBtn" class="bg-primary text-on-primary rounded-lg px-3 py-2 font-bold text-body-sm">Generate</button>
+                    </div>
+                </div>
+                <div id="caseRows" class="space-y-3"></div>
+            </div>
+
+            <div class="xl:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+                <div class="bg-surface-container-low px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div>
+                        <h2 id="caseTitle" class="font-headline-sm text-headline-sm text-primary">Case detail</h2>
+                        <div id="caseSubtitle" class="text-body-sm text-secondary">Select a collection case.</div>
+                    </div>
+                    <div id="caseActions" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div id="caseDetail" class="p-card-padding text-body-sm text-secondary">No case selected.</div>
+            </div>
+        </section>
+
+        <section id="statementsPanel" class="tab-panel hidden grid grid-cols-1 xl:grid-cols-3 gap-gutter items-start">
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-card-padding">
+                <h2 class="font-headline-sm text-headline-sm text-primary mb-5">Generate Statement</h2>
+                <form id="statementForm" class="space-y-4">
+                    <div>
+                        <label class="block text-body-sm font-semibold mb-1" for="statementCustomer">Customer</label>
+                        <select id="statementCustomer" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md"></select>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <input id="statementDate" type="date" class="bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="Statement date">
+                        <input id="statementStartDate" type="date" class="bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="Start date">
+                        <input id="statementEndDate" type="date" class="bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="End date">
+                    </div>
+                    <button class="w-full bg-primary text-on-primary rounded-lg px-4 py-3 font-bold" type="submit">Generate statement</button>
+                </form>
+            </div>
+            <div class="xl:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg p-card-padding">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="font-headline-sm text-headline-sm text-primary">Statements</h2>
+                    <button id="refreshStatementsBtn" class="bg-white border border-outline-variant rounded-lg px-3 py-2 font-bold text-body-sm">Refresh</button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div id="statementRows" class="space-y-3"></div>
+                    <div class="lg:col-span-2 border border-outline-variant rounded-lg overflow-hidden bg-white">
+                        <div class="bg-surface-container-low px-4 py-3 flex justify-between items-center gap-3">
+                            <span id="statementDetailTitle" class="font-bold">Statement detail</span>
+                            <div id="statementActions" class="flex flex-wrap justify-end gap-2"></div>
+                        </div>
+                        <div id="statementDetail" class="p-4 text-body-sm text-secondary">Select a statement.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="actionModal" class="hidden fixed inset-0 bg-black/30 z-[100] items-center justify-center p-4">
+    <form id="caseActionForm" class="bg-white border border-outline-variant rounded-lg p-6 w-full max-w-[520px] space-y-4 shadow-xl">
+        <h2 id="actionModalTitle" class="font-headline-sm text-headline-sm">Case action</h2>
+        <input id="actionCaseId" type="hidden">
+        <input id="actionType" type="hidden">
+        <div id="collectorField" class="hidden">
+            <label class="block text-body-sm font-semibold mb-1" for="collectorUsername">Collector</label>
+            <input id="collectorUsername" class="w-full bg-white border border-outline-variant rounded-lg p-3" placeholder="username">
+        </div>
+        <div id="escalationField" class="hidden">
+            <label class="block text-body-sm font-semibold mb-1" for="escalatedTo">Escalate to</label>
+            <input id="escalatedTo" class="w-full bg-white border border-outline-variant rounded-lg p-3" placeholder="manager or team">
+        </div>
+        <div id="promiseFields" class="hidden grid grid-cols-2 gap-3">
+            <input id="promisedAmount" type="number" step="0.01" class="bg-white border border-outline-variant rounded-lg p-3" placeholder="Amount">
+            <input id="promisedDate" type="date" class="bg-white border border-outline-variant rounded-lg p-3">
+        </div>
+        <div id="activityFields" class="hidden grid grid-cols-2 gap-3">
+            <select id="activityType" class="bg-white border border-outline-variant rounded-lg p-3">
+                <option>NOTE</option>
+                <option>CALL</option>
+                <option>EMAIL</option>
+            </select>
+            <input id="activitySubject" class="bg-white border border-outline-variant rounded-lg p-3" placeholder="Subject">
+        </div>
+        <textarea id="actionNotes" class="w-full bg-white border border-outline-variant rounded-lg p-3" rows="4" placeholder="Notes or reason"></textarea>
+        <div class="flex justify-end gap-2">
+            <button type="button" id="closeModalBtn" class="bg-white border border-outline-variant rounded-lg px-4 py-2 font-bold">Cancel</button>
+            <button class="bg-primary text-on-primary rounded-lg px-4 py-2 font-bold" type="submit">Apply</button>
+        </div>
+    </form>
+</div>
+
+<script>
+(() => {
+    const state = {
+        organizationId: '',
+        customers: [],
+        cases: [],
+        selectedCase: null,
+        statements: [],
+        selectedStatement: null
+    };
+
+    const els = {
+        orgSelector: document.getElementById('orgSelector'),
+        pageStatus: document.getElementById('pageStatus'),
+        pageAlert: document.getElementById('pageAlert'),
+        pageAlertInner: document.getElementById('pageAlertInner'),
+        pageAlertIcon: document.getElementById('pageAlertIcon'),
+        pageAlertMsg: document.getElementById('pageAlertMsg'),
+        caseRows: document.getElementById('caseRows'),
+        caseTitle: document.getElementById('caseTitle'),
+        caseSubtitle: document.getElementById('caseSubtitle'),
+        caseActions: document.getElementById('caseActions'),
+        caseDetail: document.getElementById('caseDetail'),
+        statementCustomer: document.getElementById('statementCustomer'),
+        statementRows: document.getElementById('statementRows'),
+        statementDetail: document.getElementById('statementDetail'),
+        statementDetailTitle: document.getElementById('statementDetailTitle'),
+        statementActions: document.getElementById('statementActions'),
+        actionModal: document.getElementById('actionModal')
+    };
+
+    function today(offset = 0) {
+        const date = new Date();
+        date.setDate(date.getDate() + offset);
+        return date.toISOString().slice(0, 10);
+    }
+
+    function money(value) {
+        return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function badge(status) {
+        const map = {
+            OPEN: 'bg-slate-100 text-slate-700',
+            IN_PROGRESS: 'bg-amber-50 text-amber-700',
+            PROMISED: 'bg-blue-50 text-blue-700',
+            ESCALATED: 'bg-red-50 text-red-700',
+            RESOLVED: 'bg-emerald-50 text-emerald-700',
+            CLOSED: 'bg-zinc-100 text-zinc-700',
+            ACTIVE: 'bg-blue-50 text-blue-700',
+            KEPT: 'bg-emerald-50 text-emerald-700',
+            BROKEN: 'bg-red-50 text-red-700',
+            CANCELLED: 'bg-zinc-100 text-zinc-700',
+            GENERATED: 'bg-slate-100 text-slate-700',
+            SENT: 'bg-emerald-50 text-emerald-700'
+        };
+        return `<span class="inline-flex px-2 py-1 rounded text-[11px] font-bold ${map[status] || 'bg-slate-100 text-slate-700'}">${status || '-'}</span>`;
+    }
+
+    function alert(message, type = 'info') {
+        els.pageAlert.classList.remove('hidden');
+        els.pageAlertInner.className = type === 'error'
+            ? 'flex items-start gap-3 px-4 py-3 rounded-lg border text-body-sm font-semibold bg-error-container text-on-error-container border-error/20'
+            : 'flex items-start gap-3 px-4 py-3 rounded-lg border text-body-sm font-semibold bg-white text-primary border-outline-variant';
+        els.pageAlertIcon.textContent = type === 'error' ? 'error' : 'check_circle';
+        els.pageAlertMsg.textContent = message;
+    }
+
+    async function apiJson(url, options = {}) {
+        const opts = { ...options };
+        if (opts.body) {
+            opts.headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+        }
+        const response = await fetch(url, opts);
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || `${response.status} ${response.statusText}`);
+        }
+        const contentType = response.headers.get('content-type') || '';
+        return contentType.includes('application/json') ? response.json() : null;
+    }
+
+    async function loadCustomers() {
+        state.customers = await apiJson(`/api/accountant/customers/org/${state.organizationId}`) || [];
+        els.statementCustomer.innerHTML = '<option value="">Select customer...</option>' + state.customers
+            .map(customer => `<option value="${customer.id}">${customer.customerCode || ''} ${customer.legalName}</option>`)
+            .join('');
+    }
+
+    async function loadCases() {
+        if (!state.organizationId) return;
+        els.pageStatus.textContent = 'Loading cases...';
+        state.cases = await apiJson(`/api/accountant/receivables/collections/org/${state.organizationId}`) || [];
+        renderCases();
+        els.pageStatus.textContent = '';
+    }
+
+    async function generateCases() {
+        const params = new URLSearchParams();
+        if (document.getElementById('caseAsOfDate').value) params.set('asOfDate', document.getElementById('caseAsOfDate').value);
+        state.cases = await apiJson(`/api/accountant/receivables/collections/org/${state.organizationId}/generate?${params}`, { method: 'POST' }) || [];
+        renderCases();
+        alert('Collection queue generated.');
+    }
+
+    function renderCases() {
+        els.caseRows.innerHTML = state.cases.map(row => `
+            <button data-action="select-case" data-id="${row.id}" class="w-full text-left border border-outline-variant rounded-lg p-4 bg-white hover:border-primary">
+                <div class="flex justify-between gap-3"><strong>${row.customerName || '-'}</strong>${badge(row.status)}</div>
+                <div class="text-body-sm text-secondary mt-2">${row.invoiceNumber} · ${row.daysOverdue || 0} days overdue</div>
+                <div class="flex justify-between mt-2"><span>${row.collectorUsername || 'Unassigned'}</span><strong>${money(row.outstandingAmount)}</strong></div>
+            </button>
+        `).join('') || '<div class="text-secondary text-body-sm">No collection cases found.</div>';
+        renderCaseDetail();
+    }
+
+    async function selectCase(id) {
+        state.selectedCase = await apiJson(`/api/accountant/receivables/collections/${id}`);
+        renderCaseDetail();
+    }
+
+    function renderCaseDetail() {
+        const item = state.selectedCase;
+        if (!item) {
+            els.caseTitle.textContent = 'Case detail';
+            els.caseSubtitle.textContent = 'Select a collection case.';
+            els.caseActions.innerHTML = '';
+            els.caseDetail.textContent = 'No case selected.';
+            return;
+        }
+        const terminal = ['RESOLVED', 'CLOSED'].includes(item.status);
+        els.caseTitle.textContent = `${item.customerName} · ${item.invoiceNumber}`;
+        els.caseSubtitle.textContent = `${item.daysOverdue} days overdue · ${money(item.outstandingAmount)} outstanding`;
+        els.caseActions.innerHTML = `
+            ${!terminal ? `<button data-action="open-action" data-kind="assign" data-id="${item.id}" class="px-3 py-2 rounded bg-white border border-outline-variant font-bold text-body-sm">Assign</button>` : ''}
+            ${!terminal ? `<button data-action="dunning" data-id="${item.id}" class="px-3 py-2 rounded bg-white border border-outline-variant font-bold text-body-sm">Dunning</button>` : ''}
+            ${!terminal ? `<button data-action="open-action" data-kind="promise" data-id="${item.id}" class="px-3 py-2 rounded bg-white border border-outline-variant font-bold text-body-sm">Promise</button>` : ''}
+            ${!terminal ? `<button data-action="open-action" data-kind="activity" data-id="${item.id}" class="px-3 py-2 rounded bg-white border border-outline-variant font-bold text-body-sm">Activity</button>` : ''}
+            ${!terminal ? `<button data-action="open-action" data-kind="escalate" data-id="${item.id}" class="px-3 py-2 rounded bg-white border border-outline-variant font-bold text-body-sm">Escalate</button>` : ''}
+            ${!terminal ? `<button data-action="open-action" data-kind="close" data-id="${item.id}" class="px-3 py-2 rounded bg-primary text-on-primary font-bold text-body-sm">Close</button>` : ''}
+            ${item.customerId ? `<button data-action="open-action" data-kind="hold" data-id="${item.id}" class="px-3 py-2 rounded bg-white border border-outline-variant font-bold text-body-sm">Credit hold</button>` : ''}
+            ${item.customerId ? `<button data-action="release-hold" data-id="${item.customerId}" class="px-3 py-2 rounded bg-white border border-outline-variant font-bold text-body-sm">Release hold</button>` : ''}
+        `;
+        els.caseDetail.innerHTML = `
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                <div class="bg-surface-container-low rounded-lg p-3"><div class="text-secondary">Invoice total</div><div class="font-bold">${money(item.invoiceTotal)}</div></div>
+                <div class="bg-surface-container-low rounded-lg p-3"><div class="text-secondary">Paid</div><div class="font-bold">${money(item.amountPaid)}</div></div>
+                <div class="bg-surface-container-low rounded-lg p-3"><div class="text-secondary">Collector</div><div class="font-bold">${item.collectorUsername || '-'}</div></div>
+                <div class="bg-surface-container-low rounded-lg p-3"><div class="text-secondary">Next action</div><div class="font-bold">${item.nextActionDate || '-'}</div></div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div>
+                    <h3 class="font-bold mb-3">Promises</h3>
+                    <div class="space-y-2">${(item.promises || []).map(promise => `
+                        <div class="border border-outline-variant rounded-lg p-3 bg-white">
+                            <div class="flex justify-between">${badge(promise.status)}<strong>${money(promise.promisedAmount)}</strong></div>
+                            <div class="text-secondary mt-1">By ${promise.promisedDate} · ${promise.notes || ''}</div>
+                        </div>
+                    `).join('') || '<div class="text-secondary">No promises recorded.</div>'}</div>
+                </div>
+                <div>
+                    <h3 class="font-bold mb-3">Activity</h3>
+                    <div class="space-y-2 max-h-[360px] overflow-y-auto">${(item.activities || []).map(activity => `
+                        <div class="border border-outline-variant rounded-lg p-3 bg-white">
+                            <div class="flex justify-between gap-3"><strong>${activity.subject || activity.activityType}</strong>${badge(activity.status)}</div>
+                            <div class="text-secondary mt-1">${activity.activityType} · ${activity.createdBy || '-'} · ${activity.createdAt || ''}</div>
+                            <div class="mt-2">${activity.notes || ''}</div>
+                        </div>
+                    `).join('') || '<div class="text-secondary">No activity recorded.</div>'}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function openAction(kind, caseId) {
+        document.getElementById('actionCaseId').value = caseId;
+        document.getElementById('actionType').value = kind;
+        document.getElementById('actionModalTitle').textContent = kind[0].toUpperCase() + kind.slice(1);
+        document.getElementById('collectorField').classList.toggle('hidden', kind !== 'assign');
+        document.getElementById('escalationField').classList.toggle('hidden', kind !== 'escalate');
+        document.getElementById('promiseFields').classList.toggle('hidden', kind !== 'promise');
+        document.getElementById('activityFields').classList.toggle('hidden', kind !== 'activity');
+        document.getElementById('actionNotes').value = '';
+        els.actionModal.classList.remove('hidden');
+        els.actionModal.classList.add('flex');
+    }
+
+    function closeAction() {
+        els.actionModal.classList.add('hidden');
+        els.actionModal.classList.remove('flex');
+    }
+
+    async function loadStatements() {
+        if (!state.organizationId) return;
+        state.statements = await apiJson(`/api/accountant/receivables/customer-statements/org/${state.organizationId}`) || [];
+        renderStatements();
+    }
+
+    function renderStatements() {
+        els.statementRows.innerHTML = state.statements.map(statement => `
+            <button data-action="select-statement" data-id="${statement.id}" class="w-full text-left border border-outline-variant rounded-lg p-4 bg-white hover:border-primary">
+                <div class="flex justify-between gap-3"><strong>${statement.customerName || '-'}</strong>${badge(statement.status)}</div>
+                <div class="text-body-sm text-secondary mt-2">${statement.statementDate} · ${statement.startDate} to ${statement.endDate}</div>
+                <div class="font-bold mt-2">${money(statement.closingBalance)}</div>
+            </button>
+        `).join('') || '<div class="text-secondary text-body-sm">No customer statements found.</div>';
+        renderStatementDetail();
+    }
+
+    async function selectStatement(id) {
+        state.selectedStatement = await apiJson(`/api/accountant/receivables/customer-statements/${id}`);
+        renderStatementDetail();
+    }
+
+    function renderStatementDetail() {
+        const statement = state.selectedStatement;
+        if (!statement) {
+            els.statementDetailTitle.textContent = 'Statement detail';
+            els.statementActions.innerHTML = '';
+            els.statementDetail.textContent = 'Select a statement.';
+            return;
+        }
+        els.statementDetailTitle.textContent = `${statement.customerName} · ${statement.statementDate}`;
+        els.statementActions.innerHTML = statement.status !== 'SENT'
+            ? `<button data-action="send-statement" data-id="${statement.id}" class="px-2 py-1 rounded bg-primary text-on-primary font-bold text-body-sm">Send</button>`
+            : '';
+        els.statementDetail.innerHTML = `
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <div><span class="text-secondary">Opening</span><div class="font-bold">${money(statement.openingBalance)}</div></div>
+                <div><span class="text-secondary">Invoiced</span><div class="font-bold">${money(statement.totalInvoiced)}</div></div>
+                <div><span class="text-secondary">Paid</span><div class="font-bold">${money(statement.totalPaid)}</div></div>
+                <div><span class="text-secondary">Closing</span><div class="font-bold">${money(statement.closingBalance)}</div></div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[680px] text-left">
+                    <thead class="bg-surface-container-low"><tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Reference</th><th class="px-3 py-2">Type</th><th class="px-3 py-2 text-right">Debit</th><th class="px-3 py-2 text-right">Credit</th></tr></thead>
+                    <tbody class="divide-y divide-outline-variant">${(statement.lines || []).map(line => `
+                        <tr><td class="px-3 py-2">${line.transactionDate}</td><td class="px-3 py-2">${line.referenceNumber}</td><td class="px-3 py-2">${line.lineType}</td><td class="px-3 py-2 text-right">${money(line.debitAmount)}</td><td class="px-3 py-2 text-right">${money(line.creditAmount)}</td></tr>
+                    `).join('')}</tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async function refreshSelectedCase() {
+        if (state.selectedCase) {
+            await selectCase(state.selectedCase.id);
+        }
+        await loadCases();
+    }
+
+    async function initOrg() {
+        state.organizationId = els.orgSelector.value;
+        state.selectedCase = null;
+        state.selectedStatement = null;
+        if (!state.organizationId) return;
+        await loadCustomers();
+        await Promise.all([loadCases(), loadStatements()]);
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(tab => {
+                tab.classList.toggle('tab-active', tab === button);
+                tab.classList.toggle('tab-idle', tab !== button);
+            });
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById(`${button.dataset.tab}Panel`).classList.remove('hidden');
+        });
+    });
+
+    document.addEventListener('click', async event => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        const { action, id, kind } = button.dataset;
+        try {
+            if (action === 'select-case') await selectCase(id);
+            if (action === 'open-action') openAction(kind, id);
+            if (action === 'dunning') {
+                state.selectedCase = await apiJson(`/api/accountant/receivables/collections/${id}/dunning`, { method: 'POST' });
+                await refreshSelectedCase();
+                alert('Dunning notice recorded.');
+            }
+            if (action === 'release-hold') {
+                await apiJson(`/api/accountant/customers/${id}/credit-hold/release`, { method: 'PATCH', body: JSON.stringify({ reason: 'Released from collections workspace' }) });
+                await loadCustomers();
+                alert('Credit hold released.');
+            }
+            if (action === 'select-statement') await selectStatement(id);
+            if (action === 'send-statement') {
+                state.selectedStatement = await apiJson(`/api/accountant/receivables/customer-statements/${id}/send`, { method: 'PATCH' });
+                await loadStatements();
+                renderStatementDetail();
+                alert('Customer statement marked sent.');
+            }
+        } catch (err) {
+            alert(err.message, 'error');
+        }
+    });
+
+    document.getElementById('caseActionForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const caseId = document.getElementById('actionCaseId').value;
+        const type = document.getElementById('actionType').value;
+        const selected = state.selectedCase;
+        const body = {
+            collectorUsername: document.getElementById('collectorUsername').value || null,
+            escalatedTo: document.getElementById('escalatedTo').value || null,
+            reason: document.getElementById('actionNotes').value || null,
+            notes: document.getElementById('actionNotes').value || null,
+            activityType: document.getElementById('activityType').value || null,
+            subject: document.getElementById('activitySubject').value || null,
+            promisedAmount: document.getElementById('promisedAmount').value || null,
+            promisedDate: document.getElementById('promisedDate').value || null
+        };
+        try {
+            if (type === 'assign') state.selectedCase = await apiJson(`/api/accountant/receivables/collections/${caseId}/assign`, { method: 'PATCH', body: JSON.stringify(body) });
+            if (type === 'escalate') state.selectedCase = await apiJson(`/api/accountant/receivables/collections/${caseId}/escalate`, { method: 'PATCH', body: JSON.stringify(body) });
+            if (type === 'close') state.selectedCase = await apiJson(`/api/accountant/receivables/collections/${caseId}/close`, { method: 'PATCH', body: JSON.stringify(body) });
+            if (type === 'activity') state.selectedCase = await apiJson(`/api/accountant/receivables/collections/${caseId}/activities`, { method: 'POST', body: JSON.stringify(body) });
+            if (type === 'promise') state.selectedCase = await apiJson(`/api/accountant/receivables/collections/${caseId}/promises`, { method: 'POST', body: JSON.stringify(body) });
+            if (type === 'hold' && selected?.customerId) {
+                await apiJson(`/api/accountant/customers/${selected.customerId}/credit-hold`, { method: 'PATCH', body: JSON.stringify({ reason: body.notes }) });
+            }
+            closeAction();
+            await refreshSelectedCase();
+            await loadCustomers();
+            alert('Action applied.');
+        } catch (err) {
+            alert(err.message, 'error');
+        }
+    });
+
+    document.getElementById('statementForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        try {
+            state.selectedStatement = await apiJson(`/api/accountant/receivables/customer-statements/org/${state.organizationId}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    customerId: document.getElementById('statementCustomer').value ? Number(document.getElementById('statementCustomer').value) : null,
+                    statementDate: document.getElementById('statementDate').value || null,
+                    startDate: document.getElementById('statementStartDate').value || null,
+                    endDate: document.getElementById('statementEndDate').value || null
+                })
+            });
+            await loadStatements();
+            renderStatementDetail();
+            alert('Customer statement generated.');
+        } catch (err) {
+            alert(err.message, 'error');
+        }
+    });
+
+    els.orgSelector.addEventListener('change', () => initOrg().catch(err => alert(err.message, 'error')));
+    document.getElementById('refreshCasesBtn').addEventListener('click', () => loadCases().catch(err => alert(err.message, 'error')));
+    document.getElementById('generateCasesBtn').addEventListener('click', () => generateCases().catch(err => alert(err.message, 'error')));
+    document.getElementById('refreshStatementsBtn').addEventListener('click', () => loadStatements().catch(err => alert(err.message, 'error')));
+    document.getElementById('closeModalBtn').addEventListener('click', closeAction);
+
+    document.getElementById('caseAsOfDate').value = today();
+    document.getElementById('statementDate').value = today();
+    document.getElementById('statementStartDate').value = today(-30);
+    document.getElementById('statementEndDate').value = today();
+    document.getElementById('promisedDate').value = today(7);
+    if (els.orgSelector.options.length > 1) {
+        els.orgSelector.selectedIndex = 1;
+        initOrg().catch(err => alert(err.message, 'error'));
+    }
+})();
+</script>
+</body>
+</html>

@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface ApprovalRequestRepository extends JpaRepository<ApprovalRequest, Long> {
     Optional<ApprovalRequest> findByEntityTypeAndEntityId(String entityType, Long entityId);
+    Optional<ApprovalRequest> findByEntityTypeAndEntityIdAndStatus(String entityType, Long entityId, ApprovalRequest.ApprovalStatus status);
     List<ApprovalRequest> findByOrganizationIdAndStatus(Long organizationId, ApprovalRequest.ApprovalStatus status);
     List<ApprovalRequest> findByAssignedToUserId(Long userId);
 }

@@ -141,7 +141,16 @@
                 <h2 class="font-headline-sm text-headline-sm text-primary">Customer Invoice Builder</h2>
             </div>
         </div>
-
+        <div class="flex items-center gap-3">
+            <a href="/accountant/receivablesCollections" class="h-10 px-3 rounded-lg border border-outline-variant bg-white text-primary font-bold text-body-sm flex items-center gap-2 hover:border-primary">
+                <span class="material-symbols-outlined text-[18px]">support_agent</span>
+                Collections
+            </a>
+            <select id="organizationSelect" class="bg-surface-container-lowest rounded-lg p-2 text-body-md min-w-[220px]">
+                <option th:each="org : ${organizations}" th:value="${org.id}" th:text="${org.name}">Organization</option>
+            </select>
+            <span id="pageStatus" class="text-body-sm text-secondary"></span>
+        </div>
     </header>
 
     <main class="p-outer-padding max-w-[1440px] mx-auto space-y-gutter w-full">
@@ -149,7 +158,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-stack-md mb-8">
                 <div class="space-y-1.5">
                     <label class="block font-body-sm font-semibold text-primary">Customer Account Selector</label>
-                    <select class="w-full bg-surface-container-lowest rounded-lg p-2.5 text-body-md focus:ring-0">
+                    <select id="customerSelect" class="w-full bg-surface-container-lowest rounded-lg p-2.5 text-body-md focus:ring-0">
                         <option value="">Select Customer...</option>
                         <option>Dangote Cement PLC</option>
                         <option>MTN Nigeria Communications</option>
@@ -168,14 +177,12 @@
                 </div>
                 <div class="space-y-1.5">
                     <label class="block font-body-sm font-semibold text-primary">Invoice Date</label>
-                    <input class="w-full bg-surface-container-lowest rounded-lg p-2 text-body-md focus:ring-0" type="date" value="2023-11-24">
+                    <input id="invoiceDate" class="w-full bg-surface-container-lowest rounded-lg p-2 text-body-md focus:ring-0" type="date" value="2023-11-24">
                 </div>
                 <div class="space-y-1.5">
                     <label class="block font-body-sm font-semibold text-primary">Applied Tax Rules</label>
-                    <select class="w-full bg-surface-container-lowest rounded-lg p-2.5 text-body-md focus:ring-0">
-                        <option>NG VAT (7.5%)</option>
-                        <option>WHT Exempt (0%)</option>
-                        <option>Combined VAT + Levy (10%)</option>
+                    <select id="taxJurisdictionSelect" class="w-full bg-surface-container-lowest rounded-lg p-2.5 text-body-md focus:ring-0">
+                        <option value="">No tax</option>
                     </select>
                 </div>
             </div>
@@ -199,7 +206,7 @@
                             <input class="w-full bg-transparent border-none focus:ring-0 text-body-md p-0" placeholder="Enter service description..." type="text" value="Enterprise Software License Renewal">
                         </td>
                         <td class="py-4 px-4">
-                            <select class="w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
+                            <select class="line-account-select w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
                                 <option>4001 - Sales Income</option>
                                 <option>4002 - Service Revenue</option>
                                 <option>4005 - Software Subscriptions</option>
@@ -226,7 +233,7 @@
                             <input class="w-full bg-transparent border-none focus:ring-0 text-body-md p-0" placeholder="Enter service description..." type="text" value="Cloud Infrastructure Support - Q4">
                         </td>
                         <td class="py-4 px-4">
-                            <select class="w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
+                            <select class="line-account-select w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
                                 <option>4002 - Service Revenue</option>
                                 <option selected="">4003 - Technical Support</option>
                                 <option>4004 - Consulting Fees</option>
@@ -274,10 +281,10 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4 mt-4">
-                    <button class="px-6 py-3 bg-surface-container-lowest border border-outline-variant text-primary font-bold rounded-lg hover:bg-surface-container transition-all active:opacity-80">
+                    <button id="saveDraftBtn" class="px-6 py-3 bg-surface-container-lowest border border-outline-variant text-primary font-bold rounded-lg hover:bg-surface-container transition-all active:opacity-80">
                         Save as Draft
                     </button>
-                    <button class="px-8 py-3 bg-primary text-on-primary font-bold rounded-lg shadow-md hover:bg-zinc-800 transition-all active:opacity-80 flex items-center gap-2">
+                    <button id="postInvoiceBtn" class="px-8 py-3 bg-primary text-on-primary font-bold rounded-lg shadow-md hover:bg-zinc-800 transition-all active:opacity-80 flex items-center gap-2">
                         Generate & Post Customer Invoice
                         <span class="material-symbols-outlined text-[20px]">send</span>
                     </button>
@@ -323,15 +330,46 @@
                 </div>
             </div>
         </div>
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-headline-sm text-headline-sm text-primary">Open Receivables</h3>
+                <button id="refreshInvoicesBtn" class="px-4 py-2 border border-outline-variant rounded-lg font-semibold text-body-sm">Refresh</button>
+            </div>
+            <div id="invoiceList" class="divide-y divide-outline-variant text-body-sm"></div>
+        </section>
     </main>
 </div>
 
 <script>
+    let currentOrgId = null;
+    let revenueAccounts = [];
+    let customers = [];
+    let taxJurisdictions = [];
+
     function formatCurrency(value) {
         return new Intl.NumberFormat('en-NG', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }).format(value);
+    }
+
+    async function apiJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options
+        });
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || response.statusText);
+        }
+        if (response.status === 204) return null;
+        return response.json();
+    }
+
+    function setStatus(message, type = 'info') {
+        const el = document.getElementById('pageStatus');
+        el.textContent = message;
+        el.className = type === 'error' ? 'text-body-sm text-error' : 'text-body-sm text-secondary';
     }
 
     function updateTotals() {
@@ -346,11 +384,15 @@
             subtotal += net;
         });
 
-        const tax = subtotal * 0.075;
+        const selectedTax = taxJurisdictions.find(row => String(row.id) === document.getElementById('taxJurisdictionSelect').value);
+        const taxRate = selectedTax ? Number(selectedTax.taxRate || 0) : 0;
+        const tax = subtotal * (taxRate / 100);
         const grandTotal = subtotal + tax;
 
         document.getElementById('subtotal-display').textContent = formatCurrency(subtotal);
         document.getElementById('tax-display').textContent = formatCurrency(tax);
+        document.querySelector('#tax-display').closest('div').querySelector('span:first-child').textContent =
+            selectedTax ? `Tax Total (${taxRate}%)` : 'Tax Total';
         document.getElementById('grand-total-display').textContent = formatCurrency(grandTotal);
     }
 
@@ -370,9 +412,8 @@
                 <input type="text" placeholder="Enter service description..." class="w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
             </td>
             <td class="py-4 px-4">
-                <select class="w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
-                    <option>4001 - Sales Income</option>
-                    <option>4002 - Service Revenue</option>
+                <select class="line-account-select w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
+                    ${revenueAccounts.map(account => `<option value="${account.id}">${account.accountCode} - ${account.accountName}</option>`).join('')}
                 </select>
             </td>
             <td class="py-4 px-4 text-right">
@@ -395,8 +436,113 @@
         updateTotals();
     }
 
+    function populateLineAccountSelects() {
+        document.querySelectorAll('.line-account-select').forEach(select => {
+            const selected = select.value;
+            select.innerHTML = revenueAccounts.map(account => `<option value="${account.id}">${account.accountCode} - ${account.accountName}</option>`).join('');
+            if (selected) select.value = selected;
+        });
+    }
+
+    function populateTaxSelect() {
+        const select = document.getElementById('taxJurisdictionSelect');
+        const selected = select.value;
+        select.innerHTML = '<option value="">No tax</option>' + taxJurisdictions
+            .filter(tax => tax.calculationType === 'PERCENTAGE')
+            .map(tax => `<option value="${tax.id}">${tax.jurisdictionCode} - ${tax.jurisdictionName} (${tax.taxRate}%)</option>`)
+            .join('');
+        if (selected) select.value = selected;
+    }
+
+    async function loadContext() {
+        currentOrgId = document.getElementById('organizationSelect').value;
+        if (!currentOrgId) return;
+        const [accounts, customerRows, taxRows] = await Promise.all([
+            apiJson(`/api/accountant/chart-of-accounts/org/${currentOrgId}`),
+            apiJson(`/api/accountant/customers/org/${currentOrgId}`),
+            apiJson(`/api/accountant/tax-jurisdictions/org/${currentOrgId}`)
+        ]);
+        revenueAccounts = (accounts || []).filter(account => account.accountType === 'REVENUE');
+        customers = customerRows || [];
+        taxJurisdictions = taxRows || [];
+        const customerSelect = document.getElementById('customerSelect');
+        customerSelect.innerHTML = customers.map(customer => `<option value="${customer.id}">${customer.customerCode} - ${customer.legalName}</option>`).join('');
+        populateLineAccountSelects();
+        populateTaxSelect();
+        updateTotals();
+        await loadInvoices();
+    }
+
+    function collectPayload() {
+        const customer = customers.find(row => String(row.id) === document.getElementById('customerSelect').value);
+        const invoiceNumber = `AR-${Date.now()}`;
+        const lineItems = Array.from(document.querySelectorAll('#invoice-table tbody tr')).map(row => ({
+            chartAccountId: Number(row.querySelector('.line-account-select')?.value || 0) || null,
+            description: row.querySelector('input[type="text"]').value,
+            quantity: Number(row.querySelector('.qty-input').value || 0),
+            unitPrice: Number(row.querySelector('.rate-input').value || 0)
+        }));
+        const subtotal = lineItems.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
+        return {
+            customerId: customer ? customer.id : null,
+            customerName: customer ? customer.legalName : 'Walk-in Customer',
+            invoiceNumber,
+            invoiceDate: document.getElementById('invoiceDate').value,
+            dueDate: document.getElementById('invoiceDate').value,
+            taxJurisdictionId: Number(document.getElementById('taxJurisdictionSelect').value || 0) || null,
+            lineItems
+        };
+    }
+
+    async function saveDraft() {
+        try {
+            setStatus('Saving draft...');
+            const invoice = await apiJson(`/api/accountant/customer-invoices/org/${currentOrgId}`, {
+                method: 'POST',
+                body: JSON.stringify(collectPayload())
+            });
+            setStatus(`Draft ${invoice.invoiceNumber} saved.`);
+            await loadInvoices();
+            return invoice;
+        } catch (err) {
+            setStatus(`Save failed: ${err.message}`, 'error');
+            throw err;
+        }
+    }
+
+    async function postInvoice() {
+        try {
+            const draft = await saveDraft();
+            await apiJson(`/api/accountant/customer-invoices/${draft.id}/send`, { method: 'PATCH' });
+            await apiJson(`/api/accountant/customer-invoices/${draft.id}/post`, { method: 'PATCH' });
+            setStatus(`Invoice ${draft.invoiceNumber} posted.`);
+            await loadInvoices();
+        } catch (err) {
+            setStatus(`Posting failed: ${err.message}`, 'error');
+        }
+    }
+
+    async function loadInvoices() {
+        const rows = await apiJson(`/api/accountant/reports/aged-receivables/org/${currentOrgId}`) || [];
+        document.getElementById('invoiceList').innerHTML = rows.map(invoice => `
+            <div class="py-3 flex items-center justify-between gap-4">
+                <div>
+                    <div class="font-semibold text-primary">${invoice.invoiceNumber} · ${invoice.customerName}</div>
+                    <div class="text-secondary">${invoice.status} · Due ${invoice.dueDate}</div>
+                </div>
+                <div class="font-semibold">${formatCurrency((invoice.totalAmount || 0) - (invoice.amountPaid || 0))}</div>
+            </div>
+        `).join('') || '<div class="py-3 text-secondary">No open receivables.</div>';
+    }
+
     // Run Initial Calculations on load
     updateTotals();
+    document.getElementById('organizationSelect').addEventListener('change', loadContext);
+    document.getElementById('taxJurisdictionSelect').addEventListener('change', updateTotals);
+    document.getElementById('saveDraftBtn').addEventListener('click', () => saveDraft().catch(() => {}));
+    document.getElementById('postInvoiceBtn').addEventListener('click', postInvoice);
+    document.getElementById('refreshInvoicesBtn').addEventListener('click', loadInvoices);
+    loadContext().catch(err => setStatus(`Load failed: ${err.message}`, 'error'));
 </script>
 </body>
 </html>

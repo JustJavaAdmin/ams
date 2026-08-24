@@ -35,10 +35,22 @@ public class AccountantController {
         return "accountant/purchaseInvoice";
     }
 
+    @GetMapping("/payablesAutomation")
+    public String payablesAutomation(Model model) {
+        model.addAttribute("organizations", organizationRepository.findAll());
+        return "accountant/payablesAutomation";
+    }
+
     @GetMapping("/customerInvoicing")
     public String customerInvoicing(Model model) {
         model.addAttribute("organizations", organizationRepository.findAll());
         return "accountant/customerInvoicing";
+    }
+
+    @GetMapping("/receivablesCollections")
+    public String receivablesCollections(Model model) {
+        model.addAttribute("organizations", organizationRepository.findAll());
+        return "accountant/receivablesCollections";
     }
 
     @GetMapping("/cashAndBank")
@@ -51,5 +63,11 @@ public class AccountantController {
     public String fixedAssets(Model model) {
         model.addAttribute("organizations", organizationRepository.findAll());
         return "accountant/fixedAssets";
+    }
+
+    @GetMapping("/depreciationJournals")
+    public String depreciationJournals(Model model) {
+        model.addAttribute("organizations", organizationRepository.findAll());
+        return "accountant/depreciationJournals";
     }
 }

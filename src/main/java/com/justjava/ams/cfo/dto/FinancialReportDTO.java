@@ -22,6 +22,10 @@ public class FinancialReportDTO {
     private String generatedBy;
     private LocalDate approvedDate;
     private String approvedBy;
+    private Long approvalRequestId;
+    private Long approvalRuleId;
+    private String approvalRuleName;
+    private Integer requiredApprovals;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

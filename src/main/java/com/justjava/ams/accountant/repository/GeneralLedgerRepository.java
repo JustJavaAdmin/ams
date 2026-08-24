@@ -14,6 +14,7 @@ import java.util.List;
 public interface GeneralLedgerRepository extends JpaRepository<GeneralLedger, Long> {
     List<GeneralLedger> findByAccountIdOrderByTransactionDateDesc(Long accountId);
     List<GeneralLedger> findByJournalNumber(String journalNumber);
+    List<GeneralLedger> findBySourceTypeAndSourceId(GeneralLedger.SourceType sourceType, Long sourceId);
     List<GeneralLedger> findByJournalNumberAndStatus(String journalNumber, GeneralLedger.TransactionStatus status);
     List<GeneralLedger> findByTransactionDateBetween(LocalDate startDate, LocalDate endDate);
     boolean existsByAccountIdAndStatus(Long accountId, GeneralLedger.TransactionStatus status);
@@ -24,6 +25,17 @@ public interface GeneralLedgerRepository extends JpaRepository<GeneralLedger, Lo
 
     @Query("SELECT gl FROM GeneralLedger gl WHERE gl.account.id = :accountId AND gl.status = :status")
     List<GeneralLedger> findByAccountIdAndStatus(@Param("accountId") Long accountId, @Param("status") GeneralLedger.TransactionStatus status);
+
+    @Query("""
+            SELECT gl FROM GeneralLedger gl
+            WHERE gl.account.id = :accountId
+              AND gl.status = com.justjava.ams.accountant.entity.GeneralLedger.TransactionStatus.POSTED
+              AND gl.transactionDate = :transactionDate
+            ORDER BY gl.id ASC
+            """)
+    List<GeneralLedger> findPostedBankEntriesByAccountAndDate(
+            @Param("accountId") Long accountId,
+            @Param("transactionDate") LocalDate transactionDate);
 
     // Reporting queries - filter by the organization through the GL.account.organization.id path
     @Query("SELECT gl FROM GeneralLedger gl WHERE gl.status = com.justjava.ams.accountant.entity.GeneralLedger.TransactionStatus.POSTED AND gl.account.organization.id = :organizationId AND gl.transactionDate BETWEEN :fromDate AND :toDate ORDER BY gl.transactionDate ASC")

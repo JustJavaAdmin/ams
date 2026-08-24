@@ -10,7 +10,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tax_jurisdictions")
+@Table(name = "tax_jurisdictions", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"organization_id", "jurisdiction_code"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,7 +30,7 @@ public class TaxJurisdiction {
     @Column(nullable = false)
     private String jurisdictionName;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String jurisdictionCode;
 
     @Column

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.List;
 
 @Data
@@ -32,6 +33,7 @@ public class FinancialReportSummaryResponse {
     private BigDecimal totalLiabilities;
     private BigDecimal totalEquity;
     private BigDecimal balanceSheetVariance;
+    private Map<String, BigDecimal> summaryMetrics;
     private String reportContent;
     private LocalDateTime generatedAt;
 }

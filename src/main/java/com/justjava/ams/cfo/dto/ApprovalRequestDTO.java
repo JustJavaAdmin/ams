@@ -3,6 +3,7 @@ package com.justjava.ams.cfo.dto;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -14,6 +15,12 @@ public class ApprovalRequestDTO {
     private Long organizationId;
     private String entityType;
     private Long entityId;
+    private String moduleType;
+    private String transactionType;
+    private Long approvalRuleId;
+    private String approvalRuleName;
+    private String approverRole;
+    private BigDecimal evaluatedAmount;
     private String status;
     private Long submittedByUserId;
     private LocalDate submittedDate;

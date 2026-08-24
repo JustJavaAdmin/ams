@@ -3,6 +3,7 @@ package com.justjava.ams.cfo;
 import com.justjava.ams.accountant.dto.ManualJournalDTO;
 import com.justjava.ams.accountant.service.ManualJournalService;
 import com.justjava.ams.cfo.dto.*;
+import com.justjava.ams.cfo.service.BudgetService;
 import com.justjava.ams.cfo.service.FinancialReportService;
 import com.justjava.ams.cfo.service.TrialBalanceService;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CfoApiController {
     private final ManualJournalService manualJournalService;
+    private final BudgetService budgetService;
     private final FinancialReportService financialReportService;
     private final TrialBalanceService trialBalanceService;
 
@@ -34,6 +36,78 @@ public class CfoApiController {
     @GetMapping("/manual-journals/{journalId}")
     public ManualJournalDTO getManualJournalForReview(@PathVariable Long journalId) {
         return manualJournalService.getJournal(journalId);
+    }
+
+    @GetMapping("/budgets/org/{organizationId}")
+    public List<BudgetDTO> getBudgets(
+            @PathVariable Long organizationId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) String status) {
+        if (year != null) {
+            return budgetService.getBudgetsByYear(organizationId, year);
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            return budgetService.getBudgetsByStatus(organizationId, status);
+        }
+        return budgetService.getBudgetsByOrganization(organizationId);
+    }
+
+    @PostMapping("/budgets/org/{organizationId}")
+    public BudgetDTO createBudget(
+            @PathVariable Long organizationId,
+            @Valid @RequestBody BudgetDTO request) {
+        return budgetService.createBudget(organizationId, request);
+    }
+
+    @GetMapping("/budgets/{budgetId}")
+    public BudgetDTO getBudget(@PathVariable Long budgetId) {
+        return budgetService.getBudget(budgetId);
+    }
+
+    @PostMapping("/budgets/{budgetId}/lines")
+    public BudgetLineDTO createBudgetLine(
+            @PathVariable Long budgetId,
+            @Valid @RequestBody BudgetLineDTO request) {
+        return budgetService.createBudgetLine(budgetId, request);
+    }
+
+    @GetMapping("/budgets/{budgetId}/lines")
+    public List<BudgetLineDTO> getBudgetLines(@PathVariable Long budgetId) {
+        return budgetService.getBudgetLines(budgetId);
+    }
+
+    @PatchMapping("/budgets/{budgetId}/approve")
+    public BudgetDTO approveBudget(@PathVariable Long budgetId) {
+        return budgetService.approveBudget(budgetId);
+    }
+
+    @PatchMapping("/budgets/{budgetId}/submit")
+    public BudgetDTO submitBudget(@PathVariable Long budgetId) {
+        return budgetService.updateBudgetStatus(budgetId, "SUBMITTED");
+    }
+
+    @PatchMapping("/budgets/{budgetId}/reject")
+    public BudgetDTO rejectBudget(
+            @PathVariable Long budgetId,
+            @Valid @RequestBody JournalRejectionRequest request) {
+        return budgetService.rejectBudget(budgetId, request != null ? request.getRejectionReason() : null);
+    }
+
+    @PatchMapping("/budgets/{budgetId}/activate")
+    public BudgetDTO activateBudget(@PathVariable Long budgetId) {
+        return budgetService.activateBudget(budgetId);
+    }
+
+    @PatchMapping("/budgets/{budgetId}/status/{status}")
+    public BudgetDTO updateBudgetStatus(@PathVariable Long budgetId, @PathVariable String status) {
+        return budgetService.updateBudgetStatus(budgetId, status);
+    }
+
+    @GetMapping("/budgets/org/{organizationId}/dashboard")
+    public BudgetDashboardResponse getBudgetDashboard(
+            @PathVariable Long organizationId,
+            @RequestParam(required = false) Integer year) {
+        return budgetService.getDashboard(organizationId, year);
     }
 
     @PatchMapping("/manual-journals/{journalId}/approve")
@@ -147,6 +221,22 @@ public class CfoApiController {
         return financialReportService.approveReport(reportId, approverName);
     }
 
+    @PatchMapping("/financial-reports/{reportId}/submit")
+    public FinancialReportDTO submitFinancialReport(@PathVariable Long reportId, Principal principal) {
+        String submittedBy = getUserName(principal);
+        if (submittedBy == null || submittedBy.trim().isEmpty()) {
+            submittedBy = "system";
+        }
+        return financialReportService.submitReportForApproval(reportId, submittedBy);
+    }
+
+    @PatchMapping("/financial-reports/{reportId}/reject")
+    public FinancialReportDTO rejectFinancialReport(
+            @PathVariable Long reportId,
+            @Valid @RequestBody(required = false) JournalRejectionRequest request) {
+        return financialReportService.rejectReport(reportId, request != null ? request.getRejectionReason() : null);
+    }
+
     @PatchMapping("/manual-journals/{journalId}/reject")
     public ManualJournalDTO rejectManualJournal(
             @PathVariable Long journalId,
@@ -172,6 +262,9 @@ public class CfoApiController {
                 .branchId(journal.getBranchId())
                 .totalDebits(journal.getTotalDebits())
                 .totalCredits(journal.getTotalCredits())
+                .approvalRuleId(journal.getApprovalRuleId())
+                .approvalRuleName(journal.getApprovalRuleName())
+                .requiredApprovals(journal.getRequiredApprovals())
                 .status(journal.getStatus())
                 .build();
     }

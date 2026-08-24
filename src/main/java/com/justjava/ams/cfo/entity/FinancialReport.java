@@ -59,6 +59,18 @@ public class FinancialReport {
     private String approvedBy;
 
     @Column
+    private Long approvalRequestId;
+
+    @Column
+    private Long approvalRuleId;
+
+    @Column
+    private String approvalRuleName;
+
+    @Column
+    private Integer requiredApprovals = 1;
+
+    @Column
     private String notes;
 
     @CreationTimestamp
@@ -68,6 +80,9 @@ public class FinancialReport {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Version
+    private Long version;
 
     public enum ReportType {
         INCOME_STATEMENT,
@@ -82,6 +97,7 @@ public class FinancialReport {
         DRAFT,
         PENDING_REVIEW,
         APPROVED,
+        REJECTED,
         PUBLISHED,
         ARCHIVED
     }

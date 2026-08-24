@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import com.justjava.ams.common.entity.User;
+import com.justjava.ams.common.entity.Branch;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,6 +29,10 @@ public class GeneralLedger {
 
     @Column(nullable = false)
     private String journalNumber;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private Branch branch;
 
     @Column(nullable = false)
     private LocalDate transactionDate;
@@ -56,6 +61,35 @@ public class GeneralLedger {
     @Enumerated(EnumType.STRING)
     private TransactionStatus status = TransactionStatus.PENDING;
 
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private SourceType sourceType = SourceType.MANUAL_JOURNAL;
+
+    @Column(nullable = false)
+    private Long sourceId;
+
+    @Column(nullable = false)
+    private String postingBatchId;
+
+    @Column
+    private String postedBy;
+
+    @Column
+    private LocalDateTime postedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reversed_entry_id")
+    private GeneralLedger reversedEntry;
+
+    @Column(columnDefinition = "TEXT")
+    private String reversalReason;
+
+    @Column
+    private String reversedBy;
+
+    @Column
+    private LocalDateTime reversedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fiscal_period_id")
     private FiscalPeriod fiscalPeriod;
@@ -68,6 +102,9 @@ public class GeneralLedger {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Version
+    private Long version;
+
     public enum DebitCredit {
         DEBIT,
         CREDIT
@@ -78,6 +115,20 @@ public class GeneralLedger {
         APPROVED,
         POSTED,
         REVERSED
+    }
+
+    public enum SourceType {
+        MANUAL_JOURNAL,
+        CUSTOMER_INVOICE,
+        PURCHASE_INVOICE,
+        EXPENSE,
+        CUSTOMER_PAYMENT,
+        SUPPLIER_PAYMENT,
+        EXPENSE_PAYMENT,
+        BANK_TRANSACTION,
+        FIXED_ASSET,
+        FIXED_ASSET_DEPRECIATION,
+        YEAR_END_CLOSE
     }
 }
 

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -18,4 +19,5 @@ public class FinancialReportGenerateRequest {
     private LocalDate toDate;
     private String generatedBy;
     private Boolean persist;
+    private List<String> accountTypes;
 }

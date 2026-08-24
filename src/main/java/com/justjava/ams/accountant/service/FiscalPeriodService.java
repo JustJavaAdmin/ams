@@ -2,9 +2,15 @@ package com.justjava.ams.accountant.service;
 
 import com.justjava.ams.auditor.dto.AuditLogDTO;
 import com.justjava.ams.auditor.service.AuditLogService;
+import com.justjava.ams.accountant.entity.CustomerInvoice;
 import com.justjava.ams.accountant.dto.FiscalPeriodDTO;
 import com.justjava.ams.accountant.entity.FiscalPeriod;
+import com.justjava.ams.accountant.entity.ManualJournal;
+import com.justjava.ams.accountant.entity.PurchaseInvoice;
+import com.justjava.ams.accountant.repository.CustomerInvoiceRepository;
 import com.justjava.ams.accountant.repository.FiscalPeriodRepository;
+import com.justjava.ams.accountant.repository.ManualJournalRepository;
+import com.justjava.ams.accountant.repository.PurchaseInvoiceRepository;
 import com.justjava.ams.common.entity.Organization;
 import com.justjava.ams.common.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +34,9 @@ public class FiscalPeriodService {
     private final FiscalPeriodRepository fiscalPeriodRepository;
     private final OrganizationRepository organizationRepository;
     private final AuditLogService auditLogService;
+    private final ManualJournalRepository manualJournalRepository;
+    private final CustomerInvoiceRepository customerInvoiceRepository;
+    private final PurchaseInvoiceRepository purchaseInvoiceRepository;
 
     public FiscalPeriodDTO createFiscalPeriod(Long organizationId, FiscalPeriodDTO dto) {
         Organization organization = findOrganization(organizationId);
@@ -100,6 +109,7 @@ public class FiscalPeriodService {
     public FiscalPeriodDTO lockFiscalPeriod(Long periodId) {
         FiscalPeriod period = findFiscalPeriod(periodId);
         FiscalPeriodDTO oldValue = mapToDTO(period);
+        requireNoOpenAccountingWork(period);
 
         period.setStatus(FiscalPeriod.PeriodStatus.LOCKED);
         period.setClosed(true);
@@ -124,6 +134,7 @@ public class FiscalPeriodService {
     public FiscalPeriodDTO closeFiscalPeriod(Long periodId) {
         FiscalPeriod period = findFiscalPeriod(periodId);
         FiscalPeriodDTO oldValue = mapToDTO(period);
+        requireNoOpenAccountingWork(period);
 
         period.setStatus(FiscalPeriod.PeriodStatus.CLOSED);
         period.setClosed(true);
@@ -211,6 +222,33 @@ public class FiscalPeriodService {
                 .build();
 
         auditLogService.createAuditLog(organizationId, auditLog);
+    }
+
+    private void requireNoOpenAccountingWork(FiscalPeriod period) {
+        Long organizationId = period.getOrganization().getId();
+        LocalDate startDate = period.getStartDate().toLocalDate();
+        LocalDate endDate = period.getEndDate().toLocalDate();
+        if (manualJournalRepository.existsOpenWorkInPeriod(
+                organizationId,
+                List.of(ManualJournal.JournalStatus.DRAFT, ManualJournal.JournalStatus.SUBMITTED, ManualJournal.JournalStatus.APPROVED),
+                startDate,
+                endDate)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot close fiscal period while manual journals are unposted");
+        }
+        if (customerInvoiceRepository.existsOpenWorkInPeriod(
+                organizationId,
+                List.of(CustomerInvoice.InvoiceStatus.DRAFT, CustomerInvoice.InvoiceStatus.APPROVED, CustomerInvoice.InvoiceStatus.SENT),
+                startDate,
+                endDate)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot close fiscal period while customer invoices are unposted");
+        }
+        if (purchaseInvoiceRepository.existsOpenWorkInPeriod(
+                organizationId,
+                List.of(PurchaseInvoice.PurchaseStatus.DRAFT, PurchaseInvoice.PurchaseStatus.SUBMITTED, PurchaseInvoice.PurchaseStatus.APPROVED),
+                startDate,
+                endDate)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot close fiscal period while purchase invoices are unposted");
+        }
     }
 }
 

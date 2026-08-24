@@ -6,9 +6,12 @@ import com.justjava.ams.financeAdmin.repository.TaxJurisdictionRepository;
 import com.justjava.ams.common.entity.Organization;
 import com.justjava.ams.common.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,18 +25,23 @@ public class TaxJurisdictionService {
 
     public TaxJurisdictionDTO createTaxJurisdiction(Long organizationId, TaxJurisdictionDTO dto) {
         Organization organization = organizationRepository.findById(organizationId)
-                .orElseThrow(() -> new RuntimeException("Organization not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+        validate(dto);
+        taxJurisdictionRepository.findByOrganizationIdAndJurisdictionCode(organizationId, required(dto.getJurisdictionCode(), "Jurisdiction code is required"))
+                .ifPresent(existing -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Tax jurisdiction code already exists for organization");
+                });
 
         TaxJurisdiction jurisdiction = TaxJurisdiction.builder()
                 .organization(organization)
-                .jurisdictionName(dto.getJurisdictionName())
-                .jurisdictionCode(dto.getJurisdictionCode())
+                .jurisdictionName(required(dto.getJurisdictionName(), "Jurisdiction name is required"))
+                .jurisdictionCode(required(dto.getJurisdictionCode(), "Jurisdiction code is required"))
                 .country(dto.getCountry())
                 .state(dto.getState())
                 .municipality(dto.getMunicipality())
                 .taxRate(dto.getTaxRate())
-                .taxType(TaxJurisdiction.TaxType.valueOf(dto.getTaxType()))
-                .calculationType(TaxJurisdiction.TaxCalculationType.valueOf(dto.getCalculationType()))
+                .taxType(parseTaxType(dto.getTaxType()))
+                .calculationType(parseCalculationType(dto.getCalculationType()))
                 .description(dto.getDescription())
                 .active(true)
                 .build();
@@ -43,7 +51,7 @@ public class TaxJurisdictionService {
 
     public TaxJurisdictionDTO getTaxJurisdiction(Long jurisdictionId) {
         TaxJurisdiction jurisdiction = taxJurisdictionRepository.findById(jurisdictionId)
-                .orElseThrow(() -> new RuntimeException("Tax jurisdiction not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tax jurisdiction not found"));
         return mapToDTO(jurisdiction);
     }
 
@@ -55,7 +63,7 @@ public class TaxJurisdictionService {
     }
 
     public List<TaxJurisdictionDTO> getJurisdictionsByType(Long organizationId, String taxType) {
-        return taxJurisdictionRepository.findByOrganizationIdAndTaxType(organizationId, TaxJurisdiction.TaxType.valueOf(taxType))
+        return taxJurisdictionRepository.findByOrganizationIdAndTaxType(organizationId, parseTaxType(taxType))
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
@@ -63,21 +71,61 @@ public class TaxJurisdictionService {
 
     public TaxJurisdictionDTO updateTaxJurisdiction(Long jurisdictionId, TaxJurisdictionDTO dto) {
         TaxJurisdiction jurisdiction = taxJurisdictionRepository.findById(jurisdictionId)
-                .orElseThrow(() -> new RuntimeException("Tax jurisdiction not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tax jurisdiction not found"));
 
-        if (dto.getJurisdictionName() != null) jurisdiction.setJurisdictionName(dto.getJurisdictionName());
-        if (dto.getTaxRate() != null) jurisdiction.setTaxRate(dto.getTaxRate());
+        if (dto.getJurisdictionName() != null) jurisdiction.setJurisdictionName(required(dto.getJurisdictionName(), "Jurisdiction name is required"));
+        if (dto.getTaxRate() != null) {
+            if (dto.getTaxRate().compareTo(BigDecimal.ZERO) < 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tax rate cannot be negative");
+            }
+            jurisdiction.setTaxRate(dto.getTaxRate());
+        }
         if (dto.getActive() != null) jurisdiction.setActive(dto.getActive());
         if (dto.getDescription() != null) jurisdiction.setDescription(dto.getDescription());
+        if (dto.getCalculationType() != null) jurisdiction.setCalculationType(parseCalculationType(dto.getCalculationType()));
+        if (dto.getTaxType() != null) jurisdiction.setTaxType(parseTaxType(dto.getTaxType()));
 
         return mapToDTO(taxJurisdictionRepository.save(jurisdiction));
     }
 
     public void deleteTaxJurisdiction(Long jurisdictionId) {
         TaxJurisdiction jurisdiction = taxJurisdictionRepository.findById(jurisdictionId)
-                .orElseThrow(() -> new RuntimeException("Tax jurisdiction not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tax jurisdiction not found"));
         jurisdiction.setActive(false);
         taxJurisdictionRepository.save(jurisdiction);
+    }
+
+    private void validate(TaxJurisdictionDTO dto) {
+        required(dto.getJurisdictionName(), "Jurisdiction name is required");
+        required(dto.getJurisdictionCode(), "Jurisdiction code is required");
+        if (dto.getTaxRate() == null || dto.getTaxRate().compareTo(BigDecimal.ZERO) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tax rate cannot be negative");
+        }
+        parseTaxType(dto.getTaxType());
+        parseCalculationType(dto.getCalculationType());
+    }
+
+    private TaxJurisdiction.TaxType parseTaxType(String value) {
+        try {
+            return TaxJurisdiction.TaxType.valueOf(required(value, "Tax type is required").toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported tax type");
+        }
+    }
+
+    private TaxJurisdiction.TaxCalculationType parseCalculationType(String value) {
+        try {
+            return TaxJurisdiction.TaxCalculationType.valueOf(required(value, "Calculation type is required").toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported tax calculation type");
+        }
+    }
+
+    private String required(String value, String message) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+        }
+        return value.trim();
     }
 
     private TaxJurisdictionDTO mapToDTO(TaxJurisdiction jurisdiction) {

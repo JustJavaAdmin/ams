@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Depreciation Journal Imports | AMS Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#000000",
+                        surface: "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "surface-container-lowest": "#ffffff",
+                        secondary: "#505f76",
+                        "outline-variant": "#cfc4c5",
+                        "on-primary": "#ffffff",
+                        error: "#ba1a1a"
+                    },
+                    borderRadius: { lg: "0.5rem", xl: "0.75rem" },
+                    spacing: { "card-padding": "24px", "outer-padding": "32px", gutter: "24px" },
+                    fontFamily: {
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "label-md": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "body-md": ["14px", {"lineHeight": "20px"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f2f4f6; font-family: 'Hanken Grotesk', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; vertical-align: middle; }
+    </style>
+</head>
+<body class="min-h-screen flex text-primary">
+<aside th:replace="~{layouts/accountantLayout :: sidebar('fixedAssets')}"></aside>
+
+<div class="flex-grow flex flex-col min-w-0">
+    <header class="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-40">
+        <div class="flex items-center justify-between w-full px-outer-padding h-16">
+            <span class="font-headline-sm text-headline-sm text-primary">Depreciation Journal Imports</span>
+        </div>
+    </header>
+
+    <main class="px-outer-padding py-gutter max-w-7xl mx-auto w-full space-y-gutter">
+        <div id="pageAlert" class="hidden">
+            <div id="pageAlertInner" class="flex items-start gap-3 px-4 py-3 rounded-lg border text-body-md font-semibold">
+                <span id="pageAlertIcon" class="material-symbols-outlined text-[18px] mt-0.5"></span>
+                <span id="pageAlertMsg"></span>
+            </div>
+        </div>
+
+        <section class="bg-white border border-outline-variant rounded-lg p-card-padding">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                <div class="space-y-2">
+                    <label for="orgSelector" class="font-label-md text-secondary uppercase">Organization</label>
+                    <select id="orgSelector" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
+                        <option value="">Select organization...</option>
+                        <option th:each="org : ${organizations}" th:value="${org.id}" th:text="${org.name}"></option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label for="externalSystem" class="font-label-md text-secondary uppercase">External System</label>
+                    <input id="externalSystem" type="text" value="FixedAssetApp" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
+                </div>
+                <div class="space-y-2">
+                    <label for="externalBatchId" class="font-label-md text-secondary uppercase">External Batch ID</label>
+                    <input id="externalBatchId" type="text" placeholder="DEP-2026-08" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter items-start">
+            <section class="bg-white border border-outline-variant rounded-lg p-card-padding lg:col-span-1">
+                <h2 class="font-headline-sm text-headline-sm mb-5">Upload Journal</h2>
+                <form id="importForm" class="space-y-5">
+                    <div class="space-y-2">
+                        <label for="journalDate" class="font-label-md text-secondary uppercase">Journal Date</label>
+                        <input id="journalDate" type="date" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="description" class="font-label-md text-secondary uppercase">Description</label>
+                        <input id="description" type="text" placeholder="Monthly depreciation journal" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="branchCode" class="font-label-md text-secondary uppercase">Branch Code</label>
+                        <input id="branchCode" type="text" placeholder="Optional" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="journalFile" class="font-label-md text-secondary uppercase">CSV or XLSX File</label>
+                        <input id="journalFile" type="file" accept=".csv,.txt,.xlsx" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
+                    </div>
+                    <label class="flex items-center gap-3 text-body-md font-semibold">
+                        <input id="autoSubmit" type="checkbox" class="rounded border-outline-variant">
+                        Submit for approval after import
+                    </label>
+                    <button type="submit" class="w-full bg-primary text-on-primary rounded-lg px-4 py-3 font-bold">
+                        <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                        Import Depreciation Journal
+                    </button>
+                </form>
+            </section>
+
+            <section class="bg-white border border-outline-variant rounded-lg overflow-hidden lg:col-span-2">
+                <div class="p-card-padding border-b border-outline-variant flex items-center justify-between">
+                    <div>
+                        <h2 class="font-headline-sm text-headline-sm">Import History</h2>
+                        <p id="historySubtitle" class="text-secondary text-body-md">Select an organization to load imported depreciation batches.</p>
+                    </div>
+                    <button id="refreshBtn" class="bg-white border border-outline-variant rounded-lg px-3 py-2 font-semibold text-body-md">
+                        <span class="material-symbols-outlined text-[18px]">refresh</span>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                        <tr class="bg-surface-container">
+                            <th class="px-5 py-3 font-label-md text-secondary uppercase">Batch</th>
+                            <th class="px-5 py-3 font-label-md text-secondary uppercase">System</th>
+                            <th class="px-5 py-3 font-label-md text-secondary uppercase">Date</th>
+                            <th class="px-5 py-3 font-label-md text-secondary uppercase text-right">Total</th>
+                            <th class="px-5 py-3 font-label-md text-secondary uppercase">Status</th>
+                            <th class="px-5 py-3"></th>
+                        </tr>
+                        </thead>
+                        <tbody id="importsBody" class="divide-y divide-outline-variant">
+                        <tr><td colspan="6" class="px-5 py-8 text-center text-secondary">No imports loaded.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script>
+    const els = {
+        alert: document.getElementById('pageAlert'),
+        alertInner: document.getElementById('pageAlertInner'),
+        alertIcon: document.getElementById('pageAlertIcon'),
+        alertMsg: document.getElementById('pageAlertMsg'),
+        org: document.getElementById('orgSelector'),
+        externalSystem: document.getElementById('externalSystem'),
+        externalBatchId: document.getElementById('externalBatchId'),
+        journalDate: document.getElementById('journalDate'),
+        description: document.getElementById('description'),
+        branchCode: document.getElementById('branchCode'),
+        autoSubmit: document.getElementById('autoSubmit'),
+        file: document.getElementById('journalFile'),
+        form: document.getElementById('importForm'),
+        body: document.getElementById('importsBody'),
+        subtitle: document.getElementById('historySubtitle'),
+        refresh: document.getElementById('refreshBtn')
+    };
+
+    async function apiJson(url, options = {}) {
+        const headers = options.body instanceof FormData ? (options.headers || {}) : { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        const response = await fetch(url, { ...options, headers });
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!response.ok) throw new Error(data?.message || data?.error || text || `Request failed with ${response.status}`);
+        return data;
+    }
+
+    function showAlert(message, type = 'success') {
+        const success = type === 'success';
+        els.alert.classList.remove('hidden');
+        els.alertInner.className = `flex items-start gap-3 px-4 py-3 rounded-lg border text-body-md font-semibold ${success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`;
+        els.alertIcon.textContent = success ? 'check_circle' : 'error';
+        els.alertMsg.textContent = message;
+    }
+
+    function money(value) {
+        return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    async function loadImports() {
+        const orgId = els.org.value;
+        if (!orgId) {
+            els.body.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-secondary">Select an organization.</td></tr>';
+            els.subtitle.textContent = 'Select an organization to load imported depreciation batches.';
+            return;
+        }
+        const imports = await apiJson(`/api/accountant/depreciation-journals/org/${orgId}/imports`);
+        els.subtitle.textContent = `${imports.length} depreciation import${imports.length === 1 ? '' : 's'} found.`;
+        if (!imports.length) {
+            els.body.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-secondary">No depreciation journals imported yet.</td></tr>';
+            return;
+        }
+        els.body.innerHTML = imports.map(row => `
+            <tr>
+                <td class="px-5 py-4 font-semibold">${escapeHtml(row.externalBatchId)}</td>
+                <td class="px-5 py-4 text-secondary">${escapeHtml(row.externalSystem)}</td>
+                <td class="px-5 py-4">${row.journalDate}</td>
+                <td class="px-5 py-4 text-right font-semibold">${money(row.totalDebit)}</td>
+                <td class="px-5 py-4"><span class="px-2 py-1 rounded-full bg-surface-container text-secondary text-xs font-bold">${row.status}</span></td>
+                <td class="px-5 py-4 text-right"><a class="font-semibold underline" href="/accountant/manualJournal">Journal #${row.manualJournalId}</a></td>
+            </tr>
+        `).join('');
+    }
+
+    async function importFile(event) {
+        event.preventDefault();
+        if (!els.org.value) throw new Error('Select an organization first.');
+        if (!els.file.files[0]) throw new Error('Select a CSV or XLSX file.');
+        const formData = new FormData();
+        formData.append('externalSystem', els.externalSystem.value);
+        formData.append('externalBatchId', els.externalBatchId.value);
+        formData.append('journalDate', els.journalDate.value);
+        formData.append('description', els.description.value);
+        formData.append('branchCode', els.branchCode.value);
+        formData.append('autoSubmit', els.autoSubmit.checked);
+        formData.append('file', els.file.files[0]);
+        const result = await apiJson(`/api/accountant/depreciation-journals/org/${els.org.value}/import-file`, { method: 'POST', body: formData });
+        showAlert(`Imported batch ${result.externalBatchId} into journal #${result.manualJournalId}.`);
+        els.form.reset();
+        els.externalSystem.value = 'FixedAssetApp';
+        await loadImports();
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    els.org.addEventListener('change', () => loadImports().catch(err => showAlert(err.message, 'error')));
+    els.refresh.addEventListener('click', () => loadImports().catch(err => showAlert(err.message, 'error')));
+    els.form.addEventListener('submit', event => importFile(event).catch(err => showAlert(err.message, 'error')));
+</script>
+</body>
+</html>

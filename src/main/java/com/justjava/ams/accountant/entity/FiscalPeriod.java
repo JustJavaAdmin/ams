@@ -58,8 +58,12 @@ public class FiscalPeriod {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Version
+    private Long version;
+
     public enum PeriodStatus {
         OPEN,
+        CLOSING,
         LOCKED,
         CLOSED
     }

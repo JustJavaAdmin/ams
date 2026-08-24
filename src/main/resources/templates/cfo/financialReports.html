@@ -198,7 +198,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
 
                     <!-- Card 1: Income Statement -->
                     <div class="bg-surface border border-outline-variant/60 rounded-xl p-card-padding flex flex-col justify-between">
@@ -236,37 +236,75 @@
                         </button>
                     </div>
 
-                    <!-- Card 3: Cash Flow Statement (out of Stage 2 scope) -->
-                    <div class="bg-surface border border-outline-variant/60 rounded-xl p-card-padding flex flex-col justify-between report-card-disabled opacity-60">
+                    <!-- Card 3: Cash Flow Statement -->
+                    <div class="bg-surface border border-outline-variant/60 rounded-xl p-card-padding flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between mb-stack-md">
                                 <div class="p-2 bg-surface-container rounded-lg">
-                                    <span class="material-symbols-outlined text-secondary">show_chart</span>
+                                    <span class="material-symbols-outlined text-primary">show_chart</span>
                                 </div>
-                                <span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Later</span>
+                                <span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Cash Movement</span>
                             </div>
-                            <h3 class="font-headline-sm text-headline-sm mb-2 text-secondary">Cash Flow Statement</h3>
-                            <p class="font-body-md text-body-md text-secondary leading-relaxed">Not part of the 12-15 hour Stage 2 MVP.</p>
+                            <h3 class="font-headline-sm text-headline-sm mb-2">Cash Flow Statement</h3>
+                            <p class="font-body-md text-body-md text-secondary leading-relaxed">Operating, investing, and financing cash movements from posted cash and bank GL entries.</p>
                         </div>
-                        <button type="button" disabled class="mt-6 w-full bg-surface-container text-secondary font-bold py-3 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
-                            Not Available Yet
+                        <button id="generateCashFlowBtn" type="button" class="mt-6 w-full bg-primary text-on-primary font-bold py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            Generate Cash Flow
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
                         </button>
                     </div>
 
-                    <!-- Card 4: Multi-Dimensional Report (out of Stage 2 scope) -->
-                    <div class="bg-surface border border-outline-variant/60 rounded-xl p-card-padding flex flex-col justify-between report-card-disabled opacity-60">
+                    <!-- Card 4: Equity Statement -->
+                    <div class="bg-surface border border-outline-variant/60 rounded-xl p-card-padding flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between mb-stack-md">
                                 <div class="p-2 bg-surface-container rounded-lg">
-                                    <span class="material-symbols-outlined text-secondary">analytics</span>
+                                    <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
                                 </div>
-                                <span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Later</span>
+                                <span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Equity Movement</span>
                             </div>
-                            <h3 class="font-headline-sm text-headline-sm mb-2 text-secondary">Multi-Dimensional Report</h3>
-                            <p class="font-body-md text-body-md text-secondary leading-relaxed">Not part of the 12-15 hour Stage 2 MVP.</p>
+                            <h3 class="font-headline-sm text-headline-sm mb-2">Equity Statement</h3>
+                            <p class="font-body-md text-body-md text-secondary leading-relaxed">Opening equity, period equity movements, net income, and closing equity.</p>
                         </div>
-                        <button type="button" disabled class="mt-6 w-full bg-surface-container text-secondary font-bold py-3 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
-                            Not Available Yet
+                        <button id="generateEquityBtn" type="button" class="mt-6 w-full bg-primary text-on-primary font-bold py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            Generate Equity Statement
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+
+                    <!-- Card 5: Budget Variance -->
+                    <div class="bg-surface border border-outline-variant/60 rounded-xl p-card-padding flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-stack-md">
+                                <div class="p-2 bg-surface-container rounded-lg">
+                                    <span class="material-symbols-outlined text-primary">monitoring</span>
+                                </div>
+                                <span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Budget vs Actual</span>
+                            </div>
+                            <h3 class="font-headline-sm text-headline-sm mb-2">Budget Variance</h3>
+                            <p class="font-body-md text-body-md text-secondary leading-relaxed">Budgeted, actual consumed, and variance amounts for active budget lines.</p>
+                        </div>
+                        <button id="generateBudgetVarianceBtn" type="button" class="mt-6 w-full bg-primary text-on-primary font-bold py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            Generate Budget Variance
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+
+                    <!-- Card 6: Custom Report -->
+                    <div class="bg-surface border border-outline-variant/60 rounded-xl p-card-padding flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-stack-md">
+                                <div class="p-2 bg-surface-container rounded-lg">
+                                    <span class="material-symbols-outlined text-primary">analytics</span>
+                                </div>
+                                <span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Account Summary</span>
+                            </div>
+                            <h3 class="font-headline-sm text-headline-sm mb-2">Custom Report</h3>
+                            <p class="font-body-md text-body-md text-secondary leading-relaxed">A generated account summary across posted GL entries for the selected period.</p>
+                        </div>
+                        <button id="generateCustomBtn" type="button" class="mt-6 w-full bg-primary text-on-primary font-bold py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            Generate Custom Report
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
                         </button>
                     </div>
                 </div>
@@ -403,6 +441,10 @@
     function reportLabel(type) {
         if (type === 'INCOME_STATEMENT') return 'Income Statement';
         if (type === 'BALANCE_SHEET') return 'Balance Sheet';
+        if (type === 'CASH_FLOW') return 'Cash Flow Statement';
+        if (type === 'EQUITY') return 'Equity Statement';
+        if (type === 'BUDGET_VARIANCE') return 'Budget Variance';
+        if (type === 'CUSTOM') return 'Custom Report';
         return type || 'Report';
     }
 
@@ -595,6 +637,12 @@
                 { label: 'Net Income', value: report.netIncome },
                 { label: 'Variance', value: report.balanceSheetVariance, warn: variance !== 0 }
             ]);
+        } else if (report.summaryMetrics && Object.keys(report.summaryMetrics).length) {
+            totalsStrip.innerHTML = totalsBlockHtml(Object.entries(report.summaryMetrics).map(([key, value]) => ({
+                label: metricLabel(key),
+                value,
+                warn: key.toLowerCase().includes('variance') && Number(value || 0) < 0
+            })));
         } else {
             totalsStrip.innerHTML = '';
         }
@@ -623,8 +671,22 @@
         `).join('');
     }
 
+    function metricLabel(key) {
+        return String(key || '')
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, char => char.toUpperCase());
+    }
+
     function groupBySection(lines, reportType) {
-        const order = reportType === 'INCOME_STATEMENT' ? ['REVENUE', 'EXPENSE'] : ['ASSET', 'LIABILITY', 'EQUITY'];
+        const orders = {
+            INCOME_STATEMENT: ['REVENUE', 'EXPENSE'],
+            BALANCE_SHEET: ['ASSET', 'LIABILITY', 'EQUITY'],
+            CASH_FLOW: ['OPERATING', 'INVESTING', 'FINANCING'],
+            EQUITY: ['OPENING_EQUITY', 'PERIOD_MOVEMENTS', 'CLOSING_EQUITY'],
+            BUDGET_VARIANCE: ['FAVORABLE_VARIANCE', 'UNFAVORABLE_VARIANCE'],
+            CUSTOM: ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE']
+        };
+        const order = orders[reportType] || [];
         const groups = order
             .map(section => ({ section, lines: lines.filter(line => line.section === section) }))
             .filter(group => group.lines.length > 0);
@@ -635,7 +697,22 @@
     }
 
     function sectionLabel(section) {
-        const map = { REVENUE: 'Revenue', EXPENSE: 'Expenses', ASSET: 'Assets', LIABILITY: 'Liabilities', EQUITY: 'Equity', OTHER: 'Other' };
+        const map = {
+            REVENUE: 'Revenue',
+            EXPENSE: 'Expenses',
+            ASSET: 'Assets',
+            LIABILITY: 'Liabilities',
+            EQUITY: 'Equity',
+            OPERATING: 'Operating Activities',
+            INVESTING: 'Investing Activities',
+            FINANCING: 'Financing Activities',
+            OPENING_EQUITY: 'Opening Equity',
+            PERIOD_MOVEMENTS: 'Period Movements',
+            CLOSING_EQUITY: 'Closing Equity',
+            FAVORABLE_VARIANCE: 'Favorable Variance',
+            UNFAVORABLE_VARIANCE: 'Unfavorable Variance',
+            OTHER: 'Other'
+        };
         return map[section] || section;
     }
 
@@ -737,6 +814,10 @@
             rows.push(['', '', '', '', '', 'Total Equity', '', '', report.totalEquity].map(csvCell).join(','));
             rows.push(['', '', '', '', '', 'Net Income', '', '', report.netIncome].map(csvCell).join(','));
             rows.push(['', '', '', '', '', 'Balance Sheet Variance', '', '', report.balanceSheetVariance].map(csvCell).join(','));
+        } else if (report.summaryMetrics) {
+            Object.entries(report.summaryMetrics).forEach(([key, value]) => {
+                rows.push(['', '', '', '', '', metricLabel(key), '', '', value].map(csvCell).join(','));
+            });
         }
 
         const csvContent = rows.join('\n');
@@ -762,6 +843,10 @@
 
         document.getElementById('generateIncomeStatementBtn').addEventListener('click', (e) => generateFinancialReport('INCOME_STATEMENT', e.currentTarget));
         document.getElementById('generateBalanceSheetBtn').addEventListener('click', (e) => generateFinancialReport('BALANCE_SHEET', e.currentTarget));
+        document.getElementById('generateCashFlowBtn').addEventListener('click', (e) => generateFinancialReport('CASH_FLOW', e.currentTarget));
+        document.getElementById('generateEquityBtn').addEventListener('click', (e) => generateFinancialReport('EQUITY', e.currentTarget));
+        document.getElementById('generateBudgetVarianceBtn').addEventListener('click', (e) => generateFinancialReport('BUDGET_VARIANCE', e.currentTarget));
+        document.getElementById('generateCustomBtn').addEventListener('click', (e) => generateFinancialReport('CUSTOM', e.currentTarget));
         document.getElementById('exportFinancialReportCsvBtn').addEventListener('click', exportFinancialReportCsv);
 
         document.getElementById('refreshBtn').addEventListener('click', async () => {

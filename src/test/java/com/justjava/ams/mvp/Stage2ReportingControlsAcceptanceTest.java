@@ -223,6 +223,58 @@ class Stage2ReportingControlsAcceptanceTest {
         assertThat(decimal(balanceSheet, "totalAssets")).isEqualByComparingTo(new BigDecimal("100.00"));
         assertThat(balanceSheet.hasNonNull("balanceSheetVariance")).isTrue();
 
+        JsonNode cashFlow = postJson(
+                "/api/cfo/financial-reports/org/" + organizationId + "/generate",
+                Map.of(
+                        "reportType", "CASH_FLOW",
+                        "fromDate", journalDate.minusDays(1).toString(),
+                        "toDate", journalDate.plusDays(1).toString(),
+                        "generatedBy", "stage2-cfo",
+                        "persist", true),
+                cfo(),
+                status().isOk());
+        assertThat(cashFlow.get("reportType").asText()).isEqualTo("CASH_FLOW");
+        assertThat(cashFlow.get("summaryMetrics").has("netChangeInCash")).isTrue();
+
+        JsonNode equity = postJson(
+                "/api/cfo/financial-reports/org/" + organizationId + "/generate",
+                Map.of(
+                        "reportType", "EQUITY",
+                        "fromDate", journalDate.minusDays(1).toString(),
+                        "toDate", journalDate.plusDays(1).toString(),
+                        "generatedBy", "stage2-cfo",
+                        "persist", true),
+                cfo(),
+                status().isOk());
+        assertThat(equity.get("reportType").asText()).isEqualTo("EQUITY");
+        assertThat(equity.get("summaryMetrics").has("closingEquity")).isTrue();
+
+        JsonNode budgetVariance = postJson(
+                "/api/cfo/financial-reports/org/" + organizationId + "/generate",
+                Map.of(
+                        "reportType", "BUDGET_VARIANCE",
+                        "fromDate", journalDate.minusDays(1).toString(),
+                        "toDate", journalDate.plusDays(1).toString(),
+                        "generatedBy", "stage2-cfo",
+                        "persist", true),
+                cfo(),
+                status().isOk());
+        assertThat(budgetVariance.get("reportType").asText()).isEqualTo("BUDGET_VARIANCE");
+        assertThat(budgetVariance.get("summaryMetrics").has("totalVariance")).isTrue();
+
+        JsonNode customReport = postJson(
+                "/api/cfo/financial-reports/org/" + organizationId + "/generate",
+                Map.of(
+                        "reportType", "CUSTOM",
+                        "fromDate", journalDate.minusDays(1).toString(),
+                        "toDate", journalDate.plusDays(1).toString(),
+                        "generatedBy", "stage2-cfo",
+                        "persist", true),
+                cfo(),
+                status().isOk());
+        assertThat(customReport.get("reportType").asText()).isEqualTo("CUSTOM");
+        assertThat(customReport.get("summaryMetrics").has("total")).isTrue();
+
         JsonNode securityEvents = getJson(
                 "/api/auditor/security-events/org/" + organizationId,
                 auditor(),
