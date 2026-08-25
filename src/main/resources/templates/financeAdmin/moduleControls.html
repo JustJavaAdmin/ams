@@ -449,7 +449,6 @@
     };
 
     const CORE_MODULES = ['GENERAL_LEDGER', 'REPORTING', 'AUDIT'];
-    const STAGE2_DISABLED_MODULES = ['BANKING', 'FIXED_ASSETS', 'BUDGETING', 'PAYROLL', 'ACCOUNTS_PAYABLE', 'ACCOUNTS_RECEIVABLE'];
 
     document.addEventListener('DOMContentLoaded', init);
 
@@ -694,7 +693,6 @@
 
     function renderModuleCard(module) {
         const meta = getModuleMeta(module.moduleType);
-        const showStage2Badge = STAGE2_DISABLED_MODULES.includes(module.moduleType) && !module.enabled;
         const notes = module.notes ? escapeHtml(module.notes) : 'No notes recorded.';
         const limit = (module.maxTransactionAmountLimit === null || module.maxTransactionAmountLimit === undefined)
             ? 'No limit set'
@@ -721,7 +719,6 @@
                     ${module.enableAuditTrail ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface-container text-secondary border border-outline-variant">Audit Trail On</span>' : ''}
                     ${module.requiresApproval ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface-container text-secondary border border-outline-variant">Requires Approval</span>' : ''}
                     ${module.allowUserConfiguration ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface-container text-secondary border border-outline-variant">User Configurable</span>' : ''}
-                    ${showStage2Badge ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-error-container text-on-error-container border border-outline-variant">Disabled for this MVP stage</span>' : ''}
                 </div>
 
                 <div class="mt-3 font-label-md text-label-md text-on-tertiary-container">
