@@ -208,6 +208,72 @@
 
                 <div id="moduleEmptyState" class="hidden p-6 bg-surface-container-low rounded-lg border border-surface-container-high text-center text-secondary font-body-sm"></div>
 
+                <section class="bg-surface-container-lowest border border-surface-container-highest rounded-xl p-card-padding shadow-sm">
+                    <div class="flex flex-col lg:flex-row lg:items-start gap-gutter">
+                        <div class="lg:w-2/3">
+                            <div class="flex items-start justify-between gap-4 mb-5">
+                                <div>
+                                    <h3 class="font-headline-sm text-headline-sm text-primary">Approval Rules</h3>
+                                    <p class="text-secondary font-body-sm uppercase tracking-wider mt-1">Transaction routing thresholds for review workflows</p>
+                                </div>
+                                <span id="approvalRuleCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-secondary-container text-on-secondary-container border border-outline-variant">0 rules</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-surface border-b border-outline-variant">
+                                    <tr>
+                                        <th class="py-3 px-3 font-label-md text-label-md text-secondary uppercase">Rule</th>
+                                        <th class="py-3 px-3 font-label-md text-label-md text-secondary uppercase">Module</th>
+                                        <th class="py-3 px-3 font-label-md text-label-md text-secondary uppercase">Transaction</th>
+                                        <th class="py-3 px-3 font-label-md text-label-md text-secondary uppercase text-right">Range</th>
+                                        <th class="py-3 px-3 font-label-md text-label-md text-secondary uppercase">Approver</th>
+                                        <th class="py-3 px-3"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="approvalRulesBody" class="divide-y divide-outline-variant">
+                                    <tr><td colspan="6" class="py-8 px-3 text-center text-secondary">Select an organization to load approval rules.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <aside class="lg:w-1/3">
+                            <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Create Approval Rule</h3>
+                            <form id="approvalRuleForm" class="space-y-3">
+                                <input id="ruleName" required maxlength="255" placeholder="Rule name" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <select id="ruleModuleType" required class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm"></select>
+                                    <input id="ruleTransactionType" placeholder="Transaction type" value="ALL" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <input id="ruleMinAmount" type="number" min="0" step="0.01" value="0" placeholder="Min amount" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                    <input id="ruleMaxAmount" type="number" min="0" step="0.01" placeholder="Max amount" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <select id="ruleAccountType" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                        <option value="">Any account</option>
+                                        <option value="ASSET">Asset</option>
+                                        <option value="LIABILITY">Liability</option>
+                                        <option value="EQUITY">Equity</option>
+                                        <option value="REVENUE">Revenue</option>
+                                        <option value="EXPENSE">Expense</option>
+                                    </select>
+                                    <input id="ruleDepartmentCode" placeholder="Department" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <input id="ruleRequiredApprovals" type="number" min="1" value="1" required placeholder="Required approvals" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                    <input id="rulePriority" type="number" value="100" placeholder="Priority" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                </div>
+                                <input id="ruleApproverRole" placeholder="Approver role, e.g. CFO" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm">
+                                <textarea id="ruleNotes" maxlength="500" placeholder="Notes" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm min-h-20"></textarea>
+                                <button id="approvalRuleSubmitBtn" type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-body-sm text-body-sm text-on-primary hover:opacity-90 transition-opacity">
+                                    <span class="material-symbols-outlined text-lg">rule</span>
+                                    Create Rule
+                                </button>
+                            </form>
+                        </aside>
+                    </div>
+                </section>
+
                 <div class="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
                     <div class="flex gap-3">
                         <span class="material-symbols-outlined text-primary">verified_user</span>

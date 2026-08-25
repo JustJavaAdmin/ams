@@ -46,7 +46,17 @@ import java.util.stream.Collectors;
 @Transactional
 public class BulkImportService {
 
-    private static final List<String> BRANCH_HEADERS = List.of("branch_code", "branch_name", "is_active");
+    private static final List<String> BRANCH_HEADERS = List.of(
+            "branch_code",
+            "branch_name",
+            "address",
+            "city",
+            "state",
+            "country",
+            "postal_code",
+            "phone",
+            "email",
+            "is_active");
     private static final List<String> COA_HEADERS = List.of(
             "account_code",
             "account_name",
@@ -66,7 +76,8 @@ public class BulkImportService {
     private final ObjectMapper objectMapper;
 
     public String branchTemplate() {
-        return String.join(",", BRANCH_HEADERS) + "\nBR-LOS-01,Lagos Island Operations,true\n";
+        return String.join(",", BRANCH_HEADERS)
+                + "\nBR-LOS-01,Lagos Island Operations,\"12 Marina Road\",Lagos,Lagos,Nigeria,100221,+2348012345678,lagos@example.com,true\n";
     }
 
     public String chartOfAccountsTemplate() {
@@ -206,6 +217,10 @@ public class BulkImportService {
         String code = required(row, "branch_code", "Branch code is required", errors);
         String name = required(row, "branch_name", "Branch name is required", errors);
         Boolean active = parseBoolean(row.get("is_active"), "is_active", errors);
+        String email = trimToNull(row.get("email"));
+        if (email != null && !email.contains("@")) {
+            errors.add("Invalid email");
+        }
 
         if (code != null) {
             String key = code.toLowerCase(Locale.ROOT);
@@ -223,6 +238,13 @@ public class BulkImportService {
 
         normalized.put("code", code);
         normalized.put("name", name);
+        normalized.put("address", trimToNull(row.get("address")));
+        normalized.put("city", trimToNull(row.get("city")));
+        normalized.put("state", trimToNull(row.get("state")));
+        normalized.put("country", trimToNull(row.get("country")));
+        normalized.put("postalCode", trimToNull(row.get("postal_code")));
+        normalized.put("phone", trimToNull(row.get("phone")));
+        normalized.put("email", email);
         normalized.put("active", String.valueOf(active == null || active));
         return new RowValidation(errors, normalized);
     }
@@ -286,6 +308,13 @@ public class BulkImportService {
         }
 
         branch.setName(row.get("name"));
+        branch.setAddress(trimToNull(row.get("address")));
+        branch.setCity(trimToNull(row.get("city")));
+        branch.setState(trimToNull(row.get("state")));
+        branch.setCountry(trimToNull(row.get("country")));
+        branch.setPostalCode(trimToNull(row.get("postalCode")));
+        branch.setPhone(trimToNull(row.get("phone")));
+        branch.setEmail(trimToNull(row.get("email")));
         branch.setActive(Boolean.parseBoolean(row.get("active")));
         Branch saved = branchRepository.save(branch);
         importRow.setStatus(updating ? BulkImportRow.RowStatus.UPDATED : BulkImportRow.RowStatus.CREATED);

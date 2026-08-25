@@ -60,6 +60,13 @@
                 <span class="material-symbols-outlined mr-3">precision_manufacturing</span>
                 <span class="font-body-md text-body-md">Fixed Assets</span>
             </a>
+
+            <a th:href="@{/accountant/depreciationJournals}"
+               class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
+               th:classappend="${activeTab == 'depreciationJournals'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">
+                <span class="material-symbols-outlined mr-3">upload_file</span>
+                <span class="font-body-md text-body-md">Depreciation Journals</span>
+            </a>
         </nav>
 
         <div class="px-4 mt-auto space-y-4">

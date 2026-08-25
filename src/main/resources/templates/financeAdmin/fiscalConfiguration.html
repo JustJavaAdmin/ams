@@ -121,6 +121,69 @@
                 </span>
             </div>
 
+            <section class="mb-gutter bg-surface-container-lowest border border-surface-container-highest rounded-xl p-card-padding shadow-sm">
+                <div class="flex flex-col lg:flex-row lg:items-start gap-gutter">
+                    <div class="lg:w-1/3">
+                        <h3 class="font-headline-sm text-headline-sm text-primary">Accounting Settings</h3>
+                        <p class="text-secondary font-body-sm mt-1">Base currency, fiscal behavior, and transaction approval defaults.</p>
+                        <p id="fiscalConfigStatus" class="text-body-sm text-secondary mt-4">Select an organization to load settings.</p>
+                    </div>
+                    <form id="fiscalConfigForm" class="lg:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-stack-md">
+                        <input type="hidden" id="fiscalConfigId">
+                        <div>
+                            <label class="block font-body-sm font-semibold text-on-surface mb-2" for="baseCurrency">Base Currency</label>
+                            <input id="baseCurrency" maxlength="3" value="NGN" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md uppercase">
+                        </div>
+                        <div>
+                            <label class="block font-body-sm font-semibold text-on-surface mb-2" for="accountingMethod">Accounting Method</label>
+                            <select id="accountingMethod" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md">
+                                <option value="ACCRUAL">Accrual</option>
+                                <option value="CASH">Cash</option>
+                                <option value="HYBRID">Hybrid</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-body-sm font-semibold text-on-surface mb-2" for="approvalHierarchyLevels">Approval Levels</label>
+                            <input id="approvalHierarchyLevels" type="number" min="1" max="10" value="2" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md">
+                        </div>
+                        <div>
+                            <label class="block font-body-sm font-semibold text-on-surface mb-2" for="fiscalYearStartMonth">Start Month</label>
+                            <input id="fiscalYearStartMonth" type="number" min="1" max="12" value="1" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md">
+                        </div>
+                        <div>
+                            <label class="block font-body-sm font-semibold text-on-surface mb-2" for="fiscalYearEndMonth">End Month</label>
+                            <input id="fiscalYearEndMonth" type="number" min="1" max="12" value="12" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md">
+                        </div>
+                        <div>
+                            <label class="block font-body-sm font-semibold text-on-surface mb-2" for="numberOfQuarters">Quarters</label>
+                            <input id="numberOfQuarters" type="number" min="1" max="4" value="4" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md">
+                        </div>
+                        <label class="flex items-center gap-2 font-body-sm font-semibold text-on-surface">
+                            <input id="multiCurrencyEnabled" type="checkbox" class="w-4 h-4 rounded accent-primary">
+                            Multi-currency
+                        </label>
+                        <label class="flex items-center gap-2 font-body-sm font-semibold text-on-surface">
+                            <input id="requireApprovalForTransactions" type="checkbox" checked class="w-4 h-4 rounded accent-primary">
+                            Require approvals
+                        </label>
+                        <label class="flex items-center gap-2 font-body-sm font-semibold text-on-surface">
+                            <input id="allowNegativeInventory" type="checkbox" class="w-4 h-4 rounded accent-primary">
+                            Negative inventory
+                        </label>
+                        <div class="md:col-span-3">
+                            <label class="block font-body-sm font-semibold text-on-surface mb-2" for="fiscalConfigNotes">Notes</label>
+                            <textarea id="fiscalConfigNotes" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md min-h-20"></textarea>
+                        </div>
+                        <div class="md:col-span-3 flex justify-end">
+                            <button id="saveFiscalConfigBtn" class="bg-primary text-on-primary font-body-md font-bold py-3 px-6 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-2" type="submit">
+                                <span class="material-symbols-outlined">save</span>
+                                Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
                 <section class="lg:col-span-2">
                     <div class="bg-surface-container-lowest border border-surface-container-highest rounded-xl p-card-padding shadow-sm h-full flex flex-col">
@@ -287,6 +350,7 @@
     let currentOrgId = null;
     let allPeriods = [];
     let taxJurisdictions = [];
+    let fiscalConfiguration = null;
     let isRequestActive = false;
     let pendingAction = null;
 
@@ -351,8 +415,63 @@
     function setFormDisabled(disabled) {
         document.querySelectorAll('#periodForm input, #periodForm select, #periodForm button')
             .forEach(el => { el.disabled = disabled; });
+        document.querySelectorAll('#fiscalConfigForm input, #fiscalConfigForm select, #fiscalConfigForm textarea, #fiscalConfigForm button')
+            .forEach(el => { el.disabled = disabled; });
         document.getElementById('submitPeriodBtn').classList.toggle('opacity-60', disabled);
         document.getElementById('submitPeriodBtn').classList.toggle('cursor-not-allowed', disabled);
+        document.getElementById('saveFiscalConfigBtn').classList.toggle('opacity-60', disabled);
+        document.getElementById('saveFiscalConfigBtn').classList.toggle('cursor-not-allowed', disabled);
+    }
+
+    function resetFiscalConfigForm() {
+        fiscalConfiguration = null;
+        document.getElementById('fiscalConfigId').value = '';
+        document.getElementById('baseCurrency').value = 'NGN';
+        document.getElementById('accountingMethod').value = 'ACCRUAL';
+        document.getElementById('approvalHierarchyLevels').value = '2';
+        document.getElementById('fiscalYearStartMonth').value = '1';
+        document.getElementById('fiscalYearEndMonth').value = '12';
+        document.getElementById('numberOfQuarters').value = '4';
+        document.getElementById('multiCurrencyEnabled').checked = false;
+        document.getElementById('requireApprovalForTransactions').checked = true;
+        document.getElementById('allowNegativeInventory').checked = false;
+        document.getElementById('fiscalConfigNotes').value = '';
+        document.getElementById('fiscalConfigStatus').textContent = currentOrgId
+            ? 'No saved settings found. Defaults are ready to save.'
+            : 'Select an organization to load settings.';
+    }
+
+    function populateFiscalConfig(config) {
+        fiscalConfiguration = config;
+        document.getElementById('fiscalConfigId').value = config.id || '';
+        document.getElementById('baseCurrency').value = config.baseCurrency || 'NGN';
+        document.getElementById('accountingMethod').value = config.accountingMethod || 'ACCRUAL';
+        document.getElementById('approvalHierarchyLevels').value = config.approvalHierarchyLevels || 2;
+        document.getElementById('fiscalYearStartMonth').value = config.fiscalYearStartMonth || 1;
+        document.getElementById('fiscalYearEndMonth').value = config.fiscalYearEndMonth || 12;
+        document.getElementById('numberOfQuarters').value = config.numberOfQuarters || 4;
+        document.getElementById('multiCurrencyEnabled').checked = !!config.multiCurrencyEnabled;
+        document.getElementById('requireApprovalForTransactions').checked = config.requireApprovalForTransactions !== false;
+        document.getElementById('allowNegativeInventory').checked = !!config.allowNegativeInventory;
+        document.getElementById('fiscalConfigNotes').value = config.notes || '';
+        document.getElementById('fiscalConfigStatus').textContent = 'Settings saved for this organization.';
+    }
+
+    async function loadFiscalConfiguration() {
+        if (!currentOrgId) {
+            resetFiscalConfigForm();
+            return;
+        }
+        document.getElementById('fiscalConfigStatus').textContent = 'Loading settings...';
+        try {
+            populateFiscalConfig(await apiJson(`/api/financeAdmin/fiscal-configuration/org/${currentOrgId}`));
+        } catch (err) {
+            resetFiscalConfigForm();
+            if (!String(err.message || '').includes('not found')) {
+                document.getElementById('fiscalConfigStatus').textContent = 'Settings could not be loaded.';
+                showAlert('Could not load fiscal settings: ' + err.message);
+            }
+        }
     }
 
     function statusBadge(status) {
@@ -398,6 +517,7 @@
             sessionStorage.setItem(ORG_KEY, currentOrgId);
             setFormDisabled(false);
             document.getElementById('orgSelectorHint').classList.add('hidden');
+            await loadFiscalConfiguration();
             await loadFiscalPeriods();
             await loadTaxJurisdictions();
         } catch (err) {
@@ -412,10 +532,12 @@
     document.getElementById('orgSelector').addEventListener('change', async function () {
         currentOrgId = this.value ? Number(this.value) : null;
         resetPeriodForm();
+        resetFiscalConfigForm();
 
         if (!currentOrgId) {
             allPeriods = [];
             taxJurisdictions = [];
+            fiscalConfiguration = null;
             setFormDisabled(true);
             sessionStorage.removeItem(ORG_KEY);
             document.getElementById('orgSelectorHint').classList.remove('hidden');
@@ -427,8 +549,47 @@
         sessionStorage.setItem(ORG_KEY, currentOrgId);
         setFormDisabled(false);
         document.getElementById('orgSelectorHint').classList.add('hidden');
+        await loadFiscalConfiguration();
         await loadFiscalPeriods();
         await loadTaxJurisdictions();
+    });
+
+    document.getElementById('fiscalConfigForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (!currentOrgId || isRequestActive) return;
+
+        const btn = document.getElementById('saveFiscalConfigBtn');
+        const payload = {
+            fiscalYearStartMonth: Number(document.getElementById('fiscalYearStartMonth').value || 1),
+            fiscalYearEndMonth: Number(document.getElementById('fiscalYearEndMonth').value || 12),
+            numberOfQuarters: Number(document.getElementById('numberOfQuarters').value || 4),
+            accountingMethod: document.getElementById('accountingMethod').value,
+            multiCurrencyEnabled: document.getElementById('multiCurrencyEnabled').checked,
+            baseCurrency: document.getElementById('baseCurrency').value.trim().toUpperCase() || 'NGN',
+            allowNegativeInventory: document.getElementById('allowNegativeInventory').checked,
+            requireApprovalForTransactions: document.getElementById('requireApprovalForTransactions').checked,
+            approvalHierarchyLevels: Number(document.getElementById('approvalHierarchyLevels').value || 1),
+            notes: document.getElementById('fiscalConfigNotes').value.trim() || null
+        };
+
+        isRequestActive = true;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">autorenew</span> Saving...';
+        try {
+            const configId = document.getElementById('fiscalConfigId').value;
+            const saved = await apiJson(
+                configId ? `/api/financeAdmin/fiscal-configuration/${configId}` : `/api/financeAdmin/fiscal-configuration/org/${currentOrgId}`,
+                { method: configId ? 'PUT' : 'POST', body: JSON.stringify(payload) }
+            );
+            populateFiscalConfig(saved);
+            showAlert('Fiscal settings saved successfully.', 'success');
+        } catch (err) {
+            showAlert('Could not save fiscal settings: ' + err.message);
+        } finally {
+            isRequestActive = false;
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">save</span> Save Settings';
+        }
     });
 
     function setTableLoadingState() {

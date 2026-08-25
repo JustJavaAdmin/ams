@@ -191,6 +191,8 @@
                         </div>
 
                         <form id="branchRegistrationForm" class="space-y-6">
+                            <input type="hidden" id="branchId" value="">
+                            <input type="hidden" id="branchFormMode" value="create">
                             <div>
                                 <label class="block font-body-sm font-semibold text-on-surface mb-2" for="parentCompany">Target Company</label>
                                 <div class="relative">
@@ -218,11 +220,49 @@
                                 </p>
                             </div>
 
+                            <div>
+                                <label class="block font-body-sm font-semibold text-on-surface mb-2" for="branchAddress">Address</label>
+                                <textarea id="branchAddress" rows="2" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline/40" placeholder="Street address"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="branchCity">City</label>
+                                    <input id="branchCity" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                                </div>
+                                <div>
+                                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="branchState">State</label>
+                                    <input id="branchState" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                                </div>
+                                <div>
+                                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="branchCountry">Country</label>
+                                    <input id="branchCountry" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                                </div>
+                                <div>
+                                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="branchPostalCode">Postal Code</label>
+                                    <input id="branchPostalCode" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                                </div>
+                                <div>
+                                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="branchPhone">Phone</label>
+                                    <input id="branchPhone" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                                </div>
+                                <div>
+                                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="branchEmail">Email</label>
+                                    <input id="branchEmail" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="email">
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3 pt-1">
+                                <input type="checkbox" id="branchActive" checked class="w-4 h-4 rounded border-surface-container-highest accent-primary cursor-pointer">
+                                <label for="branchActive" class="font-body-sm font-semibold text-on-surface cursor-pointer">Active</label>
+                            </div>
+
                             <div class="pt-4">
                                 <button id="branchSubmitBtn" class="w-full bg-primary text-on-primary font-body-lg font-bold py-4 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-black/5" type="submit">
                                     <span class="material-symbols-outlined">domain_add</span>
                                     Register Branch
                                 </button>
+                                <button id="branchResetBtn" type="button" class="hidden mt-3 w-full border border-surface-container-highest text-on-surface font-body-md font-semibold py-3 rounded-lg hover:bg-surface-container-low transition-colors">Cancel Edit</button>
                             </div>
                         </form>
 
@@ -256,7 +296,9 @@
                             <tr>
                                 <th class="py-3 px-4 font-label-md text-label-md text-secondary uppercase tracking-widest">Branch Name</th>
                                 <th class="py-3 px-4 font-label-md text-label-md text-secondary uppercase tracking-widest">Code</th>
+                                <th class="py-3 px-4 font-label-md text-label-md text-secondary uppercase tracking-widest">Contact</th>
                                 <th class="py-3 px-4 font-label-md text-label-md text-secondary uppercase tracking-widest text-center">Status</th>
+                                <th class="py-3 px-4 font-label-md text-label-md text-secondary uppercase tracking-widest text-right">Actions</th>
                             </tr>
                             </thead>
                             <tbody id="branchesTableBody" class="divide-y divide-surface-container-high">
@@ -320,7 +362,7 @@
     <div id="createOrgOverlay" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
     <!-- Dialog -->
-    <div class="relative bg-surface-container-lowest border border-surface-container-highest rounded-xl shadow-2xl w-full max-w-lg z-10">
+    <div class="relative bg-surface-container-lowest border border-surface-container-highest rounded-xl shadow-2xl w-full max-w-2xl z-10 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between p-6 border-b border-surface-container-highest">
             <div>
                 <h2 class="font-headline-sm text-headline-sm text-primary">Create Organization</h2>
@@ -354,6 +396,11 @@
             </div>
 
             <div>
+                <label class="block font-body-sm font-semibold text-on-surface mb-2" for="orgDescription">Legal Description</label>
+                <textarea id="orgDescription" rows="2" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline/40" placeholder="Optional legal or operating description"></textarea>
+            </div>
+
+            <div>
                 <label class="block font-body-sm font-semibold text-on-surface mb-2" for="orgCountry">Country <span class="text-error">*</span></label>
                 <div class="relative">
                     <select class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none appearance-none transition-all cursor-pointer" id="orgCountry" required>
@@ -367,6 +414,35 @@
                     </select>
                     <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-secondary">expand_more</span>
                 </div>
+            </div>
+
+            <div>
+                <label class="block font-body-sm font-semibold text-on-surface mb-2" for="orgAddress">Address</label>
+                <textarea id="orgAddress" rows="2" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline/40" placeholder="Registered office address"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="orgCity">City</label>
+                    <input id="orgCity" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                </div>
+                <div>
+                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="orgState">State</label>
+                    <input id="orgState" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                </div>
+                <div>
+                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="orgPostalCode">Postal Code</label>
+                    <input id="orgPostalCode" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                </div>
+                <div>
+                    <label class="block font-body-sm font-semibold text-on-surface mb-2" for="orgPhone">Phone</label>
+                    <input id="orgPhone" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="text">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-body-sm font-semibold text-on-surface mb-2" for="orgEmail">Email</label>
+                <input id="orgEmail" class="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg py-3 px-4 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" type="email">
             </div>
 
             <div class="flex items-center gap-3 pt-1">
@@ -550,7 +626,7 @@
         if (branches.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="3" class="py-8 px-4 text-center">
+                    <td colspan="5" class="py-8 px-4 text-center">
                         <div class="flex flex-col items-center gap-2">
                             <span class="material-symbols-outlined text-[36px] text-outline/40">domain_add</span>
                             <p class="text-secondary font-body-sm">No branches yet. Use the <strong>Add Branch</strong> form above to register one.</p>
@@ -569,11 +645,22 @@
                 tr.innerHTML = `
                     <td class="py-4 px-4">
                         <div class="font-body-md font-semibold text-primary">${escapeHtml(branch.name)}</div>
+                        <div class="text-[12px] text-secondary">${escapeHtml([branch.city, branch.state, branch.country].filter(Boolean).join(', ') || branch.address || 'No address captured')}</div>
                     </td>
                     <td class="py-4 px-4 font-label-md text-on-secondary-container">${escapeHtml(branch.code)}</td>
+                    <td class="py-4 px-4 text-body-sm text-secondary">
+                        <div>${escapeHtml(branch.email || '-')}</div>
+                        <div>${escapeHtml(branch.phone || '-')}</div>
+                    </td>
                     <td class="py-4 px-4 text-center">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${activeClass}">${activeLabel}</span>
+                    </td>
+                    <td class="py-4 px-4 text-right">
+                        <button type="button" class="branch-edit-btn p-1.5 rounded bg-surface-container-high text-on-surface-variant hover:bg-primary hover:text-on-primary transition-colors" title="Edit branch">
+                            <span class="material-symbols-outlined text-[18px]">edit</span>
+                        </button>
                     </td>`;
+                tr.querySelector('.branch-edit-btn').addEventListener('click', () => editBranch(branch));
                 tbody.appendChild(tr);
             });
         }
@@ -606,7 +693,7 @@
         const tbody = document.getElementById('branchesTableBody');
         tbody.innerHTML = `
             <tr>
-                <td colspan="3" class="py-8 px-4 text-center">
+                <td colspan="5" class="py-8 px-4 text-center">
                     <div class="flex items-center justify-center gap-2 text-secondary text-body-sm">
                         <span class="material-symbols-outlined animate-spin text-[20px]">autorenew</span>
                         Loading branches...
@@ -694,9 +781,56 @@
         } catch (err) {
             document.getElementById('branchesTableBody').innerHTML = `
                 <tr>
-                    <td colspan="3" class="py-6 px-4 text-center text-error text-body-sm font-semibold">${escapeHtml(err.message)}</td>
+                    <td colspan="5" class="py-6 px-4 text-center text-error text-body-sm font-semibold">${escapeHtml(err.message)}</td>
                 </tr>`;
         }
+    }
+
+    function branchFormPayload(orgId) {
+        return {
+            organizationId: orgId,
+            name: document.getElementById('branchName').value.trim(),
+            code: document.getElementById('branchCode').value.trim(),
+            address: document.getElementById('branchAddress').value.trim() || null,
+            city: document.getElementById('branchCity').value.trim() || null,
+            state: document.getElementById('branchState').value.trim() || null,
+            country: document.getElementById('branchCountry').value.trim() || null,
+            postalCode: document.getElementById('branchPostalCode').value.trim() || null,
+            phone: document.getElementById('branchPhone').value.trim() || null,
+            email: document.getElementById('branchEmail').value.trim() || null,
+            active: document.getElementById('branchActive').checked
+        };
+    }
+
+    function resetBranchForm() {
+        document.getElementById('branchFormMode').value = 'create';
+        document.getElementById('branchId').value = '';
+        document.getElementById('branchRegistrationForm').reset();
+        if (selectedOrganizationId) {
+            document.getElementById('parentCompany').value = selectedOrganizationId;
+        }
+        document.getElementById('branchActive').checked = true;
+        document.getElementById('branchSubmitBtn').innerHTML = '<span class="material-symbols-outlined">domain_add</span> Register Branch';
+        document.getElementById('branchResetBtn').classList.add('hidden');
+    }
+
+    function editBranch(branch) {
+        document.getElementById('branchFormMode').value = 'edit';
+        document.getElementById('branchId').value = branch.id;
+        document.getElementById('parentCompany').value = branch.organizationId;
+        document.getElementById('branchName').value = branch.name || '';
+        document.getElementById('branchCode').value = branch.code || '';
+        document.getElementById('branchAddress').value = branch.address || '';
+        document.getElementById('branchCity').value = branch.city || '';
+        document.getElementById('branchState').value = branch.state || '';
+        document.getElementById('branchCountry').value = branch.country || '';
+        document.getElementById('branchPostalCode').value = branch.postalCode || '';
+        document.getElementById('branchPhone').value = branch.phone || '';
+        document.getElementById('branchEmail').value = branch.email || '';
+        document.getElementById('branchActive').checked = branch.active !== false;
+        document.getElementById('branchSubmitBtn').innerHTML = '<span class="material-symbols-outlined">save</span> Update Branch';
+        document.getElementById('branchResetBtn').classList.remove('hidden');
+        document.getElementById('branchRegistrationForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // ===================== BRANCH FORM SUBMIT =====================
@@ -705,8 +839,8 @@
         if (isRequestActive) return;
 
         const orgId = parseInt(document.getElementById('parentCompany').value);
-        const name = document.getElementById('branchName').value.trim();
-        const code = document.getElementById('branchCode').value.trim();
+        const branchId = document.getElementById('branchId').value;
+        const mode = document.getElementById('branchFormMode').value;
         const errorDiv = document.getElementById('branchFormError');
         const errorMsg = document.getElementById('branchFormErrorMsg');
         const btn = document.getElementById('branchSubmitBtn');
@@ -721,18 +855,24 @@
 
         isRequestActive = true;
         btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">autorenew</span> Registering...';
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">autorenew</span> Saving...';
 
         try {
-            await apiJson('/api/branches', {
-                method: 'POST',
-                body: JSON.stringify({ organizationId: orgId, name, code, active: true })
-            });
+            const payload = branchFormPayload(orgId);
+            if (mode === 'edit') {
+                await apiJson(`/api/branches/${branchId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                await apiJson('/api/branches', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+            }
 
-            document.getElementById('branchName').value = '';
-            document.getElementById('branchCode').value = '';
-            document.getElementById('parentCompany').value = orgId;
-            showAlert('Branch registered successfully!', 'success');
+            resetBranchForm();
+            showAlert(mode === 'edit' ? 'Branch updated successfully.' : 'Branch registered successfully!', 'success');
             await loadBranches(orgId);
         } catch (err) {
             errorMsg.textContent = err.message;
@@ -740,9 +880,13 @@
         } finally {
             isRequestActive = false;
             btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-outlined">domain_add</span> Register Branch';
+            btn.innerHTML = mode === 'edit'
+                ? '<span class="material-symbols-outlined">save</span> Update Branch'
+                : '<span class="material-symbols-outlined">domain_add</span> Register Branch';
         }
     });
+
+    document.getElementById('branchResetBtn').addEventListener('click', resetBranchForm);
 
     // ===================== BRANCH BULK IMPORT =====================
     document.getElementById('branchImportForm').addEventListener('submit', async function (e) {
@@ -859,6 +1003,13 @@
         const registrationNumber = document.getElementById('orgRegNumber').value.trim();
         const taxId = document.getElementById('orgTaxId').value.trim();
         const country = document.getElementById('orgCountry').value;
+        const description = document.getElementById('orgDescription').value.trim();
+        const address = document.getElementById('orgAddress').value.trim();
+        const city = document.getElementById('orgCity').value.trim();
+        const state = document.getElementById('orgState').value.trim();
+        const postalCode = document.getElementById('orgPostalCode').value.trim();
+        const phone = document.getElementById('orgPhone').value.trim();
+        const email = document.getElementById('orgEmail').value.trim();
         const active = document.getElementById('orgActive').checked;
         const errorDiv = document.getElementById('orgModalError');
         const errorMsg = document.getElementById('orgModalErrorMsg');
@@ -873,7 +1024,20 @@
         try {
             const created = await apiJson('/api/organizations', {
                 method: 'POST',
-                body: JSON.stringify({ name, registrationNumber, taxId: taxId || null, country, active })
+                body: JSON.stringify({
+                    name,
+                    description: description || null,
+                    registrationNumber,
+                    taxId: taxId || null,
+                    address: address || null,
+                    city: city || null,
+                    state: state || null,
+                    country,
+                    postalCode: postalCode || null,
+                    phone: phone || null,
+                    email: email || null,
+                    active
+                })
             });
 
             closeCreateOrgModal();

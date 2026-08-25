@@ -5,6 +5,7 @@ import com.justjava.ams.auditor.dto.AuditLogFilterRequest;
 import com.justjava.ams.auditor.entity.AuditLog;
 import com.justjava.ams.auditor.repository.AuditLogRepository;
 import com.justjava.ams.common.entity.Organization;
+import com.justjava.ams.common.entity.User;
 import com.justjava.ams.common.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -36,11 +37,23 @@ public class AuditLogService {
             "ModuleControl",
             "TrialBalance",
             "FinancialReport",
-            "SecurityEvent"
+            "SecurityEvent",
+            "DepreciationJournalImport",
+            "Budget",
+            "BudgetLine",
+            "CustomerInvoice",
+            "PurchaseInvoice",
+            "Expense",
+            "PaymentSchedule",
+            "PaymentRun",
+            "Customer",
+            "Vendor",
+            "BankAccount"
     );
 
     private final AuditLogRepository auditLogRepository;
     private final OrganizationRepository organizationRepository;
+    private final AuditContextService auditContextService;
 
     public AuditLogDTO createAuditLog(Long organizationId, AuditLogDTO dto) {
         Organization organization = findOrganization(organizationId);
@@ -48,13 +61,14 @@ public class AuditLogService {
 
         AuditLog log = AuditLog.builder()
                 .organization(organization)
+                .user(resolveUser(dto.getUserId()))
                 .entityType(entityType)
                 .entityId(dto.getEntityId())
                 .action(parseAction(dto.getAction()))
                 .oldValue(dto.getOldValue())
                 .newValue(dto.getNewValue())
-                .ipAddress(dto.getIpAddress())
-                .userAgent(dto.getUserAgent())
+                .ipAddress(firstNonBlank(dto.getIpAddress(), auditContextService.currentIpAddress()))
+                .userAgent(firstNonBlank(dto.getUserAgent(), auditContextService.currentUserAgent()))
                 .description(dto.getDescription())
                 .build();
 
@@ -176,6 +190,8 @@ public class AuditLogService {
                 .stream()
                 .filter(log -> selectedEntityType == null || selectedEntityType.equals(log.getEntityType()))
                 .filter(log -> filter.getEntityId() == null || filter.getEntityId().equals(log.getEntityId()))
+                .filter(log -> filter.getUserId() == null
+                        || (log.getUser() != null && filter.getUserId().equals(log.getUser().getId())))
                 .filter(log -> selectedAction == null || selectedAction.equals(log.getAction()))
                 .filter(log -> startDate == null || !log.getCreatedAt().isBefore(startDate))
                 .filter(log -> endDate == null || !log.getCreatedAt().isAfter(endDate))
@@ -192,6 +208,25 @@ public class AuditLogService {
     private Organization findOrganization(Long organizationId) {
         return organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+    }
+
+    private User resolveUser(Long userId) {
+        return userId != null
+                ? auditContextService.resolveUser(userId)
+                : auditContextService.currentUser().orElse(null);
+    }
+
+    private String firstNonBlank(String preferred, String fallback) {
+        String normalized = trimToNull(preferred);
+        return normalized != null ? normalized : trimToNull(fallback);
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String normalizeEntityType(String entityType) {

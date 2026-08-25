@@ -121,6 +121,9 @@
                         <table class="w-full min-w-[900px] text-left">
                             <thead class="bg-surface-container-low text-body-sm text-secondary">
                             <tr>
+                                <th class="px-4 py-3 w-10">
+                                    <input id="selectAllSchedules" type="checkbox" class="rounded border-outline-variant accent-primary" title="Select all eligible schedules">
+                                </th>
                                 <th class="px-4 py-3">Vendor</th>
                                 <th class="px-4 py-3">PO / Invoice</th>
                                 <th class="px-4 py-3">Due</th>
@@ -172,7 +175,8 @@
                                 <input id="cutoffDate" type="date" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
                             </div>
                         </div>
-                        <button class="w-full bg-primary text-on-primary rounded-lg px-4 py-3 font-bold" type="submit">Create from approved due schedules</button>
+                        <p id="selectedSchedulesHint" class="text-body-sm text-secondary">Select approved schedules or leave empty to use the cutoff date.</p>
+                        <button class="w-full bg-primary text-on-primary rounded-lg px-4 py-3 font-bold" type="submit">Create payment run</button>
                     </form>
                 </div>
                 <div class="xl:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg p-card-padding">
@@ -398,6 +402,9 @@
             : 'bg-white border border-outline-variant rounded-lg px-3 py-2 font-bold text-body-sm';
         els.scheduleRows.innerHTML = state.schedules.map(schedule => `
             <tr>
+                <td class="px-4 py-3">
+                    <input type="checkbox" class="schedule-select rounded border-outline-variant accent-primary" value="${schedule.id}" ${schedule.status === 'APPROVED' ? '' : 'disabled'} title="Select schedule for payment run">
+                </td>
                 <td class="px-4 py-3 font-semibold">${schedule.vendorName || '-'}</td>
                 <td class="px-4 py-3">${schedule.purchaseOrderNumber || `#${schedule.purchaseInvoiceId}`}</td>
                 <td class="px-4 py-3">${schedule.dueDate || '-'}</td>
@@ -414,7 +421,25 @@
                     </div>
                 </td>
             </tr>
-        `).join('') || `<tr><td colspan="8" class="px-4 py-8 text-center text-secondary">No payment schedules found.</td></tr>`;
+        `).join('') || `<tr><td colspan="9" class="px-4 py-8 text-center text-secondary">No payment schedules found.</td></tr>`;
+        document.querySelectorAll('.schedule-select').forEach(input => {
+            input.addEventListener('change', updateSelectedSchedulesHint);
+        });
+        updateSelectedSchedulesHint();
+    }
+
+    function selectedScheduleIds() {
+        return Array.from(document.querySelectorAll('.schedule-select:checked'))
+            .map(input => Number(input.value))
+            .filter(Boolean);
+    }
+
+    function updateSelectedSchedulesHint() {
+        const count = selectedScheduleIds().length;
+        const hint = document.getElementById('selectedSchedulesHint');
+        if (hint) hint.textContent = count
+            ? `${count} approved schedule${count === 1 ? '' : 's'} selected for the next payment run.`
+            : 'Select approved schedules or leave empty to use the cutoff date.';
     }
 
     async function loadForecast() {
@@ -694,7 +719,8 @@
                 body: JSON.stringify({
                     bankAccountId: els.runBankAccount.value ? Number(els.runBankAccount.value) : null,
                     runDate: document.getElementById('runDate').value || null,
-                    cutoffDate: document.getElementById('cutoffDate').value || null
+                    cutoffDate: document.getElementById('cutoffDate').value || null,
+                    scheduleIds: selectedScheduleIds()
                 })
             });
             state.selectedRun = created;
@@ -739,6 +765,10 @@
     els.orgSelector.addEventListener('change', () => initOrg().catch(err => alert(err.message, 'error')));
     els.dueOnlyBtn.addEventListener('click', () => { state.dueOnly = !state.dueOnly; loadSchedules().catch(err => alert(err.message, 'error')); });
     document.getElementById('refreshSchedulesBtn').addEventListener('click', () => loadSchedules().catch(err => alert(err.message, 'error')));
+    document.getElementById('selectAllSchedules').addEventListener('change', function () {
+        document.querySelectorAll('.schedule-select:not(:disabled)').forEach(input => { input.checked = this.checked; });
+        updateSelectedSchedulesHint();
+    });
     document.getElementById('loadForecastBtn').addEventListener('click', () => loadForecast().catch(err => alert(err.message, 'error')));
     document.getElementById('refreshRunsBtn').addEventListener('click', () => loadRuns().catch(err => alert(err.message, 'error')));
     document.getElementById('refreshStatementsBtn').addEventListener('click', () => loadStatements().catch(err => alert(err.message, 'error')));

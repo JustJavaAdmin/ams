@@ -20,6 +20,8 @@ import com.justjava.ams.financeAdmin.dto.ChartOfAccountCreateRequest;
 import com.justjava.ams.financeAdmin.dto.ChartOfAccountUpdateRequest;
 import com.justjava.ams.financeAdmin.dto.FiscalPeriodCreateRequest;
 import com.justjava.ams.financeAdmin.dto.FiscalPeriodStatusRequest;
+import com.justjava.ams.financeAdmin.dto.FiscalConfigurationDTO;
+import com.justjava.ams.financeAdmin.service.FiscalConfigurationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -52,6 +54,7 @@ public class FinanceAdminApiController {
     private final ApprovalRuleService approvalRuleService;
     private final TaxJurisdictionService taxJurisdictionService;
     private final BulkImportService bulkImportService;
+    private final FiscalConfigurationService fiscalConfigurationService;
 
     @GetMapping("/chartOfAccounts/org/{organizationId}")
     public List<ChartOfAccountsDTO> getChartOfAccounts(@PathVariable Long organizationId) {
@@ -130,6 +133,26 @@ public class FinanceAdminApiController {
     @GetMapping("/fiscalPeriods/org/{organizationId}")
     public List<FiscalPeriodDTO> getFiscalPeriods(@PathVariable Long organizationId) {
         return fiscalPeriodService.getFiscalPeriodsByOrganization(organizationId);
+    }
+
+    @GetMapping("/fiscal-configuration/org/{organizationId}")
+    public FiscalConfigurationDTO getFiscalConfiguration(@PathVariable Long organizationId) {
+        return fiscalConfigurationService.getByOrganization(organizationId);
+    }
+
+    @PostMapping("/fiscal-configuration/org/{organizationId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public FiscalConfigurationDTO createFiscalConfiguration(
+            @PathVariable Long organizationId,
+            @Valid @RequestBody FiscalConfigurationDTO request) {
+        return fiscalConfigurationService.createFiscalConfiguration(organizationId, request);
+    }
+
+    @PutMapping("/fiscal-configuration/{configId}")
+    public FiscalConfigurationDTO updateFiscalConfiguration(
+            @PathVariable Long configId,
+            @Valid @RequestBody FiscalConfigurationDTO request) {
+        return fiscalConfigurationService.updateFiscalConfiguration(configId, request);
     }
 
     @GetMapping("/module-controls/org/{organizationId}")

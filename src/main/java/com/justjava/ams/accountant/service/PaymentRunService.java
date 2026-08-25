@@ -49,17 +49,7 @@ public class PaymentRunService {
         }
         LocalDate runDate = request.getRunDate() != null ? request.getRunDate() : LocalDate.now();
         LocalDate cutoffDate = request.getCutoffDate() != null ? request.getCutoffDate() : runDate;
-        List<PaymentSchedule> schedules = paymentScheduleRepository
-                .findByOrganizationIdAndStatusInAndScheduledPaymentDateLessThanEqualOrderByScheduledPaymentDateAscIdAsc(
-                        organizationId,
-                        List.of(PaymentSchedule.ScheduleStatus.APPROVED),
-                        cutoffDate)
-                .stream()
-                .filter(schedule -> schedule.getAmountRemaining().compareTo(BigDecimal.ZERO) > 0)
-                .filter(schedule -> !paymentRunItemRepository.existsByPaymentScheduleIdAndStatusIn(
-                        schedule.getId(),
-                        List.of(PaymentRunItem.PaymentRunItemStatus.PENDING)))
-                .toList();
+        List<PaymentSchedule> schedules = selectedSchedules(organizationId, request, cutoffDate);
         if (schedules.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "No approved payable schedules are eligible for this payment run");
         }
@@ -214,6 +204,43 @@ public class PaymentRunService {
         run.setItemCount(items.size());
         run.setTotalAmount(items.stream().map(PaymentRunItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
         paymentRunRepository.save(run);
+    }
+
+    private List<PaymentSchedule> selectedSchedules(Long organizationId, PaymentRunCreateRequest request, LocalDate cutoffDate) {
+        List<PaymentSchedule> schedules;
+        if (request.getScheduleIds() != null && !request.getScheduleIds().isEmpty()) {
+            schedules = paymentScheduleRepository.findAllById(request.getScheduleIds())
+                    .stream()
+                    .filter(schedule -> schedule.getOrganization().getId().equals(organizationId))
+                    .toList();
+            if (schedules.size() != request.getScheduleIds().stream().distinct().count()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more selected schedules are invalid for this organization");
+            }
+            List<PaymentSchedule> invalid = schedules.stream()
+                    .filter(schedule -> !PaymentSchedule.ScheduleStatus.APPROVED.equals(schedule.getStatus())
+                            || schedule.getAmountRemaining().compareTo(BigDecimal.ZERO) <= 0
+                            || paymentRunItemRepository.existsByPaymentScheduleIdAndStatusIn(
+                                    schedule.getId(),
+                                    List.of(PaymentRunItem.PaymentRunItemStatus.PENDING)))
+                    .toList();
+            if (!invalid.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selected schedules must be approved, unpaid, and not already pending in a payment run");
+            }
+        } else {
+            schedules = paymentScheduleRepository
+                    .findByOrganizationIdAndStatusInAndScheduledPaymentDateLessThanEqualOrderByScheduledPaymentDateAscIdAsc(
+                            organizationId,
+                            List.of(PaymentSchedule.ScheduleStatus.APPROVED),
+                            cutoffDate);
+        }
+
+        return schedules.stream()
+                .filter(schedule -> PaymentSchedule.ScheduleStatus.APPROVED.equals(schedule.getStatus()))
+                .filter(schedule -> schedule.getAmountRemaining().compareTo(BigDecimal.ZERO) > 0)
+                .filter(schedule -> !paymentRunItemRepository.existsByPaymentScheduleIdAndStatusIn(
+                        schedule.getId(),
+                        List.of(PaymentRunItem.PaymentRunItemStatus.PENDING)))
+                .toList();
     }
 
     private PaymentRun findRun(Long runId) {

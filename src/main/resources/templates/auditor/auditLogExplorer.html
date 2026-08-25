@@ -160,7 +160,7 @@
         </section>
 
         <!-- Filter Row Section -->
-        <section class="mb-gutter grid grid-cols-1 md:grid-cols-5 gap-gutter">
+        <section class="mb-gutter grid grid-cols-1 md:grid-cols-6 gap-gutter">
             <div class="flex flex-col gap-2">
                 <label class="font-body-sm font-semibold text-on-surface">Start Date</label>
                 <input class="w-full bg-white border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none" type="date" id="startDate" onchange="applyFilters()">
@@ -197,6 +197,10 @@
                     <option value="LOCK">LOCK</option>
                 </select>
             </div>
+            <div class="flex flex-col gap-2">
+                <label class="font-body-sm font-semibold text-on-surface">User ID</label>
+                <input class="w-full bg-white border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none" type="number" min="1" id="userIdFilter" onchange="applyFilters()" placeholder="Any user">
+            </div>
             <div class="flex flex-end items-end">
                 <button class="w-full border border-outline-variant bg-white text-primary px-6 py-2.5 rounded-lg font-bold text-body-md hover:bg-surface-container transition-colors" onclick="resetFilters()">
                     Reset Filters
@@ -222,11 +226,12 @@
                         <th class="px-4 py-2.5 font-label-md text-label-md uppercase text-on-secondary-container tracking-wider">Before Value</th>
                         <th class="px-4 py-2.5 font-label-md text-label-md uppercase text-on-secondary-container tracking-wider">After Value</th>
                         <th class="px-4 py-2.5 font-label-md text-label-md uppercase text-on-secondary-container tracking-wider">IP Address</th>
+                        <th class="px-4 py-2.5 font-label-md text-label-md uppercase text-on-secondary-container tracking-wider">User Agent</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-outline-variant" id="auditTableBody">
                     <tr class="text-center" id="tableLoadingRow">
-                        <td colspan="8" class="py-8 text-on-surface-variant">
+                        <td colspan="9" class="py-8 text-on-surface-variant">
                             <span class="material-symbols-outlined animate-spin inline-block mr-2" style="animation: spin 1s linear infinite;">autorenew</span>
                             Loading audit logs...
                         </td>
@@ -390,7 +395,7 @@
 
     function showOrgEmptyState() {
         const tbody = document.getElementById('auditTableBody');
-        tbody.innerHTML = '<tr><td colspan="8" class="py-10 text-center text-on-surface-variant">'
+        tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-on-surface-variant">'
             + '<span class="material-symbols-outlined text-4xl block mb-2 mx-auto text-outline">domain_disabled</span>'
             + 'No organization found. <a href="/financeAdmin/organizationSetup" class="text-primary underline font-semibold">Set one up in Finance Admin.</a>'
             + '</td></tr>';
@@ -413,7 +418,7 @@
         hideAlert();
 
         const tbody = document.getElementById('auditTableBody');
-        tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-on-surface-variant">'
+        tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-on-surface-variant">'
             + '<span class="material-symbols-outlined animate-spin inline-block mr-2">autorenew</span>'
             + 'Loading audit logs...'
             + '</td></tr>';
@@ -423,6 +428,7 @@
             const endDate = document.getElementById('endDate').value;
             const entityType = document.getElementById('entityTypeFilter').value;
             const action = document.getElementById('actionFilter').value;
+            const userId = document.getElementById('userIdFilter').value;
             const params = new URLSearchParams();
             if (startDate || endDate) {
                 params.set('startDate', formatDateForAPI(startDate || '1970-01-01', false));
@@ -430,6 +436,7 @@
             }
             if (entityType) params.set('entityType', entityType);
             if (action) params.set('action', action);
+            if (userId) params.set('userId', userId);
 
             let url = API_BASE + '/audit-logs/org/' + encodeURIComponent(orgId);
             const query = params.toString();
@@ -444,7 +451,7 @@
         } catch (err) {
             console.error('Error loading audit logs:', err);
             showAlert('Error loading audit logs: ' + err.message);
-            tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-error">Error loading audit logs: ' + escHtml(err.message) + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-error">Error loading audit logs: ' + escHtml(err.message) + '</td></tr>';
             updateIntegrityCards([]);
         } finally {
             isLoading = false;
@@ -466,7 +473,7 @@
         const pageItems = filteredLogs.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
         if (pageItems.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="py-10 text-center text-on-surface-variant">'
+            tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-on-surface-variant">'
                 + '<span class="material-symbols-outlined text-4xl block mb-2 mx-auto text-outline">manage_search</span>'
                 + 'No audit logs match the current filters.'
                 + '</td></tr>';
@@ -482,6 +489,7 @@
                     + '<td class="px-4 py-2 font-label-md text-on-secondary-container max-w-[140px] truncate" title="' + escHtml(log.oldValue || '') + '">' + escHtml(log.oldValue || '-') + '</td>'
                     + '<td class="px-4 py-2 font-label-md text-primary font-bold max-w-[140px] truncate" title="' + escHtml(log.newValue || '') + '">' + escHtml(log.newValue || '-') + '</td>'
                     + '<td class="px-4 py-2 font-label-md text-on-surface-variant">' + escHtml(log.ipAddress || 'N/A') + '</td>'
+                    + '<td class="px-4 py-2 font-label-md text-on-surface-variant max-w-[220px] truncate" title="' + escHtml(log.userAgent || '') + '">' + escHtml(log.userAgent || '-') + '</td>'
                     + '</tr>';
             }).join('');
         }
@@ -575,6 +583,7 @@
         document.getElementById('endDate').value = '';
         document.getElementById('entityTypeFilter').value = '';
         document.getElementById('actionFilter').value = '';
+        document.getElementById('userIdFilter').value = '';
         loadAuditLogs();
     }
 
@@ -588,7 +597,7 @@
         var today = new Date().toISOString().split('T')[0];
 
         var header = ['Timestamp', 'User', 'Action', 'Entity Type', 'Entity ID',
-                      'Description', 'Before Value', 'After Value', 'IP Address']
+                      'Description', 'Before Value', 'After Value', 'IP Address', 'User Agent']
                       .map(csvField).join(',');
 
         var rows = filteredLogs.map(function(log) {
@@ -601,7 +610,8 @@
                 log.description || '',
                 log.oldValue || '',
                 log.newValue || '',
-                log.ipAddress || 'N/A'
+                log.ipAddress || 'N/A',
+                log.userAgent || ''
             ].map(csvField).join(',');
         });
 

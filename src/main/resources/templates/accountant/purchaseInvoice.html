@@ -244,27 +244,29 @@
                         <label class="font-body-sm font-semibold text-slate-700">Vendor Account</label>
                         <div class="relative">
                             <select id="vendorSelect" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 appearance-none focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md">
-                                <option>Oluwa Logistics Ltd (V-9082)</option>
-                                <option>GIG Logistics</option>
-                                <option>DHL Nigeria</option>
+                                <option value="">Select vendor...</option>
                             </select>
                             <span class="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                         </div>
+                        <button id="toggleVendorFormBtn" type="button" class="mt-2 inline-flex items-center gap-1 text-primary hover:opacity-70 transition-opacity font-semibold text-[13px]">
+                            <span class="material-symbols-outlined text-[18px]">add_business</span>
+                            New Vendor
+                        </button>
                     </div>
                     <div class="space-y-1.5">
                         <label class="font-body-sm font-semibold text-slate-700">Invoice Reference Number</label>
-                        <input id="purchaseOrderNumber" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" placeholder="Enter Reference" type="text" value="INV-2023-089">
+                        <input id="purchaseOrderNumber" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" placeholder="Enter Reference" type="text">
                     </div>
                     <div class="space-y-1.5">
                         <label class="font-body-sm font-semibold text-slate-700">Issue Date</label>
                         <div class="relative">
-                            <input id="purchaseDate" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" type="date" value="2023-08-24">
+                            <input id="purchaseDate" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" type="date">
                         </div>
                     </div>
                     <div class="space-y-1.5">
                         <label class="font-body-sm font-semibold text-slate-700">Due Date</label>
                         <div class="relative">
-                            <input id="dueDate" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" type="date" value="2023-09-07">
+                            <input id="dueDate" class="w-full bg-white border border-slate-200 rounded-lg h-11 px-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-body-md" type="date">
                         </div>
                     </div>
                     <div class="space-y-1.5">
@@ -280,8 +282,23 @@
                         <label class="font-body-sm font-semibold text-slate-700">Total Extraction Value (₦)</label>
                         <div class="relative">
                             <span class="absolute left-3 top-2.5 font-bold text-slate-400">₦</span>
-                            <input class="w-full bg-white border-2 border-primary/20 rounded-lg h-11 pl-8 pr-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-headline-sm text-primary" type="text" value="75,250.00">
+                            <input id="purchaseTotalDisplay" class="w-full bg-white border-2 border-primary/20 rounded-lg h-11 pl-8 pr-3 focus:border-primary focus:ring-2 focus:ring-slate-100 transition-all font-headline-sm text-primary" type="text" value="0.00" readonly>
                         </div>
+                    </div>
+                </div>
+                <div id="vendorFormPanel" class="hidden border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input id="newVendorCode" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Vendor code">
+                        <input id="newVendorLegalName" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Legal name">
+                        <input id="newVendorEmail" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Email" type="email">
+                        <input id="newVendorPhone" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Phone">
+                        <input id="newVendorTaxId" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Tax ID">
+                        <input id="newVendorPaymentTerms" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Payment terms">
+                    </div>
+                    <textarea id="newVendorBillingAddress" class="mt-3 w-full bg-white border border-slate-200 rounded-lg p-3" rows="2" placeholder="Billing address"></textarea>
+                    <div class="flex justify-end gap-2 mt-3">
+                        <button id="cancelVendorBtn" type="button" class="px-4 h-10 rounded-lg border border-slate-200 text-slate-600 font-semibold">Cancel</button>
+                        <button id="saveVendorBtn" type="button" class="px-4 h-10 rounded-lg bg-primary text-white font-bold">Save Vendor</button>
                     </div>
                 </div>
                 <div class="mt-stack-md">
@@ -306,33 +323,16 @@
                             <tbody id="invoice-items" class="divide-y divide-slate-50 font-body-sm">
                             <tr>
                                 <td class="p-3">
-                                    <input class="w-full border-none p-0 focus:ring-0 bg-transparent" type="text" value="Bulk Courier Services - Lagos Central">
+                                    <input class="w-full border-none p-0 focus:ring-0 bg-transparent" type="text" placeholder="Item description">
                                 </td>
                                 <td class="p-3">
                                     <select class="line-account-select w-full border-none p-0 focus:ring-0 bg-transparent text-slate-600">
-                                        <option>Office Expenses: Logistics</option>
-                                        <option>Delivery Charges</option>
-                                        <option>Marketing Operations</option>
+                                        <option value="">Select expense account...</option>
                                     </select>
                                 </td>
-                                <td class="p-3 text-center"><input class="qty-input w-16 text-center border-none p-0 bg-transparent" type="number" value="1"></td>
-                                <td class="p-3 text-right"><input class="unit-input w-28 text-right border-none p-0 bg-transparent" type="number" value="45000.00"></td>
-                                <td class="p-3 text-right font-bold">45,000.00</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3">
-                                    <input class="w-full border-none p-0 focus:ring-0 bg-transparent" type="text" value="International Document Clearance">
-                                </td>
-                                <td class="p-3">
-                                    <select class="line-account-select w-full border-none p-0 focus:ring-0 bg-transparent text-slate-600">
-                                        <option>Office Expenses: Logistics</option>
-                                        <option>Legal &amp; Documentation</option>
-                                        <option>Misc Expenses</option>
-                                    </select>
-                                </td>
-                                <td class="p-3 text-center"><input class="qty-input w-16 text-center border-none p-0 bg-transparent" type="number" value="2"></td>
-                                <td class="p-3 text-right"><input class="unit-input w-28 text-right border-none p-0 bg-transparent" type="number" value="12500.00"></td>
-                                <td class="p-3 text-right font-bold">25,000.00</td>
+                                <td class="p-3 text-center"><input class="qty-input w-16 text-center border-none p-0 bg-transparent" type="number" min="0" value="1"></td>
+                                <td class="p-3 text-right"><input class="unit-input w-28 text-right border-none p-0 bg-transparent" type="number" min="0" step="0.01" value="0.00"></td>
+                                <td class="p-3 text-right font-bold">0.00</td>
                             </tr>
                             </tbody>
                             <tfoot>
@@ -368,6 +368,7 @@
     let expenseAccounts = [];
     let vendors = [];
     let taxJurisdictions = [];
+    let bankAccounts = [];
 
     function formatCurrency(value) {
       return new Intl.NumberFormat('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
@@ -390,6 +391,10 @@
       const el = document.getElementById('pageStatus');
       el.textContent = message;
       el.className = type === 'error' ? 'text-body-sm text-red-700' : 'text-body-sm text-slate-500';
+    }
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
     }
 
     document.querySelectorAll('.ocr-highlight').forEach(highlight => {
@@ -431,7 +436,9 @@
     function populateLineAccountSelects() {
       document.querySelectorAll('.line-account-select').forEach(select => {
         const selected = select.value;
-        select.innerHTML = expenseAccounts.map(account => `<option value="${account.id}">${account.accountCode} - ${account.accountName}</option>`).join('');
+        select.innerHTML = expenseAccounts.length
+          ? expenseAccounts.map(account => `<option value="${account.id}">${account.accountCode} - ${account.accountName}</option>`).join('')
+          : '<option value="">No expense accounts found</option>';
         if (selected) select.value = selected;
       });
     }
@@ -463,18 +470,25 @@
     async function loadContext() {
       currentOrgId = document.getElementById('organizationSelect').value;
       if (!currentOrgId) return;
-      const [accounts, vendorRows, taxRows] = await Promise.all([
+      const [accounts, vendorRows, taxRows, bankRows] = await Promise.all([
         apiJson(`/api/accountant/chart-of-accounts/org/${currentOrgId}`),
         apiJson(`/api/accountant/vendors/org/${currentOrgId}`),
-        apiJson(`/api/accountant/tax-jurisdictions/org/${currentOrgId}`)
+        apiJson(`/api/accountant/tax-jurisdictions/org/${currentOrgId}`),
+        apiJson(`/api/accountant/bank-accounts/org/${currentOrgId}`)
       ]);
       expenseAccounts = (accounts || []).filter(account => account.accountType === 'EXPENSE');
       vendors = vendorRows || [];
       taxJurisdictions = taxRows || [];
-      document.getElementById('vendorSelect').innerHTML = vendors.map(vendor => `<option value="${vendor.id}">${vendor.vendorCode} - ${vendor.legalName}</option>`).join('');
+      bankAccounts = bankRows || [];
+      document.getElementById('vendorSelect').innerHTML = vendors.length
+        ? '<option value="">Select vendor...</option>' + vendors.map(vendor => `<option value="${vendor.id}">${vendor.vendorCode} - ${vendor.legalName}</option>`).join('')
+        : '<option value="">No vendors found</option>';
       populateLineAccountSelects();
       populateTaxSelect();
       updateTotals();
+      if (!vendors.length) setStatus('No vendors found. Use New Vendor before creating a purchase invoice.', 'error');
+      else if (!expenseAccounts.length) setStatus('No expense accounts found. Create expense accounts in Chart of Accounts.', 'error');
+      else setStatus('Ready.');
       await loadInvoices();
     }
 
@@ -486,16 +500,49 @@
         quantity: Number(row.querySelector('.qty-input')?.value || 0),
         unitPrice: Number(row.querySelector('.unit-input')?.value || 0)
       }));
-      const subtotal = lineItems.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
+      const validLines = lineItems.filter(line => line.description && line.chartAccountId && line.quantity > 0 && line.unitPrice > 0);
+      if (!currentOrgId) throw new Error('Select an organization first.');
+      if (!vendor) throw new Error('Select or create a vendor first.');
+      if (!expenseAccounts.length) throw new Error('Create at least one expense account before entering purchase invoices.');
+      if (validLines.length === 0) throw new Error('Add at least one complete invoice line.');
       return {
-        vendorId: vendor ? vendor.id : null,
-        vendorName: vendor ? vendor.legalName : 'Unregistered Vendor',
+        vendorId: vendor.id,
+        vendorName: vendor.legalName,
         purchaseOrderNumber: document.getElementById('purchaseOrderNumber').value || `AP-${Date.now()}`,
-        purchaseDate: document.getElementById('purchaseDate').value,
-        dueDate: document.getElementById('dueDate').value,
+        purchaseDate: document.getElementById('purchaseDate').value || today(),
+        dueDate: document.getElementById('dueDate').value || document.getElementById('purchaseDate').value || today(),
         taxJurisdictionId: Number(document.getElementById('taxJurisdictionSelect').value || 0) || null,
-        lineItems
+        lineItems: validLines
       };
+    }
+
+    function resetVendorForm() {
+      ['newVendorCode', 'newVendorLegalName', 'newVendorEmail', 'newVendorPhone', 'newVendorTaxId', 'newVendorPaymentTerms', 'newVendorBillingAddress']
+        .forEach(id => document.getElementById(id).value = '');
+      document.getElementById('vendorFormPanel').classList.add('hidden');
+    }
+
+    async function saveVendor() {
+      if (!currentOrgId) throw new Error('Select an organization first.');
+      const payload = {
+        vendorCode: document.getElementById('newVendorCode').value.trim(),
+        legalName: document.getElementById('newVendorLegalName').value.trim(),
+        email: document.getElementById('newVendorEmail').value.trim() || null,
+        phone: document.getElementById('newVendorPhone').value.trim() || null,
+        taxId: document.getElementById('newVendorTaxId').value.trim() || null,
+        paymentTerms: document.getElementById('newVendorPaymentTerms').value.trim() || null,
+        billingAddress: document.getElementById('newVendorBillingAddress').value.trim() || null,
+        active: true
+      };
+      if (!payload.vendorCode || !payload.legalName) throw new Error('Vendor code and legal name are required.');
+      const vendor = await apiJson(`/api/accountant/vendors/org/${currentOrgId}`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      resetVendorForm();
+      await loadContext();
+      document.getElementById('vendorSelect').value = vendor.id;
+      setStatus(`Vendor ${vendor.vendorCode} created.`);
     }
 
     async function saveDraft() {
@@ -540,12 +587,64 @@
       `).join('') || '<div class="py-3 text-slate-500">No open payables.</div>';
     }
 
+    async function loadInvoices() {
+      const rows = await apiJson(`/api/accountant/reports/aged-payables/org/${currentOrgId}`) || [];
+      document.getElementById('invoiceList').innerHTML = rows.map(invoice => `
+        <div class="py-3 flex items-center justify-between gap-4">
+          <div>
+            <div class="font-semibold text-primary">${invoice.documentNumber} - ${invoice.partyName}</div>
+            <div class="text-slate-500">${invoice.status} - Due ${invoice.dueDate}</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="font-semibold">NGN ${formatCurrency(invoice.outstandingAmount || 0)}</div>
+            ${['POSTED', 'PARTIALLY_PAID'].includes(invoice.status) ? `<button data-payment-id="${invoice.documentId}" class="px-2 py-1 rounded border border-slate-200 text-body-sm font-bold">Record Payment</button>` : ''}
+          </div>
+        </div>
+      `).join('') || '<div class="py-3 text-slate-500">No open payables.</div>';
+      document.querySelectorAll('[data-payment-id]').forEach(button => {
+        button.addEventListener('click', () => recordInvoicePayment(button.dataset.paymentId));
+      });
+    }
+
+    async function recordInvoicePayment(invoiceId) {
+      if (!bankAccounts.length) {
+        setStatus('Create a bank account before recording supplier payments.', 'error');
+        return;
+      }
+      const bankAccount = bankAccounts[0];
+      const amount = window.prompt('Payment amount');
+      if (!amount || Number(amount) <= 0) {
+        setStatus('Payment amount must be positive.', 'error');
+        return;
+      }
+      try {
+        await apiJson(`/api/accountant/purchase-invoices/${invoiceId}/payments`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            amount: Number(amount),
+            bankAccountId: bankAccount.id,
+            paymentDate: today(),
+            notes: `Supplier payment from ${bankAccount.bankName || 'selected bank account'}`
+          })
+        });
+        setStatus('Supplier payment recorded.');
+        await loadInvoices();
+      } catch (err) {
+        setStatus(`Payment failed: ${err.message}`, 'error');
+      }
+    }
+
     document.getElementById('invoice-items').addEventListener('input', updateTotals);
     document.getElementById('taxJurisdictionSelect').addEventListener('change', updateTotals);
     document.getElementById('organizationSelect').addEventListener('change', loadContext);
+    document.getElementById('toggleVendorFormBtn').addEventListener('click', () => document.getElementById('vendorFormPanel').classList.toggle('hidden'));
+    document.getElementById('cancelVendorBtn').addEventListener('click', resetVendorForm);
+    document.getElementById('saveVendorBtn').addEventListener('click', () => saveVendor().catch(err => setStatus(err.message, 'error')));
     document.getElementById('saveDraftBtn').addEventListener('click', () => saveDraft().catch(() => {}));
     document.getElementById('postInvoiceBtn').addEventListener('click', postInvoice);
     document.getElementById('refreshInvoicesBtn').addEventListener('click', loadInvoices);
+    document.getElementById('purchaseDate').value = today();
+    document.getElementById('dueDate').value = today();
     loadContext().catch(err => setStatus(`Load failed: ${err.message}`, 'error'));
 </script>
 </body>

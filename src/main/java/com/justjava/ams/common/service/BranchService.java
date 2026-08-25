@@ -41,6 +41,13 @@ public class BranchService {
                 .organization(organization)
                 .name(name)
                 .code(code)
+                .address(trimToNull(request.getAddress()))
+                .city(trimToNull(request.getCity()))
+                .state(trimToNull(request.getState()))
+                .country(trimToNull(request.getCountry()))
+                .postalCode(trimToNull(request.getPostalCode()))
+                .phone(trimToNull(request.getPhone()))
+                .email(trimToNull(request.getEmail()))
                 .active(request.getActive() != null ? request.getActive() : true)
                 .build();
 
@@ -80,6 +87,13 @@ public class BranchService {
 
         branch.setName(name);
         branch.setCode(code);
+        branch.setAddress(trimToNull(request.getAddress()));
+        branch.setCity(trimToNull(request.getCity()));
+        branch.setState(trimToNull(request.getState()));
+        branch.setCountry(trimToNull(request.getCountry()));
+        branch.setPostalCode(trimToNull(request.getPostalCode()));
+        branch.setPhone(trimToNull(request.getPhone()));
+        branch.setEmail(trimToNull(request.getEmail()));
         branch.setActive(request.getActive() != null ? request.getActive() : branch.getActive());
 
         Branch saved = branchRepository.save(branch);
@@ -104,6 +118,13 @@ public class BranchService {
                 .organizationId(branch.getOrganization().getId())
                 .name(branch.getName())
                 .code(branch.getCode())
+                .address(branch.getAddress())
+                .city(branch.getCity())
+                .state(branch.getState())
+                .country(branch.getCountry())
+                .postalCode(branch.getPostalCode())
+                .phone(branch.getPhone())
+                .email(branch.getEmail())
                 .active(branch.getActive())
                 .createdAt(branch.getCreatedAt())
                 .updatedAt(branch.getUpdatedAt())

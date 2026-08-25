@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class AuditLogFilterRequest {
     private String entityType;
     private Long entityId;
+    private Long userId;
     private String action;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

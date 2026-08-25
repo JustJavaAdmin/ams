@@ -29,6 +29,27 @@ public class Branch {
 	@Column(nullable = false, unique = true)
 	private String code;
 
+	@Column
+	private String address;
+
+	@Column
+	private String city;
+
+	@Column
+	private String state;
+
+	@Column
+	private String country;
+
+	@Column
+	private String postalCode;
+
+	@Column
+	private String phone;
+
+	@Column
+	private String email;
+
 	@Column(name = "is_active", nullable = false)
 	private Boolean active = true;
 

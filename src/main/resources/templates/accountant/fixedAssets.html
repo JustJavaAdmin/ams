@@ -1,297 +1,158 @@
-<!DOCTYPE html><html class="light" lang="en" xmlns:th="http://www.thymeleaf.org"><head>
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Fixed Asset Register - FinAdmin</title>
+    <title>External Fixed Assets | AMS Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script id="tailwind-config">
+    <script>
         tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              "colors": {
-                      "outline-variant": "#cfc4c5",
-                      "on-tertiary": "#ffffff",
-                      "surface-variant": "#e0e3e5",
-                      "on-primary-fixed-variant": "#474747",
-                      "inverse-on-surface": "#eff1f3",
-                      "secondary-fixed": "#d3e4fe",
-                      "secondary": "#505f76",
-                      "primary": "#000000",
-                      "on-error": "#ffffff",
-                      "surface-container-highest": "#e0e3e5",
-                      "surface-container-high": "#e6e8ea",
-                      "on-tertiary-fixed-variant": "#3f465c",
-                      "on-error-container": "#93000a",
-                      "background": "#f7f9fb",
-                      "on-tertiary-container": "#7c839b",
-                      "surface-bright": "#f7f9fb",
-                      "secondary-fixed-dim": "#b7c8e1",
-                      "on-surface": "#191c1e",
-                      "surface-tint": "#5e5e5e",
-                      "on-secondary": "#ffffff",
-                      "on-primary-container": "#848484",
-                      "tertiary-container": "#131b2e",
-                      "on-secondary-fixed": "#0b1c30",
-                      "surface-container-low": "#f2f4f6",
-                      "error": "#ba1a1a",
-                      "on-primary-fixed": "#1b1b1b",
-                      "primary-fixed-dim": "#c6c6c6",
-                      "on-tertiary-fixed": "#131b2e",
-                      "tertiary-fixed": "#dae2fd",
-                      "secondary-container": "#d0e1fb",
-                      "on-surface-variant": "#4c4546",
-                      "tertiary-fixed-dim": "#bec6e0",
-                      "surface-container-lowest": "#ffffff",
-                      "inverse-primary": "#c6c6c6",
-                      "surface-dim": "#d8dadc",
-                      "tertiary": "#000000",
-                      "outline": "#7e7576",
-                      "inverse-surface": "#2d3133",
-                      "primary-container": "#1b1b1b",
-                      "surface": "#f7f9fb",
-                      "surface-container": "#eceef0",
-                      "on-secondary-fixed-variant": "#38485d",
-                      "primary-fixed": "#e2e2e2",
-                      "error-container": "#ffdad6",
-                      "on-secondary-container": "#54647a",
-                      "on-background": "#191c1e",
-                      "on-primary": "#ffffff"
-              },
-              "borderRadius": {
-                      "DEFAULT": "0.25rem",
-                      "lg": "12px",
-                      "xl": "0.75rem",
-                      "full": "9999px"
-              },
-              "spacing": {
-                      "gutter": "24px",
-                      "card-padding": "24px",
-                      "stack-md": "16px",
-                      "stack-sm": "8px",
-                      "outer-padding": "32px"
-              },
-              "fontFamily": {
-                      "label-md": ["JetBrains Mono"],
-                      "body-sm": ["Hanken Grotesk"],
-                      "headline-md": ["Hanken Grotesk"],
-                      "headline-lg": ["Hanken Grotesk"],
-                      "currency-display": ["Hanken Grotesk"],
-                      "body-md": ["Hanken Grotesk"],
-                      "body-lg": ["Hanken Grotesk"],
-                      "headline-sm": ["Hanken Grotesk"]
-              },
-              "fontSize": {
-                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
-                      "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
-                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
-                      "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                      "currency-display": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
-                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
-                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
-              }
-            },
-          },
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#000000",
+                        surface: "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "surface-container-lowest": "#ffffff",
+                        secondary: "#505f76",
+                        "outline-variant": "#cfc4c5",
+                        "on-primary": "#ffffff",
+                        error: "#ba1a1a"
+                    },
+                    borderRadius: { lg: "0.5rem", xl: "0.75rem" },
+                    spacing: { "card-padding": "24px", "outer-padding": "32px", gutter: "24px" },
+                    fontFamily: {
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "label-md": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "body-md": ["14px", {"lineHeight": "20px"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}]
+                    }
+                }
+            }
         }
     </script>
     <style>
-        body {
-            background-color: #f2f4f6;
-            font-family: 'Hanken Grotesk', sans-serif;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .table-scrollbar::-webkit-scrollbar {
-            height: 6px;
-        }
-        .table-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        .table-scrollbar::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 10px;
-        }
-        .active-row:hover {
-            background-color: #f2f4f6;
-            transition: background-color 0.2s ease;
-        }
+        body { background-color: #f2f4f6; font-family: 'Hanken Grotesk', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; vertical-align: middle; }
     </style>
 </head>
-<body class="min-h-screen flex">
-
+<body class="min-h-screen flex text-primary">
 <aside th:replace="~{layouts/accountantLayout :: sidebar('fixedAssets')}"></aside>
 
 <div class="flex-grow flex flex-col min-w-0">
-    <header class="bg-surface sticky top-0 z-40 border-b border-outline-variant flex justify-between items-center w-full px-outer-padding py-4 max-w-full">
-        <div class="flex items-center gap-4">
-            <span class="font-headline-sm text-headline-sm font-bold text-primary">Fixed Asset Register</span>
+    <header class="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-40">
+        <div class="flex items-center justify-between w-full px-outer-padding h-16">
+            <span class="font-headline-sm text-headline-sm text-primary">External Fixed Assets</span>
+            <a href="/accountant/depreciationJournals" class="inline-flex items-center gap-2 bg-primary text-on-primary rounded-lg px-4 py-2 font-bold text-body-md">
+                <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                Depreciation Imports
+            </a>
         </div>
-
     </header>
 
-    <main class="px-outer-padding py-gutter max-w-7xl mx-auto w-full flex flex-col gap-gutter">
-        <div class="-mb-2">
-            <p class="font-body-md text-body-md text-on-surface-variant">Track corporate assets, manage location deployments, and process depreciation entries.</p>
-        </div>
-
-        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding shadow-sm">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex gap-4">
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
-                        <input class="pl-10 pr-4 py-2 border border-outline-variant rounded-lg bg-surface text-body-sm font-body-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all w-64" placeholder="Search assets..." type="text">
-                    </div>
-                    <button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg text-body-sm font-body-sm hover:bg-surface-container transition-colors">
-                        <span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
-                        Filter
-                    </button>
+    <main class="px-outer-padding py-gutter max-w-7xl mx-auto w-full space-y-gutter">
+        <section class="bg-white border border-outline-variant rounded-lg p-card-padding">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[28px]">inventory_2</span>
                 </div>
-                <button class="bg-primary text-on-primary font-bold px-6 py-2.5 rounded-lg text-body-sm hover:opacity-90 transition-opacity flex items-center gap-2">
-                    <span class="material-symbols-outlined" data-icon="add">add</span>
-                    + Register New Asset
+                <div class="max-w-3xl">
+                    <h1 class="font-headline-sm text-headline-sm mb-2">Fixed assets are maintained outside AMS</h1>
+                    <p class="text-secondary text-body-md">
+                        The fixed asset register, asset additions, disposals, valuation, and depreciation calculations are owned by the external fixed asset application.
+                        AMS consumes the accounting output from that application by importing generated depreciation journal batches.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-outline-variant rounded-lg overflow-hidden">
+            <div class="p-card-padding border-b border-outline-variant flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                <div class="space-y-2">
+                    <label for="orgSelector" class="font-label-md text-secondary uppercase">Organization</label>
+                    <select id="orgSelector" class="w-full md:w-80 bg-white border border-outline-variant rounded-lg p-3 text-body-md">
+                        <option value="">Select organization...</option>
+                        <option th:each="org : ${organizations}" th:value="${org.id}" th:text="${org.name}"></option>
+                    </select>
+                </div>
+                <button id="refreshBtn" type="button" class="inline-flex items-center justify-center gap-2 bg-white border border-outline-variant rounded-lg px-4 py-3 font-semibold text-body-md">
+                    <span class="material-symbols-outlined text-[18px]">refresh</span>
+                    Refresh
                 </button>
             </div>
-
-            <div class="overflow-x-auto table-scrollbar">
-                <table class="w-full text-left border-collapse">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
                     <thead>
-                    <tr class="bg-surface-container-low border-b border-outline-variant">
-                        <th class="px-4 py-3 font-label-md text-label-md uppercase text-on-surface-variant">Asset ID</th>
-                        <th class="px-4 py-3 font-label-md text-label-md uppercase text-on-surface-variant">Description Name</th>
-                        <th class="px-4 py-3 font-label-md text-label-md uppercase text-on-surface-variant">Location</th>
-                        <th class="px-4 py-3 font-label-md text-label-md uppercase text-on-surface-variant">Purchase Date</th>
-                        <th class="px-4 py-3 font-label-md text-label-md uppercase text-on-surface-variant text-right">Cost Baseline</th>
-                        <th class="px-4 py-3 font-label-md text-label-md uppercase text-on-surface-variant">Method</th>
-                        <th class="px-4 py-3 font-label-md text-label-md uppercase text-on-surface-variant text-right">Accum. Depr.</th>
-                        <th class="px-4 py-3 font-label-md text-label-md uppercase text-on-surface-variant text-right">Net Book Value</th>
+                    <tr class="bg-surface-container">
+                        <th class="px-5 py-3 font-label-md text-secondary uppercase">Batch</th>
+                        <th class="px-5 py-3 font-label-md text-secondary uppercase">External System</th>
+                        <th class="px-5 py-3 font-label-md text-secondary uppercase">Journal Date</th>
+                        <th class="px-5 py-3 font-label-md text-secondary uppercase text-right">Debit Total</th>
+                        <th class="px-5 py-3 font-label-md text-secondary uppercase">Status</th>
+                        <th class="px-5 py-3"></th>
                     </tr>
                     </thead>
-                    <tbody class="divide-y divide-outline-variant">
-                    <tr class="active-row cursor-pointer">
-                        <td class="px-4 py-4 font-label-md text-body-md">#AS-GEN-001</td>
-                        <td class="px-4 py-4">
-                            <div class="font-body-md font-bold text-on-surface">Industrial 500kVA Generator</div>
-                            <div class="text-[11px] text-on-surface-variant">Power & Infrastructure</div>
-                        </td>
-                        <td class="px-4 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-secondary-container text-on-secondary-fixed-variant">
-                                    Lagos Hub
-                                </span>
-                        </td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">12 Jan 2023</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦45,000,000.00</td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">Straight Line</td>
-                        <td class="px-4 py-4 font-body-md text-right text-error font-medium">₦9,000,000.00</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦36,000,000.00</td>
-                    </tr>
-                    <tr class="active-row cursor-pointer">
-                        <td class="px-4 py-4 font-label-md text-body-md">#AS-IT-421</td>
-                        <td class="px-4 py-4">
-                            <div class="font-body-md font-bold text-on-surface">Core Banking Server Rack</div>
-                            <div class="text-[11px] text-on-surface-variant">Information Technology</div>
-                        </td>
-                        <td class="px-4 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-surface-container-highest text-on-surface-variant">
-                                    Abuja HQ
-                                </span>
-                        </td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">25 Mar 2023</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦12,500,000.00</td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">Red. Balance</td>
-                        <td class="px-4 py-4 font-body-md text-right text-error font-medium">₦3,125,000.00</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦9,375,000.00</td>
-                    </tr>
-                    <tr class="active-row cursor-pointer">
-                        <td class="px-4 py-4 font-label-md text-body-md">#AS-VH-012</td>
-                        <td class="px-4 py-4">
-                            <div class="font-body-md font-bold text-on-surface">Toyota Hilux - Ops Unit</div>
-                            <div class="text-[11px] text-on-surface-variant">Motor Vehicles</div>
-                        </td>
-                        <td class="px-4 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-secondary-container text-on-secondary-fixed-variant">
-                                    Port Harcourt
-                                </span>
-                        </td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">05 Jun 2023</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦32,000,000.00</td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">Straight Line</td>
-                        <td class="px-4 py-4 font-body-md text-right text-error font-medium">₦4,000,000.00</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦28,000,000.00</td>
-                    </tr>
-                    <tr class="active-row cursor-pointer">
-                        <td class="px-4 py-4 font-label-md text-body-md">#AS-OF-882</td>
-                        <td class="px-4 py-4">
-                            <div class="font-body-md font-bold text-on-surface">Ergonomic Suite Set (12)</div>
-                            <div class="text-[11px] text-on-surface-variant">Furniture & Fittings</div>
-                        </td>
-                        <td class="px-4 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-surface-container-highest text-on-surface-variant">
-                                    Lagos Hub
-                                </span>
-                        </td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">14 Aug 2023</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦6,800,000.00</td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">Straight Line</td>
-                        <td class="px-4 py-4 font-body-md text-right text-error font-medium">₦680,000.00</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦6,120,000.00</td>
-                    </tr>
-                    <tr class="active-row cursor-pointer">
-                        <td class="px-4 py-4 font-label-md text-body-md">#AS-IT-901</td>
-                        <td class="px-4 py-4">
-                            <div class="font-body-md font-bold text-on-surface">MacBook Pro 16" (Batch 5)</div>
-                            <div class="text-[11px] text-on-surface-variant">Information Technology</div>
-                        </td>
-                        <td class="px-4 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-secondary-container text-on-secondary-fixed-variant">
-                                    Kano Branch
-                                </span>
-                        </td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">22 Sep 2023</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦18,200,000.00</td>
-                        <td class="px-4 py-4 font-body-sm text-on-surface-variant">Red. Balance</td>
-                        <td class="px-4 py-4 font-body-md text-right text-error font-medium">₦2,730,000.00</td>
-                        <td class="px-4 py-4 font-body-md font-bold text-right text-on-surface">₦15,470,000.00</td>
-                    </tr>
+                    <tbody id="importsBody" class="divide-y divide-outline-variant">
+                    <tr><td colspan="6" class="px-5 py-8 text-center text-secondary">Select an organization to load depreciation imports.</td></tr>
                     </tbody>
                 </table>
-            </div>
-
-            <div class="mt-8 flex justify-between items-center border-t border-outline-variant pt-6">
-                <div class="flex gap-8">
-                    <div>
-                        <p class="font-label-md text-label-md text-on-surface-variant uppercase">Total Gross Value</p>
-                        <p class="font-headline-sm text-headline-sm font-bold text-on-surface">₦114,500,000.00</p>
-                    </div>
-                    <div>
-                        <p class="font-label-md text-label-md text-on-surface-variant uppercase">Total NBV</p>
-                        <p class="font-headline-sm text-headline-sm font-bold text-on-surface">₦94,965,000.00</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container disabled:opacity-30" disabled="">
-                        <span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
-                    </button>
-                    <span class="font-body-sm text-on-surface-variant px-4">Page 1 of 12</span>
-                    <button class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container">
-                        <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
-                    </button>
-                </div>
             </div>
         </section>
     </main>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const rows = document.querySelectorAll('.active-row');
-        rows.forEach(row => {
-            row.addEventListener('click', () => {
-                console.log('Asset details view requested');
-            });
-        });
-    });
+    const orgSelector = document.getElementById('orgSelector');
+    const importsBody = document.getElementById('importsBody');
+
+    async function apiJson(url) {
+        const response = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!response.ok) throw new Error(data?.message || data?.error || text || `Request failed with ${response.status}`);
+        return data;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    function money(value) {
+        return Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    async function loadImports() {
+        const orgId = orgSelector.value;
+        if (!orgId) {
+            importsBody.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-secondary">Select an organization to load depreciation imports.</td></tr>';
+            return;
+        }
+        importsBody.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-secondary">Loading depreciation imports...</td></tr>';
+        try {
+            const rows = await apiJson(`/api/accountant/depreciation-journals/org/${orgId}/imports`) || [];
+            importsBody.innerHTML = rows.length ? rows.map(row => `
+                <tr>
+                    <td class="px-5 py-4 font-semibold">${escapeHtml(row.externalBatchId)}</td>
+                    <td class="px-5 py-4 text-secondary">${escapeHtml(row.externalSystem)}</td>
+                    <td class="px-5 py-4">${escapeHtml(row.journalDate)}</td>
+                    <td class="px-5 py-4 text-right font-semibold">${money(row.totalDebit)}</td>
+                    <td class="px-5 py-4"><span class="px-2 py-1 rounded-full bg-surface-container text-secondary text-xs font-bold">${escapeHtml(row.status)}</span></td>
+                    <td class="px-5 py-4 text-right"><a class="font-semibold underline" href="/accountant/depreciationJournals">Open import workspace</a></td>
+                </tr>
+            `).join('') : '<tr><td colspan="6" class="px-5 py-8 text-center text-secondary">No depreciation journals imported yet.</td></tr>';
+        } catch (err) {
+            importsBody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-error">${escapeHtml(err.message)}</td></tr>`;
+        }
+    }
+
+    orgSelector.addEventListener('change', loadImports);
+    document.getElementById('refreshBtn').addEventListener('click', loadImports);
 </script>
-</body></html>
+</body>
+</html>

@@ -4,6 +4,7 @@ import com.justjava.ams.auditor.dto.SecurityEventDTO;
 import com.justjava.ams.auditor.entity.SecurityEvent;
 import com.justjava.ams.auditor.repository.SecurityEventRepository;
 import com.justjava.ams.common.entity.Organization;
+import com.justjava.ams.common.entity.User;
 import com.justjava.ams.common.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class SecurityEventService {
     private final SecurityEventRepository securityEventRepository;
     private final OrganizationRepository organizationRepository;
     private final AuditLogService auditLogService;
+    private final AuditContextService auditContextService;
 
     public SecurityEventDTO createSecurityEvent(Long organizationId, SecurityEventDTO dto) {
         Organization organization = organizationRepository.findById(organizationId)
@@ -44,12 +46,13 @@ public class SecurityEventService {
 
         SecurityEvent event = SecurityEvent.builder()
                 .organization(organization)
+                .user(resolveUser(dto.getUserId()))
                 .eventType(eventType)
                 .severity(severity)
                 .title(dto.getTitle())
                 .description(dto.getDescription())
-                .ipAddress(dto.getIpAddress())
-                .userAgent(dto.getUserAgent())
+                .ipAddress(firstNonBlank(dto.getIpAddress(), auditContextService.currentIpAddress()))
+                .userAgent(firstNonBlank(dto.getUserAgent(), auditContextService.currentUserAgent()))
                 // explicitly set acknowledged defaults
                 .acknowledged(false)
                 .build();
@@ -193,6 +196,8 @@ public class SecurityEventService {
                 .stream()
                 .filter(e -> selectedEventType == null || selectedEventType.equals(e.getEventType()))
                 .filter(e -> selectedSeverity == null || selectedSeverity.equals(e.getSeverity()))
+                .filter(e -> filter.getUserId() == null
+                        || (e.getUser() != null && filter.getUserId().equals(e.getUser().getId())))
                 .filter(e -> filter.getAcknowledged() == null || filter.getAcknowledged().equals(e.getAcknowledged()))
                 .filter(e -> startDate == null || !e.getCreatedAt().isBefore(startDate))
                 .filter(e -> endDate == null || !e.getCreatedAt().isAfter(endDate))
@@ -220,12 +225,13 @@ public class SecurityEventService {
 
         SecurityEvent event = SecurityEvent.builder()
                 .organization(organization)
+                .user(auditContextService.currentUser().orElse(null))
                 .eventType(et)
                 .severity(sev)
                 .title(title)
                 .description(description)
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
+                .ipAddress(firstNonBlank(ipAddress, auditContextService.currentIpAddress()))
+                .userAgent(firstNonBlank(userAgent, auditContextService.currentUserAgent()))
                 .acknowledged(false)
                 .build();
 
@@ -235,6 +241,25 @@ public class SecurityEventService {
     private Organization findOrganization(Long organizationId) {
         return organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+    }
+
+    private User resolveUser(Long userId) {
+        return userId != null
+                ? auditContextService.resolveUser(userId)
+                : auditContextService.currentUser().orElse(null);
+    }
+
+    private String firstNonBlank(String preferred, String fallback) {
+        String normalized = trimToNull(preferred);
+        return normalized != null ? normalized : trimToNull(fallback);
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private SecurityEventDTO mapToDTO(SecurityEvent event) {

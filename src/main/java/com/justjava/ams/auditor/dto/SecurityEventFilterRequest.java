@@ -15,6 +15,7 @@ public class SecurityEventFilterRequest {
 
     private String eventType;
     private String severity;
+    private Long userId;
     private Boolean acknowledged;
     private LocalDateTime startDate;
     private LocalDateTime endDate;

@@ -81,6 +81,10 @@
                     <select id="bankAccountSelector" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md">
                         <option value="">Select bank account...</option>
                     </select>
+                    <button id="toggleBankAccountFormBtn" type="button" class="mt-2 inline-flex items-center gap-1 text-primary hover:opacity-70 transition-opacity font-semibold text-[13px]">
+                        <span class="material-symbols-outlined text-[18px]">add_card</span>
+                        New Bank Account
+                    </button>
                 </div>
                 <div class="space-y-2">
                     <label class="font-body-sm text-body-sm font-semibold text-primary block" for="reconciliationSelector">Reconciliation</label>
@@ -97,6 +101,24 @@
                         <span class="material-symbols-outlined text-[18px]">task_alt</span>
                         Complete
                     </button>
+                </div>
+            </div>
+            <div id="bankAccountFormPanel" class="hidden mt-5 border border-outline-variant rounded-lg p-4 bg-surface-container-low">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input id="newBankName" class="bg-white border border-outline-variant rounded-lg p-3" placeholder="Bank name">
+                    <input id="newBankAccountNumber" class="bg-white border border-outline-variant rounded-lg p-3" placeholder="Account number">
+                    <input id="newBankAccountHolder" class="bg-white border border-outline-variant rounded-lg p-3" placeholder="Account holder">
+                    <input id="newBankBranchCode" class="bg-white border border-outline-variant rounded-lg p-3" placeholder="Branch code">
+                    <input id="newBankCurrency" class="bg-white border border-outline-variant rounded-lg p-3" placeholder="Currency" value="NGN">
+                    <input id="newBankBalance" type="number" step="0.01" class="bg-white border border-outline-variant rounded-lg p-3" placeholder="Opening balance">
+                    <select id="newBankChartAccount" class="bg-white border border-outline-variant rounded-lg p-3 md:col-span-3">
+                        <option value="">Select linked cash/bank GL account...</option>
+                    </select>
+                </div>
+                <textarea id="newBankNotes" class="mt-3 w-full bg-white border border-outline-variant rounded-lg p-3" rows="2" placeholder="Notes"></textarea>
+                <div class="flex justify-end gap-2 mt-3">
+                    <button id="cancelBankAccountBtn" type="button" class="px-4 h-10 rounded-lg border border-outline-variant text-secondary font-semibold">Cancel</button>
+                    <button id="saveBankAccountBtn" type="button" class="px-4 h-10 rounded-lg bg-primary text-on-primary font-bold">Save Bank Account</button>
                 </div>
             </div>
         </section>
@@ -175,7 +197,7 @@
 </div>
 
 <script>
-    const state = { organizationId: '', bankAccountId: '', reconciliationId: '', reconciliations: [], current: null };
+    const state = { organizationId: '', bankAccountId: '', reconciliationId: '', reconciliations: [], current: null, chartAccounts: [] };
     const els = {
         alert: document.getElementById('pageAlert'),
         alertInner: document.getElementById('pageAlertInner'),
@@ -234,13 +256,65 @@
         state.organizationId = els.orgSelector.value;
         els.bankAccountSelector.innerHTML = '<option value="">Select bank account...</option>';
         if (!state.organizationId) return;
-        const accounts = await apiJson(`/api/accountant/bank-accounts/org/${state.organizationId}`);
+        const [accounts, chartAccounts] = await Promise.all([
+            apiJson(`/api/accountant/bank-accounts/org/${state.organizationId}`),
+            apiJson(`/api/accountant/chart-of-accounts/org/${state.organizationId}`)
+        ]);
+        state.chartAccounts = chartAccounts || [];
+        populateBankChartAccounts();
         accounts.forEach(account => {
             const option = document.createElement('option');
             option.value = account.id;
             option.textContent = `${account.bankName || 'Bank'} - ${account.accountNumber || account.id}`;
             els.bankAccountSelector.appendChild(option);
         });
+        if (!accounts.length) {
+            showAlert('No bank accounts found. Use New Bank Account before importing a statement.', 'error');
+        }
+    }
+
+    function populateBankChartAccounts() {
+        const select = document.getElementById('newBankChartAccount');
+        const assetAccounts = state.chartAccounts.filter(account => account.accountType === 'ASSET');
+        select.innerHTML = assetAccounts.length
+            ? '<option value="">Select linked cash/bank GL account...</option>' + assetAccounts.map(account => `<option value="${account.id}">${account.accountCode} - ${account.accountName}</option>`).join('')
+            : '<option value="">No asset accounts found</option>';
+    }
+
+    function resetBankAccountForm() {
+        ['newBankName', 'newBankAccountNumber', 'newBankAccountHolder', 'newBankBranchCode', 'newBankBalance', 'newBankNotes']
+            .forEach(id => document.getElementById(id).value = '');
+        document.getElementById('newBankCurrency').value = 'NGN';
+        document.getElementById('newBankChartAccount').value = '';
+        document.getElementById('bankAccountFormPanel').classList.add('hidden');
+    }
+
+    async function saveBankAccount() {
+        if (!state.organizationId) throw new Error('Select an organization first.');
+        const payload = {
+            chartAccountId: Number(document.getElementById('newBankChartAccount').value || 0) || null,
+            bankName: document.getElementById('newBankName').value.trim(),
+            accountNumber: document.getElementById('newBankAccountNumber').value.trim(),
+            accountHolder: document.getElementById('newBankAccountHolder').value.trim(),
+            branchCode: document.getElementById('newBankBranchCode').value.trim() || null,
+            currency: document.getElementById('newBankCurrency').value.trim() || 'NGN',
+            balance: Number(document.getElementById('newBankBalance').value || 0),
+            notes: document.getElementById('newBankNotes').value.trim() || null,
+            active: true
+        };
+        if (!payload.chartAccountId) throw new Error('Select a linked GL asset account.');
+        if (!payload.bankName || !payload.accountNumber || !payload.accountHolder) {
+            throw new Error('Bank name, account number, and account holder are required.');
+        }
+        const created = await apiJson(`/api/accountant/bank-accounts/org/${state.organizationId}`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        resetBankAccountForm();
+        await loadBankAccounts();
+        els.bankAccountSelector.value = created.id;
+        await loadReconciliations();
+        showAlert('Bank account created.');
     }
 
     async function loadReconciliations() {
@@ -402,6 +476,9 @@
     els.bankAccountSelector.addEventListener('change', () => loadReconciliations().catch(err => showAlert(err.message, 'error')));
     els.reconciliationSelector.addEventListener('change', () => loadCurrentReconciliation().catch(err => showAlert(err.message, 'error')));
     els.importForm.addEventListener('submit', event => importStatement(event).catch(err => showAlert(err.message, 'error')));
+    document.getElementById('toggleBankAccountFormBtn').addEventListener('click', () => document.getElementById('bankAccountFormPanel').classList.toggle('hidden'));
+    document.getElementById('cancelBankAccountBtn').addEventListener('click', resetBankAccountForm);
+    document.getElementById('saveBankAccountBtn').addEventListener('click', () => saveBankAccount().catch(err => showAlert(err.message, 'error')));
     els.body.addEventListener('click', event => handleTableClick(event).catch(err => showAlert(err.message, 'error')));
     els.body.addEventListener('focusin', event => {
         const row = event.target.closest('tr[data-line-id]');

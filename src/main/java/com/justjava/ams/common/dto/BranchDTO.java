@@ -18,6 +18,13 @@ public class BranchDTO {
     private Long organizationId;
     private String name;
     private String code;
+    private String address;
+    private String city;
+    private String state;
+    private String country;
+    private String postalCode;
+    private String phone;
+    private String email;
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

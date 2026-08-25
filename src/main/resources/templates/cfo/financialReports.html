@@ -338,7 +338,8 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-end">
+                    <div class="flex flex-col sm:flex-row justify-between gap-3">
+                        <div id="reportWorkflowActions" class="flex flex-wrap gap-2"></div>
                         <button id="exportFinancialReportCsvBtn" type="button" disabled class="px-4 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container disabled:opacity-50 disabled:cursor-not-allowed font-body-sm text-body-sm text-primary flex items-center gap-2 transition-colors">
                             <span class="material-symbols-outlined text-base">download</span>
                             Export CSV
@@ -595,6 +596,7 @@
         document.getElementById('resultEmptyState').classList.remove('hidden');
         document.getElementById('resultContent').classList.add('hidden');
         document.getElementById('exportFinancialReportCsvBtn').disabled = true;
+        document.getElementById('reportWorkflowActions').innerHTML = '';
     }
 
     function renderResultPanel() {
@@ -660,6 +662,37 @@
         }
 
         document.getElementById('exportFinancialReportCsvBtn').disabled = lines.length === 0;
+        renderReportWorkflowActions(report);
+    }
+
+    function reportActionButton(reportId, action, label, icon, style = 'primary') {
+        const cls = style === 'danger'
+            ? 'bg-error text-on-error hover:opacity-90'
+            : style === 'outline'
+                ? 'border border-outline-variant bg-surface-container-lowest text-primary hover:bg-surface-container'
+                : 'bg-primary text-on-primary hover:opacity-90';
+        return `<button type="button" data-report-action="${action}" data-report-id="${reportId}" class="px-4 py-2 rounded-lg ${cls} font-body-sm text-body-sm font-semibold flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">${icon}</span>${label}
+        </button>`;
+    }
+
+    function renderReportWorkflowActions(report) {
+        const wrap = document.getElementById('reportWorkflowActions');
+        if (!report || !report.id) {
+            wrap.innerHTML = '';
+            return;
+        }
+        if (report.status === 'DRAFT') {
+            wrap.innerHTML = reportActionButton(report.id, 'submit', 'Submit', 'send');
+        } else if (report.status === 'PENDING_REVIEW') {
+            wrap.innerHTML = reportActionButton(report.id, 'approve', 'Approve', 'check_circle')
+                + reportActionButton(report.id, 'reject', 'Reject', 'cancel', 'danger');
+        } else {
+            wrap.innerHTML = '';
+        }
+        wrap.querySelectorAll('[data-report-action]').forEach(btn => {
+            btn.addEventListener('click', () => runReportWorkflowAction(btn.dataset.reportId, btn.dataset.reportAction));
+        });
     }
 
     function totalsBlockHtml(items) {
@@ -769,7 +802,10 @@
                 <td class="py-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${statusBadgeClasses(r.status)}">${escapeHtml(r.status || 'DRAFT')}</span></td>
                 <td class="py-3 font-body-sm text-body-sm text-secondary">${escapeHtml(r.generatedBy || '-')}</td>
                 <td class="py-3 pr-4 text-right">
-                    <button type="button" class="view-report-btn font-body-sm text-body-sm font-semibold text-primary hover:underline" data-report-id="${r.id}">View</button>
+                    <div class="flex flex-wrap justify-end gap-2">
+                        <button type="button" class="view-report-btn font-body-sm text-body-sm font-semibold text-primary hover:underline" data-report-id="${r.id}">View</button>
+                        ${historyReportActions(r)}
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -777,6 +813,20 @@
         tbody.querySelectorAll('.view-report-btn').forEach(btn => {
             btn.addEventListener('click', () => viewReport(btn.dataset.reportId));
         });
+        tbody.querySelectorAll('[data-history-report-action]').forEach(btn => {
+            btn.addEventListener('click', () => runReportWorkflowAction(btn.dataset.reportId, btn.dataset.historyReportAction));
+        });
+    }
+
+    function historyReportActions(report) {
+        if (report.status === 'DRAFT') {
+            return '<button type="button" class="font-body-sm text-body-sm font-semibold text-primary hover:underline" data-history-report-action="submit" data-report-id="' + report.id + '">Submit</button>';
+        }
+        if (report.status === 'PENDING_REVIEW') {
+            return '<button type="button" class="font-body-sm text-body-sm font-semibold text-green-700 hover:underline" data-history-report-action="approve" data-report-id="' + report.id + '">Approve</button>'
+                + '<button type="button" class="font-body-sm text-body-sm font-semibold text-error hover:underline" data-history-report-action="reject" data-report-id="' + report.id + '">Reject</button>';
+        }
+        return '';
     }
 
     async function viewReport(reportId) {
@@ -788,6 +838,33 @@
             document.getElementById('financialReportResultPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (err) {
             showPageMessage(err.message || 'Failed to load report.', 'error');
+        }
+    }
+
+    async function runReportWorkflowAction(reportId, action) {
+        if (!reportId || !action) return;
+        let options = { method: 'PATCH' };
+        if (action === 'reject') {
+            const reason = window.prompt('Rejection reason');
+            if (!reason || !reason.trim()) {
+                showPageMessage('Rejection reason is required.', 'error');
+                return;
+            }
+            options.body = JSON.stringify({ rejectionReason: reason.trim() });
+        }
+        hidePageMessage();
+        try {
+            const updated = await apiJson(`/api/cfo/financial-reports/${reportId}/${action}`, options);
+            showPageMessage(`Report ${action === 'submit' ? 'submitted' : action === 'approve' ? 'approved' : 'rejected'}.`, 'success');
+            await loadReportHistory();
+            if (currentFinancialReport && String(currentFinancialReport.id) === String(reportId)) {
+                currentFinancialReport = await apiJson(`/api/cfo/financial-reports/${reportId}`);
+                renderResultPanel();
+            } else if (updated) {
+                currentFinancialReport = currentFinancialReport || updated;
+            }
+        } catch (err) {
+            showPageMessage(err.message || 'Report action failed.', 'error');
         }
     }
 

@@ -4,15 +4,23 @@ import com.justjava.ams.auditor.dto.AuditLogDTO;
 import com.justjava.ams.auditor.service.AuditLogService;
 import com.justjava.ams.accountant.entity.CustomerInvoice;
 import com.justjava.ams.accountant.dto.FiscalPeriodDTO;
+import com.justjava.ams.accountant.entity.BankReconciliation;
 import com.justjava.ams.accountant.entity.FiscalPeriod;
 import com.justjava.ams.accountant.entity.ManualJournal;
+import com.justjava.ams.accountant.entity.PaymentRun;
 import com.justjava.ams.accountant.entity.PurchaseInvoice;
+import com.justjava.ams.accountant.repository.BankReconciliationRepository;
 import com.justjava.ams.accountant.repository.CustomerInvoiceRepository;
 import com.justjava.ams.accountant.repository.FiscalPeriodRepository;
 import com.justjava.ams.accountant.repository.ManualJournalRepository;
+import com.justjava.ams.accountant.repository.PaymentRunRepository;
 import com.justjava.ams.accountant.repository.PurchaseInvoiceRepository;
 import com.justjava.ams.common.entity.Organization;
 import com.justjava.ams.common.repository.OrganizationRepository;
+import com.justjava.ams.cfo.entity.ApprovalRequest;
+import com.justjava.ams.cfo.entity.FinancialReport;
+import com.justjava.ams.cfo.repository.ApprovalRequestRepository;
+import com.justjava.ams.cfo.repository.FinancialReportRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -37,6 +45,10 @@ public class FiscalPeriodService {
     private final ManualJournalRepository manualJournalRepository;
     private final CustomerInvoiceRepository customerInvoiceRepository;
     private final PurchaseInvoiceRepository purchaseInvoiceRepository;
+    private final BankReconciliationRepository bankReconciliationRepository;
+    private final PaymentRunRepository paymentRunRepository;
+    private final ApprovalRequestRepository approvalRequestRepository;
+    private final FinancialReportRepository financialReportRepository;
 
     public FiscalPeriodDTO createFiscalPeriod(Long organizationId, FiscalPeriodDTO dto) {
         Organization organization = findOrganization(organizationId);
@@ -117,7 +129,7 @@ public class FiscalPeriodService {
 
         FiscalPeriod saved = fiscalPeriodRepository.save(period);
         FiscalPeriodDTO savedDto = mapToDTO(saved);
-        log(saved.getOrganization().getId(), saved.getId(), "UPDATE", oldValue.toString(), savedDto.toString(), "Locked fiscal period " + saved.getYear() + " Q" + saved.getQuarter());
+        log(saved.getOrganization().getId(), saved.getId(), "LOCK", oldValue.toString(), savedDto.toString(), "Locked fiscal period " + saved.getYear() + " Q" + saved.getQuarter());
         return savedDto;
     }
 
@@ -142,7 +154,7 @@ public class FiscalPeriodService {
 
         FiscalPeriod saved = fiscalPeriodRepository.save(period);
         FiscalPeriodDTO savedDto = mapToDTO(saved);
-        log(saved.getOrganization().getId(), saved.getId(), "UPDATE", oldValue.toString(), savedDto.toString(), "Closed fiscal period " + saved.getYear() + " Q" + saved.getQuarter());
+        log(saved.getOrganization().getId(), saved.getId(), "CLOSE", oldValue.toString(), savedDto.toString(), "Closed fiscal period " + saved.getYear() + " Q" + saved.getQuarter());
         return savedDto;
     }
 
@@ -248,6 +260,38 @@ public class FiscalPeriodService {
                 startDate,
                 endDate)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot close fiscal period while purchase invoices are unposted");
+        }
+        if (bankReconciliationRepository.existsOpenWorkInPeriod(
+                organizationId,
+                List.of(BankReconciliation.ReconciliationStatus.DRAFT),
+                startDate,
+                endDate)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot close fiscal period while bank reconciliations are outstanding");
+        }
+        if (paymentRunRepository.existsOpenWorkInPeriod(
+                organizationId,
+                List.of(
+                        PaymentRun.PaymentRunStatus.DRAFT,
+                        PaymentRun.PaymentRunStatus.READY_FOR_APPROVAL,
+                        PaymentRun.PaymentRunStatus.APPROVED,
+                        PaymentRun.PaymentRunStatus.PARTIALLY_EXECUTED),
+                startDate,
+                endDate)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot close fiscal period while payment runs are unresolved");
+        }
+        if (approvalRequestRepository.existsOpenWorkInPeriod(
+                organizationId,
+                List.of(ApprovalRequest.ApprovalStatus.PENDING),
+                startDate,
+                endDate)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot close fiscal period while approvals are unresolved");
+        }
+        if (financialReportRepository.existsOpenWorkOverlappingPeriod(
+                organizationId,
+                List.of(FinancialReport.ReportStatus.DRAFT, FinancialReport.ReportStatus.PENDING_REVIEW),
+                startDate,
+                endDate)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot close fiscal period while financial reports are unresolved");
         }
     }
 }

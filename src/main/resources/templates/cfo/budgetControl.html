@@ -124,7 +124,10 @@
             <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Budget Control</h1>
             <p class="font-body-lg text-body-lg text-secondary">Establish operational fiscal limits, control version matrices, and monitor expenditure variance trends.</p>
         </div>
-
+        <div class="flex flex-col sm:flex-row gap-3">
+            <select id="budgetOrgSelector" class="min-w-[220px] rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm text-on-surface"></select>
+            <input id="budgetYearSelector" type="number" min="1900" max="3000" class="w-28 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm text-on-surface">
+        </div>
     </header>
 
     <!-- Main Dynamic Budgeting Dashboard Canvas Area -->
@@ -168,19 +171,53 @@
 
         <!-- Primary Content Card -->
         <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding shadow-sm">
+            <div id="budgetPageMessage" class="hidden mb-4 px-4 py-3 rounded-lg border text-body-sm font-semibold"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter mb-gutter">
+                <form id="budgetForm" class="border border-outline-variant rounded-lg p-4 bg-surface">
+                    <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Create Budget</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+                        <input id="budgetCode" required placeholder="Budget code" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetName" required placeholder="Budget name" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetYear" required type="number" min="1900" max="3000" placeholder="Year" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetTotal" required type="number" min="0" step="0.01" placeholder="Total budget" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetStartDate" required type="date" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetEndDate" required type="date" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetDepartment" placeholder="Department" class="md:col-span-2 rounded-lg border border-outline-variant bg-white px-3 py-2">
+                    </div>
+                    <button class="mt-4 bg-primary text-on-primary font-bold px-5 py-2.5 rounded-lg flex items-center gap-2" type="submit">
+                        <span class="material-symbols-outlined text-[18px]">add</span>
+                        Create Budget
+                    </button>
+                </form>
+
+                <form id="budgetLineForm" class="border border-outline-variant rounded-lg p-4 bg-surface">
+                    <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Add Budget Line</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+                        <select id="budgetSelect" required class="rounded-lg border border-outline-variant bg-white px-3 py-2"></select>
+                        <select id="budgetAccountSelect" required class="rounded-lg border border-outline-variant bg-white px-3 py-2"></select>
+                        <input id="budgetLineAmount" required type="number" min="0" step="0.01" placeholder="Allocated amount" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetLineDepartment" placeholder="Department code" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetLineProject" placeholder="Project code" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                        <input id="budgetLineBranch" placeholder="Branch code" class="rounded-lg border border-outline-variant bg-white px-3 py-2">
+                    </div>
+                    <button class="mt-4 bg-primary text-on-primary font-bold px-5 py-2.5 rounded-lg flex items-center gap-2" type="submit">
+                        <span class="material-symbols-outlined text-[18px]">add_chart</span>
+                        Add Line
+                    </button>
+                </form>
+            </div>
+
             <!-- Card Header Actions -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div class="flex items-center gap-4">
                     <h2 class="font-headline-sm text-headline-sm text-primary">Operational Budget Matrix</h2>
                     <div class="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full">
                         <span class="w-2 h-2 rounded-full bg-black"></span>
-                        <span class="font-label-md text-label-md text-primary">FY26 ALPHA MODEL</span>
+                        <span id="budgetModelLabel" class="font-label-md text-label-md text-primary">Loading</span>
                     </div>
                 </div>
-                <button class="bg-primary text-on-primary font-bold px-6 py-2.5 rounded-lg hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
-                    <span>Create Budget Version</span>
-                </button>
+                <div id="budgetWorkflowActions" class="flex flex-wrap gap-2"></div>
             </div>
 
             <!-- Table Container -->
@@ -196,7 +233,7 @@
                         <th class="py-4 px-4 font-label-md text-label-md text-secondary uppercase w-64">Variance Tracker</th>
                     </tr>
                     </thead>
-                    <tbody class="divide-y divide-surface-container">
+                    <tbody id="budgetMatrixBody" class="divide-y divide-surface-container">
                     <!-- Row 1 -->
                     <tr class="hover:bg-surface-container-low transition-colors group">
                         <td class="py-5 px-4">
@@ -323,18 +360,7 @@
 
             <!-- Table Footer / Pagination -->
             <div class="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-outline-variant pt-6">
-                <p class="font-body-sm text-body-sm text-secondary">Displaying 5 of 12 department cost centers</p>
-                <div class="flex items-center gap-2">
-                    <button aria-label="Previous Page" class="p-2 border border-outline-variant rounded hover:bg-surface transition-colors disabled:opacity-30" disabled>
-                        <span class="material-symbols-outlined text-[20px]" data-icon="chevron_left">chevron_left</span>
-                    </button>
-                    <button class="px-3 py-1 border border-primary bg-primary text-on-primary rounded text-[12px] font-bold">1</button>
-                    <button class="px-3 py-1 border border-outline-variant hover:bg-surface rounded text-[12px] font-medium transition-colors">2</button>
-                    <button class="px-3 py-1 border border-outline-variant hover:bg-surface rounded text-[12px] font-medium transition-colors">3</button>
-                    <button aria-label="Next Page" class="p-2 border border-outline-variant rounded hover:bg-surface transition-colors">
-                        <span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
-                    </button>
-                </div>
+                <p id="budgetFooterText" class="font-body-sm text-body-sm text-secondary">Loading budget lines...</p>
             </div>
         </section>
 
@@ -405,6 +431,10 @@
 
 <script>
     let currentOrgId = null;
+    let currentYear = new Date().getFullYear();
+    let budgets = [];
+    let selectedBudget = null;
+    let expenseAccounts = [];
 
     function formatBudgetCurrency(value) {
         return 'NGN ' + new Intl.NumberFormat('en-NG', {
@@ -413,13 +443,17 @@
         }).format(Number(value || 0));
     }
 
-    async function budgetApiJson(url) {
-        const response = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+    async function budgetApiJson(url, options = {}) {
+        const response = await fetch(url, {
+            ...options,
+            headers: options.body ? { 'Content-Type': 'application/json', ...(options.headers || {}) } : (options.headers || {})
+        });
+        const text = await response.text();
+        const payload = text ? JSON.parse(text) : null;
         if (!response.ok) {
-            const text = await response.text();
-            throw new Error(text || response.statusText);
+            throw new Error(payload?.message || payload?.error || payload?.detail || text || response.statusText);
         }
-        return response.json();
+        return payload;
     }
 
     function budgetEscapeHtml(str) {
@@ -439,25 +473,104 @@
         if (el) el.textContent = value;
     }
 
-    async function loadBudgetDashboard() {
+    function showBudgetMessage(message, type = 'error') {
+        const el = document.getElementById('budgetPageMessage');
+        el.textContent = message;
+        el.className = type === 'success'
+            ? 'mb-4 px-4 py-3 rounded-lg border text-body-sm font-semibold bg-secondary-container border-outline-variant text-on-secondary-container'
+            : 'mb-4 px-4 py-3 rounded-lg border text-body-sm font-semibold bg-error-container border-error text-on-error-container';
+        el.classList.remove('hidden');
+    }
+
+    async function loadBudgetContext() {
         const orgs = await budgetApiJson('/api/organizations');
         if (!orgs || !orgs.length) {
             renderBudgetError('Create an organization before configuring budgets.');
             return;
         }
-        currentOrgId = currentOrgId || orgs[0].id;
-        const dashboard = await budgetApiJson(`/api/cfo/budgets/org/${currentOrgId}/dashboard?year=${new Date().getFullYear()}`);
+        const orgSelector = document.getElementById('budgetOrgSelector');
+        orgSelector.innerHTML = orgs.map(org => `<option value="${org.id}">${budgetEscapeHtml(org.name)}</option>`).join('');
+        const stored = sessionStorage.getItem('ams.selectedOrganizationId');
+        const selected = orgs.find(org => String(org.id) === String(stored)) || orgs[0];
+        currentOrgId = selected.id;
+        orgSelector.value = currentOrgId;
+
+        const yearSelector = document.getElementById('budgetYearSelector');
+        yearSelector.value = currentYear;
+        document.getElementById('budgetYear').value = currentYear;
+        await loadBudgetData();
+    }
+
+    async function loadBudgetData() {
+        if (!currentOrgId) return;
+        currentYear = Number(document.getElementById('budgetYearSelector').value || currentYear);
+        sessionStorage.setItem('ams.selectedOrganizationId', String(currentOrgId));
+        const [dashboard, budgetRows, accounts] = await Promise.all([
+            budgetApiJson(`/api/cfo/budgets/org/${currentOrgId}/dashboard?year=${currentYear}`),
+            budgetApiJson(`/api/cfo/budgets/org/${currentOrgId}?year=${currentYear}`),
+            budgetApiJson(`/api/cfo/chart-of-accounts/org/${currentOrgId}`)
+        ]);
+        budgets = budgetRows || [];
+        selectedBudget = selectedBudget && budgets.find(b => b.id === selectedBudget.id) || budgets[0] || null;
+        expenseAccounts = (accounts || []).filter(a => a.accountType === 'EXPENSE' && a.active !== false);
+        renderBudgetSelectors();
         renderBudgetDashboard(dashboard);
+    }
+
+    function renderBudgetSelectors() {
+        const budgetSelect = document.getElementById('budgetSelect');
+        budgetSelect.innerHTML = budgets.length
+            ? budgets.map(b => `<option value="${b.id}">${budgetEscapeHtml(b.budgetCode)} - ${budgetEscapeHtml(b.budgetName)} (${budgetEscapeHtml(b.status)})</option>`).join('')
+            : '<option value="">No budgets</option>';
+        if (selectedBudget) budgetSelect.value = selectedBudget.id;
+
+        const accountSelect = document.getElementById('budgetAccountSelect');
+        accountSelect.innerHTML = expenseAccounts.length
+            ? expenseAccounts.map(a => `<option value="${a.id}">${budgetEscapeHtml(a.accountCode)} - ${budgetEscapeHtml(a.accountName)}</option>`).join('')
+            : '<option value="">No expense accounts</option>';
+
+        document.getElementById('budgetModelLabel').textContent = selectedBudget
+            ? `${selectedBudget.budgetCode} ${selectedBudget.status}`
+            : `FY ${currentYear}`;
+        renderBudgetWorkflowActions();
+    }
+
+    function renderBudgetWorkflowActions() {
+        const wrap = document.getElementById('budgetWorkflowActions');
+        if (!selectedBudget) {
+            wrap.innerHTML = '';
+            return;
+        }
+        const status = selectedBudget.status;
+        const buttons = [];
+        if (status === 'DRAFT' || status === 'REJECTED') buttons.push(actionButton('submit', 'Submit', 'send'));
+        if (status === 'SUBMITTED') {
+            buttons.push(actionButton('approve', 'Approve', 'check_circle'));
+            buttons.push(actionButton('reject', 'Reject', 'cancel', 'danger'));
+        }
+        if (status === 'APPROVED') buttons.push(actionButton('activate', 'Activate', 'play_circle'));
+        wrap.innerHTML = buttons.join('');
+        wrap.querySelectorAll('[data-budget-action]').forEach(btn => {
+            btn.addEventListener('click', () => runBudgetAction(btn.dataset.budgetAction));
+        });
+    }
+
+    function actionButton(action, label, icon, style = 'primary') {
+        const cls = style === 'danger' ? 'bg-error text-on-error' : 'bg-primary text-on-primary';
+        return `<button type="button" data-budget-action="${action}" class="${cls} font-bold px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">${icon}</span>${label}
+        </button>`;
     }
 
     function renderBudgetError(message) {
         setBudgetMetric('Total Treasury Cap', '-');
         setBudgetMetric('Actual Expenditures', '-');
         setBudgetMetric('Total Variance', '-');
-        const tbody = document.querySelector('table tbody');
+        const tbody = document.getElementById('budgetMatrixBody');
         if (tbody) {
             tbody.innerHTML = `<tr><td colspan="6" class="py-8 px-4 text-center text-secondary">${budgetEscapeHtml(message)}</td></tr>`;
         }
+        document.getElementById('budgetFooterText').textContent = message;
     }
 
     function renderBudgetDashboard(dashboard) {
@@ -479,7 +592,7 @@
                 : 'Available budget remaining';
         }
 
-        const tbody = document.querySelector('table tbody');
+        const tbody = document.getElementById('budgetMatrixBody');
         const rows = dashboard.lines || [];
         if (tbody) {
             tbody.innerHTML = rows.length ? rows.map(line => {
@@ -512,6 +625,8 @@
                     </tr>`;
             }).join('') : '<tr><td colspan="6" class="py-8 px-4 text-center text-secondary">No active budget lines for this year.</td></tr>';
         }
+        document.getElementById('budgetFooterText').textContent =
+            rows.length ? `Displaying ${rows.length} active budget line${rows.length === 1 ? '' : 's'} for FY ${dashboard.year}` : `No active budget lines for FY ${dashboard.year}.`;
 
         const alertContainer = Array.from(document.querySelectorAll('h3'))
             .find(h3 => h3.textContent.trim() === 'Budget Alerts')
@@ -530,6 +645,95 @@
         }
     }
 
+    document.getElementById('budgetOrgSelector').addEventListener('change', async function () {
+        currentOrgId = Number(this.value);
+        selectedBudget = null;
+        await loadBudgetData().catch(err => renderBudgetError(err.message));
+    });
+
+    document.getElementById('budgetYearSelector').addEventListener('change', async function () {
+        currentYear = Number(this.value || new Date().getFullYear());
+        document.getElementById('budgetYear').value = currentYear;
+        selectedBudget = null;
+        await loadBudgetData().catch(err => renderBudgetError(err.message));
+    });
+
+    document.getElementById('budgetSelect').addEventListener('change', function () {
+        selectedBudget = budgets.find(b => String(b.id) === String(this.value)) || null;
+        renderBudgetSelectors();
+    });
+
+    document.getElementById('budgetForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        try {
+            const created = await budgetApiJson(`/api/cfo/budgets/org/${currentOrgId}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    budgetCode: document.getElementById('budgetCode').value.trim(),
+                    budgetName: document.getElementById('budgetName').value.trim(),
+                    budgetYear: Number(document.getElementById('budgetYear').value),
+                    startDate: document.getElementById('budgetStartDate').value,
+                    endDate: document.getElementById('budgetEndDate').value,
+                    totalBudget: Number(document.getElementById('budgetTotal').value),
+                    departmentName: document.getElementById('budgetDepartment').value.trim() || null
+                })
+            });
+            selectedBudget = created;
+            this.reset();
+            document.getElementById('budgetYear').value = currentYear;
+            showBudgetMessage('Budget created.', 'success');
+            await loadBudgetData();
+        } catch (err) {
+            showBudgetMessage(err.message);
+        }
+    });
+
+    document.getElementById('budgetLineForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const budgetId = document.getElementById('budgetSelect').value;
+        if (!budgetId) {
+            showBudgetMessage('Create or select a budget first.');
+            return;
+        }
+        try {
+            await budgetApiJson(`/api/cfo/budgets/${budgetId}/lines`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    chartAccountId: Number(document.getElementById('budgetAccountSelect').value),
+                    allocatedAmount: Number(document.getElementById('budgetLineAmount').value),
+                    departmentCode: document.getElementById('budgetLineDepartment').value.trim() || null,
+                    projectCode: document.getElementById('budgetLineProject').value.trim() || null,
+                    branchCode: document.getElementById('budgetLineBranch').value.trim() || null
+                })
+            });
+            this.reset();
+            showBudgetMessage('Budget line added.', 'success');
+            await loadBudgetData();
+        } catch (err) {
+            showBudgetMessage(err.message);
+        }
+    });
+
+    async function runBudgetAction(action) {
+        if (!selectedBudget) return;
+        const options = { method: 'PATCH' };
+        if (action === 'reject') {
+            const reason = window.prompt('Rejection reason');
+            if (!reason || !reason.trim()) {
+                showBudgetMessage('Rejection reason is required.');
+                return;
+            }
+            options.body = JSON.stringify({ rejectionReason: reason.trim() });
+        }
+        try {
+            selectedBudget = await budgetApiJson(`/api/cfo/budgets/${selectedBudget.id}/${action}`, options);
+            showBudgetMessage(`Budget ${action === 'submit' ? 'submitted' : action === 'approve' ? 'approved' : action === 'activate' ? 'activated' : 'rejected'}.`, 'success');
+            await loadBudgetData();
+        } catch (err) {
+            showBudgetMessage(err.message);
+        }
+    }
+
     // Micro-interaction for Variance Progress Bars
     document.addEventListener('DOMContentLoaded', () => {
         const bars = document.querySelectorAll('.variance-progress');
@@ -540,7 +744,7 @@
                 bar.style.width = finalWidth;
             }, 300);
         });
-        loadBudgetDashboard().catch(err => renderBudgetError(err.message));
+        loadBudgetContext().catch(err => renderBudgetError(err.message));
     });
 
     // General UI Action Scale Transitions

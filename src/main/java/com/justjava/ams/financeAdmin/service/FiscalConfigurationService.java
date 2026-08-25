@@ -19,7 +19,12 @@ public class FiscalConfigurationService {
 
     public FiscalConfigurationDTO createFiscalConfiguration(Long organizationId, FiscalConfigurationDTO dto) {
         Organization organization = organizationRepository.findById(organizationId)
-                .orElseThrow(() -> new RuntimeException("Organization not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Organization not found"));
+
+        fiscalConfigurationRepository.findByOrganizationId(organizationId)
+                .ifPresent(existing -> {
+                    throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT, "Fiscal configuration already exists for organization");
+                });
 
         FiscalConfiguration config = FiscalConfiguration.builder()
                 .organization(organization)
@@ -40,19 +45,19 @@ public class FiscalConfigurationService {
 
     public FiscalConfigurationDTO getFiscalConfiguration(Long configId) {
         FiscalConfiguration config = fiscalConfigurationRepository.findById(configId)
-                .orElseThrow(() -> new RuntimeException("Fiscal configuration not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Fiscal configuration not found"));
         return mapToDTO(config);
     }
 
     public FiscalConfigurationDTO getByOrganization(Long organizationId) {
         FiscalConfiguration config = fiscalConfigurationRepository.findByOrganizationId(organizationId)
-                .orElseThrow(() -> new RuntimeException("Fiscal configuration not found for organization"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Fiscal configuration not found for organization"));
         return mapToDTO(config);
     }
 
     public FiscalConfigurationDTO updateFiscalConfiguration(Long configId, FiscalConfigurationDTO dto) {
         FiscalConfiguration config = fiscalConfigurationRepository.findById(configId)
-                .orElseThrow(() -> new RuntimeException("Fiscal configuration not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Fiscal configuration not found"));
 
         if (dto.getFiscalYearStartMonth() != null) config.setFiscalYearStartMonth(dto.getFiscalYearStartMonth());
         if (dto.getFiscalYearEndMonth() != null) config.setFiscalYearEndMonth(dto.getFiscalYearEndMonth());

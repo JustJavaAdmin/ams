@@ -69,6 +69,8 @@ public class AuditLog {
         LOGOUT,
         SUBMIT,
         POST,
+        CLOSE,
+        LOCK,
         APPROVE,
         REJECT
     }

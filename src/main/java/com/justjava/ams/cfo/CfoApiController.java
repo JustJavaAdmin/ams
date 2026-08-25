@@ -1,6 +1,8 @@
 package com.justjava.ams.cfo;
 
 import com.justjava.ams.accountant.dto.ManualJournalDTO;
+import com.justjava.ams.accountant.dto.ChartOfAccountsDTO;
+import com.justjava.ams.accountant.service.ChartOfAccountsService;
 import com.justjava.ams.accountant.service.ManualJournalService;
 import com.justjava.ams.cfo.dto.*;
 import com.justjava.ams.cfo.service.BudgetService;
@@ -24,6 +26,7 @@ public class CfoApiController {
     private final BudgetService budgetService;
     private final FinancialReportService financialReportService;
     private final TrialBalanceService trialBalanceService;
+    private final ChartOfAccountsService chartOfAccountsService;
 
     @GetMapping("/manual-journals/org/{organizationId}/pending")
     public List<PendingJournalApprovalResponse> getPendingManualJournals(@PathVariable Long organizationId) {
@@ -108,6 +111,11 @@ public class CfoApiController {
             @PathVariable Long organizationId,
             @RequestParam(required = false) Integer year) {
         return budgetService.getDashboard(organizationId, year);
+    }
+
+    @GetMapping("/chart-of-accounts/org/{organizationId}")
+    public List<ChartOfAccountsDTO> getChartOfAccounts(@PathVariable Long organizationId) {
+        return chartOfAccountsService.getAccountsByOrganization(organizationId);
     }
 
     @PatchMapping("/manual-journals/{journalId}/approve")
