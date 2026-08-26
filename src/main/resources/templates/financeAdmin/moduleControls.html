@@ -424,6 +424,7 @@
     let organizations = [];
     let selectedOrganizationId = null;
     let modules = [];
+    let approvalRules = [];
     let isRequestActive = false;
     let currentMessageType = null;
     let currentSettingsModuleId = null;
@@ -444,9 +445,26 @@
         FIXED_ASSETS: { label: 'Fixed Assets', icon: 'domain' },
         BUDGETING: { label: 'Budgeting', icon: 'monitoring' },
         PAYROLL: { label: 'Payroll', icon: 'payments' },
+        PAYMENTS: { label: 'Payments', icon: 'payments' },
+        INVENTORY: { label: 'Inventory', icon: 'inventory_2' },
         ACCOUNTS_PAYABLE: { label: 'Accounts Payable', icon: 'receipt_long' },
         ACCOUNTS_RECEIVABLE: { label: 'Accounts Receivable', icon: 'request_quote' }
     };
+
+    const DEFAULT_MODULE_TYPES = [
+        'GENERAL_LEDGER',
+        'ACCOUNTS_PAYABLE',
+        'ACCOUNTS_RECEIVABLE',
+        'INVENTORY',
+        'FIXED_ASSETS',
+        'PAYROLL',
+        'BUDGETING',
+        'REPORTING',
+        'BANKING',
+        'PAYMENTS',
+        'APPROVALS',
+        'AUDIT'
+    ];
 
     const CORE_MODULES = ['GENERAL_LEDGER', 'REPORTING', 'AUDIT'];
 
@@ -466,6 +484,8 @@
         document.getElementById('exportCsvBtn').addEventListener('click', exportModulesCsv);
 
         document.getElementById('moduleControlsGrid').addEventListener('click', onGridClick);
+        document.getElementById('approvalRuleForm').addEventListener('submit', onApprovalRuleSubmit);
+        document.getElementById('approvalRulesBody').addEventListener('click', onApprovalRulesClick);
 
         document.getElementById('toggleCancelBtn').addEventListener('click', closeToggleModal);
         document.getElementById('toggleConfirmBtn').addEventListener('click', confirmToggle);
@@ -626,6 +646,8 @@
             modules = [];
             showPageMessage('error', err.message);
         }
+        populateRuleModuleSelect();
+        await loadApprovalRules();
         setModulesLoading(false);
         document.getElementById('moduleSummary').classList.remove('hidden');
         renderSummary();
@@ -640,6 +662,7 @@
             skeleton.classList.remove('hidden');
             grid.classList.add('hidden');
             emptyState.classList.add('hidden');
+            renderApprovalRulesLoading();
         } else {
             skeleton.classList.add('hidden');
         }
@@ -763,6 +786,8 @@
                 method: 'POST'
             });
             modules = response?.modules || [];
+            populateRuleModuleSelect();
+            await loadApprovalRules();
             document.getElementById('moduleSummary').classList.remove('hidden');
             renderSummary();
             renderFilteredModules();
@@ -947,6 +972,169 @@
             isRequestActive = false;
             saveBtn.disabled = false;
             saveBtn.textContent = originalLabel;
+        }
+    }
+
+    // ---------- Approval rules ----------
+
+    function moduleTypeOptions() {
+        const moduleTypes = modules.length
+            ? modules.map(module => module.moduleType).filter(Boolean)
+            : DEFAULT_MODULE_TYPES;
+        return Array.from(new Set(moduleTypes));
+    }
+
+    function populateRuleModuleSelect() {
+        const select = document.getElementById('ruleModuleType');
+        const selected = select.value;
+        const options = moduleTypeOptions();
+        select.innerHTML = '<option value="">Select module...</option>' + options
+            .map(moduleType => `<option value="${escapeHtml(moduleType)}">${escapeHtml(getModuleMeta(moduleType).label)}</option>`)
+            .join('');
+        if (selected && options.includes(selected)) {
+            select.value = selected;
+        }
+    }
+
+    function renderApprovalRulesLoading() {
+        document.getElementById('approvalRulesBody').innerHTML =
+            '<tr><td colspan="6" class="py-8 px-3 text-center text-secondary">Loading approval rules...</td></tr>';
+    }
+
+    async function loadApprovalRules() {
+        if (!selectedOrganizationId) {
+            approvalRules = [];
+            renderApprovalRulesEmpty('Select an organization to load approval rules.');
+            return;
+        }
+        try {
+            approvalRules = await apiJson(`/api/financeAdmin/approval-rules/org/${selectedOrganizationId}`) || [];
+        } catch (err) {
+            approvalRules = [];
+            showPageMessage('error', err.message);
+        }
+        renderApprovalRules();
+    }
+
+    function renderApprovalRulesEmpty(message) {
+        document.getElementById('approvalRuleCount').textContent = '0 rules';
+        document.getElementById('approvalRulesBody').innerHTML =
+            `<tr><td colspan="6" class="py-8 px-3 text-center text-secondary">${escapeHtml(message)}</td></tr>`;
+    }
+
+    function renderApprovalRules() {
+        const activeRules = approvalRules.filter(rule => rule.active !== false);
+        document.getElementById('approvalRuleCount').textContent =
+            `${activeRules.length} rule${activeRules.length === 1 ? '' : 's'}`;
+        if (!activeRules.length) {
+            renderApprovalRulesEmpty('No approval rules configured for this organization.');
+            return;
+        }
+
+        document.getElementById('approvalRulesBody').innerHTML = activeRules.map(rule => {
+            const min = rule.minAmount ?? 0;
+            const max = rule.maxAmount ?? null;
+            const range = max === null || max === undefined
+                ? `${formatRuleAmount(min)}+`
+                : `${formatRuleAmount(min)} - ${formatRuleAmount(max)}`;
+            return `
+                <tr>
+                    <td class="py-3 px-3">
+                        <div class="font-body-sm text-body-sm font-bold text-primary">${escapeHtml(rule.ruleName)}</div>
+                        <div class="text-label-sm text-secondary">Priority ${escapeHtml(rule.priority ?? '-')} · ${escapeHtml(rule.requiredApprovals ?? 1)} approval(s)</div>
+                    </td>
+                    <td class="py-3 px-3 text-body-sm text-primary">${escapeHtml(getModuleMeta(rule.moduleType).label)}</td>
+                    <td class="py-3 px-3 text-body-sm text-secondary">${escapeHtml(rule.transactionType || 'ALL')}</td>
+                    <td class="py-3 px-3 text-body-sm text-primary text-right">${escapeHtml(range)}</td>
+                    <td class="py-3 px-3 text-body-sm text-secondary">${escapeHtml(rule.approverRole || 'CFO')}</td>
+                    <td class="py-3 px-3 text-right">
+                        <button type="button" data-action="deactivate-rule" data-rule-id="${rule.id}" class="font-label-md text-label-md text-error underline underline-offset-2">Deactivate</button>
+                    </td>
+                </tr>`;
+        }).join('');
+    }
+
+    function formatRuleAmount(value) {
+        const number = Number(value ?? 0);
+        return Number.isFinite(number) ? number.toLocaleString('en-NG') : '0';
+    }
+
+    function collectApprovalRulePayload() {
+        const maxAmountRaw = document.getElementById('ruleMaxAmount').value.trim();
+        return {
+            ruleName: document.getElementById('ruleName').value.trim(),
+            moduleType: document.getElementById('ruleModuleType').value,
+            transactionType: document.getElementById('ruleTransactionType').value.trim() || 'ALL',
+            minAmount: Number(document.getElementById('ruleMinAmount').value || 0),
+            maxAmount: maxAmountRaw ? Number(maxAmountRaw) : null,
+            accountType: document.getElementById('ruleAccountType').value || null,
+            departmentCode: document.getElementById('ruleDepartmentCode').value.trim() || null,
+            requiredApprovals: Number(document.getElementById('ruleRequiredApprovals').value || 1),
+            priority: Number(document.getElementById('rulePriority').value || 100),
+            approverRole: document.getElementById('ruleApproverRole').value.trim() || 'CFO',
+            active: true,
+            notes: document.getElementById('ruleNotes').value.trim() || null
+        };
+    }
+
+    async function onApprovalRuleSubmit(e) {
+        e.preventDefault();
+        if (isRequestActive || !selectedOrganizationId) return;
+
+        const payload = collectApprovalRulePayload();
+        if (!payload.ruleName || !payload.moduleType) {
+            showPageMessage('error', 'Rule name and module are required.');
+            return;
+        }
+        if (payload.maxAmount !== null && payload.maxAmount < payload.minAmount) {
+            showPageMessage('error', 'Maximum amount cannot be lower than minimum amount.');
+            return;
+        }
+
+        isRequestActive = true;
+        const btn = document.getElementById('approvalRuleSubmitBtn');
+        const originalLabel = btn.innerHTML;
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+        try {
+            await apiJson(`/api/financeAdmin/approval-rules/org/${selectedOrganizationId}`, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            document.getElementById('approvalRuleForm').reset();
+            document.getElementById('ruleTransactionType').value = 'ALL';
+            document.getElementById('ruleMinAmount').value = '0';
+            document.getElementById('ruleRequiredApprovals').value = '1';
+            document.getElementById('rulePriority').value = '100';
+            populateRuleModuleSelect();
+            await loadApprovalRules();
+            showPageMessage('success', 'Approval rule created.');
+        } catch (err) {
+            showPageMessage('error', err.message);
+        } finally {
+            isRequestActive = false;
+            btn.disabled = false;
+            btn.innerHTML = originalLabel;
+        }
+    }
+
+    function onApprovalRulesClick(e) {
+        const button = e.target.closest('[data-action="deactivate-rule"]');
+        if (!button) return;
+        deactivateApprovalRule(button.dataset.ruleId);
+    }
+
+    async function deactivateApprovalRule(ruleId) {
+        if (isRequestActive || !ruleId) return;
+        isRequestActive = true;
+        try {
+            await apiJson(`/api/financeAdmin/approval-rules/${ruleId}`, { method: 'DELETE' });
+            await loadApprovalRules();
+            showPageMessage('success', 'Approval rule deactivated.');
+        } catch (err) {
+            showPageMessage('error', err.message);
+        } finally {
+            isRequestActive = false;
         }
     }
 

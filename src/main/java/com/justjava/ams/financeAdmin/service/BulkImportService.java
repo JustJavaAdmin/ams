@@ -129,11 +129,16 @@ public class BulkImportService {
         bulkImport.setStatus(BulkImport.ImportStatus.PROCESSING);
         bulkImportRepository.save(bulkImport);
 
+        List<BulkImportRow> rows = bulkImportRowRepository.findByBulkImportIdOrderByRowNumber(importId);
+        if (rows.isEmpty() && bulkImport.getRows() != null) {
+            rows = bulkImport.getRows();
+        }
+
         int created = 0;
         int updated = 0;
         int failed = 0;
 
-        for (BulkImportRow row : bulkImport.getRows()) {
+        for (BulkImportRow row : rows) {
             if (row.getStatus() != BulkImportRow.RowStatus.VALID) {
                 row.setStatus(BulkImportRow.RowStatus.SKIPPED);
                 continue;
@@ -163,7 +168,7 @@ public class BulkImportService {
             }
         }
 
-        int skipped = (int) bulkImport.getRows().stream()
+        int skipped = (int) rows.stream()
                 .filter(row -> row.getStatus() == BulkImportRow.RowStatus.SKIPPED)
                 .count();
         bulkImport.setCreatedCount(created);

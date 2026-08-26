@@ -256,7 +256,9 @@ public class ManualJournalService {
         journal.setStatus(ManualJournal.JournalStatus.APPROVED);
         journal.setApprovedBy(normalizedApproverName);
         journal.setApprovedAt(LocalDateTime.now());
-        approvalWorkflowService.approvePending("ManualJournal", journalId, request != null ? trimToNull(request.getApprovalNote()) : null);
+        if (journal.getApprovalRequestId() != null) {
+            approvalWorkflowService.approvePending("ManualJournal", journalId, request != null ? trimToNull(request.getApprovalNote()) : null);
+        }
 
         ManualJournal saved = manualJournalRepository.save(journal);
         // Audit: record approval

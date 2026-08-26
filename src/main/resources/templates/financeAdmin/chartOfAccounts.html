@@ -921,11 +921,18 @@
 
         try {
             const result = await apiJson(`/api/financeAdmin/imports/${pendingCoaImportId}/confirm`, { method: 'POST' });
-            showAlert(`Import completed. Created ${result.createdCount}, updated ${result.updatedCount}, failed ${result.failedCount}.`, 'success');
-            document.getElementById('coaImportFile').value = '';
-            document.getElementById('coaImportPreview').classList.add('hidden');
-            pendingCoaImportId = null;
-            resetForm();
+            const hasIssues = (result.failedCount || 0) > 0 || (result.skippedCount || 0) > 0 || result.status === 'COMPLETED_WITH_ERRORS';
+            showAlert(`Import ${hasIssues ? 'completed with issues' : 'completed'}. Created ${result.createdCount}, updated ${result.updatedCount}, skipped ${result.skippedCount}, failed ${result.failedCount}.`, hasIssues ? 'error' : 'success');
+            if (hasIssues) {
+                const errorsLink = document.getElementById('coaImportErrorsLink');
+                errorsLink.href = `/api/financeAdmin/imports/${pendingCoaImportId}/errors`;
+                errorsLink.classList.remove('hidden');
+            } else {
+                document.getElementById('coaImportFile').value = '';
+                document.getElementById('coaImportPreview').classList.add('hidden');
+                pendingCoaImportId = null;
+                resetForm();
+            }
             await loadAccounts();
         } catch (err) {
             showAlert(err.message);

@@ -575,7 +575,8 @@
     }
 
     async function loadInvoices() {
-      const rows = await apiJson(`/api/accountant/reports/aged-payables/org/${currentOrgId}`) || [];
+      const report = await apiJson(`/api/accountant/reports/aged-payables/org/${currentOrgId}`);
+      const rows = Array.isArray(report) ? report : (report?.rows || []);
       document.getElementById('invoiceList').innerHTML = rows.map(invoice => `
         <div class="py-3 flex items-center justify-between gap-4">
           <div>
@@ -588,7 +589,8 @@
     }
 
     async function loadInvoices() {
-      const rows = await apiJson(`/api/accountant/reports/aged-payables/org/${currentOrgId}`) || [];
+      const report = await apiJson(`/api/accountant/reports/aged-payables/org/${currentOrgId}`);
+      const rows = Array.isArray(report) ? report : (report?.rows || []);
       document.getElementById('invoiceList').innerHTML = rows.map(invoice => `
         <div class="py-3 flex items-center justify-between gap-4">
           <div>

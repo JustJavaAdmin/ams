@@ -126,10 +126,19 @@
                         <label class="block text-body-sm font-semibold mb-1" for="statementCustomer">Customer</label>
                         <select id="statementCustomer" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md"></select>
                     </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <input id="statementDate" type="date" class="bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="Statement date">
-                        <input id="statementStartDate" type="date" class="bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="Start date">
-                        <input id="statementEndDate" type="date" class="bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="End date">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-body-sm font-semibold mb-1" for="statementDate">Statement Date</label>
+                            <input id="statementDate" type="date" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="Statement date">
+                        </div>
+                        <div>
+                            <label class="block text-body-sm font-semibold mb-1" for="statementStartDate">Start Date</label>
+                            <input id="statementStartDate" type="date" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="Start date">
+                        </div>
+                        <div>
+                            <label class="block text-body-sm font-semibold mb-1" for="statementEndDate">End Date</label>
+                            <input id="statementEndDate" type="date" class="w-full bg-white border border-outline-variant rounded-lg p-3 text-body-md" title="End date">
+                        </div>
                     </div>
                     <button class="w-full bg-primary text-on-primary rounded-lg px-4 py-3 font-bold" type="submit">Generate statement</button>
                 </form>

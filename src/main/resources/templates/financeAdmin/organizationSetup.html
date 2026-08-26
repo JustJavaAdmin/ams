@@ -959,10 +959,17 @@
 
         try {
             const result = await apiJson(`/api/financeAdmin/imports/${pendingBranchImportId}/confirm`, { method: 'POST' });
-            showAlert(`Import completed. Created ${result.createdCount}, updated ${result.updatedCount}, failed ${result.failedCount}.`, 'success');
-            document.getElementById('branchImportFile').value = '';
-            document.getElementById('branchImportPreview').classList.add('hidden');
-            pendingBranchImportId = null;
+            const hasIssues = (result.failedCount || 0) > 0 || (result.skippedCount || 0) > 0 || result.status === 'COMPLETED_WITH_ERRORS';
+            showAlert(`Import ${hasIssues ? 'completed with issues' : 'completed'}. Created ${result.createdCount}, updated ${result.updatedCount}, skipped ${result.skippedCount}, failed ${result.failedCount}.`, hasIssues ? 'error' : 'success');
+            if (hasIssues) {
+                const errorsLink = document.getElementById('branchImportErrorsLink');
+                errorsLink.href = `/api/financeAdmin/imports/${pendingBranchImportId}/errors`;
+                errorsLink.classList.remove('hidden');
+            } else {
+                document.getElementById('branchImportFile').value = '';
+                document.getElementById('branchImportPreview').classList.add('hidden');
+                pendingBranchImportId = null;
+            }
             await loadBranches(selectedOrganizationId);
         } catch (err) {
             showAlert(err.message);

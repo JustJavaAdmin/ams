@@ -170,6 +170,116 @@ class ApprovalRulesAcceptanceTest {
         assertThat(arrayContains(auditLogs, log -> "CREATE".equals(log.get("action").asText()))).isTrue();
     }
 
+    @Test
+    void cfoCanApproveSubmittedManualJournalWithoutApprovalRequest() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        LocalDate journalDate = LocalDate.now();
+
+        long organizationId = postJson(
+                "/api/organizations",
+                Map.of(
+                        "name", "Direct Approval Org " + suffix,
+                        "registrationNumber", "DAR-REG-" + suffix,
+                        "taxId", "DAR-TAX-" + suffix,
+                        "active", true),
+                financeAdmin(),
+                status().isCreated())
+                .get("id").asLong();
+
+        long branchId = postJson(
+                "/api/branches",
+                Map.of(
+                        "organizationId", organizationId,
+                        "name", "Direct Approval Branch " + suffix,
+                        "code", "DAR-" + suffix,
+                        "active", true),
+                financeAdmin(),
+                status().isCreated())
+                .get("id").asLong();
+
+        long cashAccountId = postJson(
+                "/api/financeAdmin/chartOfAccounts/org/" + organizationId,
+                Map.of(
+                        "accountCode", "102-" + suffix,
+                        "accountName", "Cash Direct " + suffix,
+                        "accountType", "ASSET",
+                        "accountSubtype", "CURRENT_ASSET",
+                        "normalBalance", "DEBIT"),
+                financeAdmin(),
+                status().isCreated())
+                .get("id").asLong();
+
+        long revenueAccountId = postJson(
+                "/api/financeAdmin/chartOfAccounts/org/" + organizationId,
+                Map.of(
+                        "accountCode", "402-" + suffix,
+                        "accountName", "Revenue Direct " + suffix,
+                        "accountType", "REVENUE",
+                        "accountSubtype", "REVENUE",
+                        "normalBalance", "CREDIT"),
+                financeAdmin(),
+                status().isCreated())
+                .get("id").asLong();
+
+        postJson(
+                "/api/financeAdmin/fiscalPeriods/org/" + organizationId,
+                Map.of(
+                        "year", journalDate.getYear(),
+                        "quarter", quarterFor(journalDate),
+                        "startDate", journalDate.minusDays(1).toString(),
+                        "endDate", journalDate.plusDays(1).toString()),
+                financeAdmin(),
+                status().isCreated());
+
+        long journalId = postJson(
+                "/api/accountant/manual-journals/org/" + organizationId,
+                Map.of(
+                        "branchId", branchId,
+                        "description", "Direct approval journal " + suffix,
+                        "journalDate", journalDate.toString()),
+                accountant(),
+                status().isCreated())
+                .get("id").asLong();
+
+        postJson(
+                "/api/accountant/manual-journals/" + journalId + "/lines",
+                Map.of(
+                        "chartOfAccountId", cashAccountId,
+                        "debitAmount", new BigDecimal("500.00"),
+                        "creditAmount", BigDecimal.ZERO,
+                        "departmentCode", "OPS",
+                        "narration", "Cash debit",
+                        "lineSequence", 1),
+                accountant(),
+                status().isCreated());
+
+        postJson(
+                "/api/accountant/manual-journals/" + journalId + "/lines",
+                Map.of(
+                        "chartOfAccountId", revenueAccountId,
+                        "debitAmount", BigDecimal.ZERO,
+                        "creditAmount", new BigDecimal("500.00"),
+                        "departmentCode", "OPS",
+                        "narration", "Revenue credit",
+                        "lineSequence", 2),
+                accountant(),
+                status().isCreated());
+
+        JsonNode submitted = patchJson(
+                "/api/accountant/manual-journals/" + journalId + "/submit",
+                Map.of("submittedBy", "approval-accountant"),
+                accountant(),
+                status().isOk());
+        assertThat(submitted.get("status").asText()).isEqualTo("SUBMITTED");
+
+        JsonNode approved = patchJson(
+                "/api/cfo/manual-journals/" + journalId + "/approve",
+                Map.of("approvedBy", "approval-cfo", "approvalNote", "Approved for posting"),
+                cfo(),
+                status().isOk());
+        assertThat(approved.get("status").asText()).isEqualTo("APPROVED");
+    }
+
     private JsonNode postJson(String path, Object body, RequestPostProcessor user, ResultMatcher statusMatcher) throws Exception {
         return objectMapper.readTree(mockMvc.perform(post(path)
                         .with(user)
