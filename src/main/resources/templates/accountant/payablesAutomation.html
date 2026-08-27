@@ -266,529 +266,529 @@
 </div>
 
 <script>
-(() => {
-    const state = {
-        organizationId: '',
-        bankAccounts: [],
-        vendors: [],
-        schedules: [],
-        runs: [],
-        selectedRun: null,
-        forecastBucket: 'WEEKLY',
-        statements: [],
-        selectedStatement: null,
-        dueOnly: false
-    };
-
-    const els = {
-        orgSelector: document.getElementById('orgSelector'),
-        pageStatus: document.getElementById('pageStatus'),
-        pageAlert: document.getElementById('pageAlert'),
-        pageAlertInner: document.getElementById('pageAlertInner'),
-        pageAlertIcon: document.getElementById('pageAlertIcon'),
-        pageAlertMsg: document.getElementById('pageAlertMsg'),
-        scheduleRows: document.getElementById('scheduleRows'),
-        scheduleFrom: document.getElementById('scheduleFrom'),
-        scheduleTo: document.getElementById('scheduleTo'),
-        scheduleStatus: document.getElementById('scheduleStatus'),
-        dueOnlyBtn: document.getElementById('dueOnlyBtn'),
-        forecastFrom: document.getElementById('forecastFrom'),
-        forecastTo: document.getElementById('forecastTo'),
-        forecastSummary: document.getElementById('forecastSummary'),
-        forecastRows: document.getElementById('forecastRows'),
-        runBankAccount: document.getElementById('runBankAccount'),
-        runRows: document.getElementById('runRows'),
-        runDetail: document.getElementById('runDetail'),
-        runDetailTitle: document.getElementById('runDetailTitle'),
-        runDetailActions: document.getElementById('runDetailActions'),
-        statementVendor: document.getElementById('statementVendor'),
-        statementRows: document.getElementById('statementRows'),
-        statementDetail: document.getElementById('statementDetail'),
-        statementDetailTitle: document.getElementById('statementDetailTitle'),
-        statementActions: document.getElementById('statementActions'),
-        statementLineInputs: document.getElementById('statementLineInputs'),
-        scheduleModal: document.getElementById('scheduleModal')
-    };
-
-    function today(offset = 0) {
-        const date = new Date();
-        date.setDate(date.getDate() + offset);
-        return date.toISOString().slice(0, 10);
-    }
-
-    function money(value) {
-        return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function badge(status) {
-        const map = {
-            PLANNED: 'bg-slate-100 text-slate-700',
-            APPROVED: 'bg-emerald-50 text-emerald-700',
-            HELD: 'bg-amber-50 text-amber-700',
-            PAID: 'bg-blue-50 text-blue-700',
-            CANCELLED: 'bg-red-50 text-red-700',
-            DRAFT: 'bg-slate-100 text-slate-700',
-            READY_FOR_APPROVAL: 'bg-amber-50 text-amber-700',
-            EXECUTED: 'bg-blue-50 text-blue-700',
-            PARTIALLY_EXECUTED: 'bg-violet-50 text-violet-700',
-            MATCHING: 'bg-amber-50 text-amber-700',
-            COMPLETED: 'bg-blue-50 text-blue-700',
-            MATCHED: 'bg-emerald-50 text-emerald-700',
-            UNMATCHED: 'bg-slate-100 text-slate-700',
-            DISPUTED: 'bg-red-50 text-red-700'
+    (() => {
+        const state = {
+            organizationId: '',
+            bankAccounts: [],
+            vendors: [],
+            schedules: [],
+            runs: [],
+            selectedRun: null,
+            forecastBucket: 'WEEKLY',
+            statements: [],
+            selectedStatement: null,
+            dueOnly: false
         };
-        return `<span class="inline-flex px-2 py-1 rounded text-[11px] font-bold ${map[status] || 'bg-slate-100 text-slate-700'}">${status || '-'}</span>`;
-    }
 
-    function setStatus(message) {
-        els.pageStatus.textContent = message || '';
-    }
-
-    function alert(message, type = 'info') {
-        els.pageAlert.classList.remove('hidden');
-        els.pageAlertInner.className = type === 'error'
-            ? 'flex items-start gap-3 px-4 py-3 rounded-lg border text-body-sm font-semibold bg-error-container text-on-error-container border-error/20'
-            : 'flex items-start gap-3 px-4 py-3 rounded-lg border text-body-sm font-semibold bg-white text-primary border-outline-variant';
-        els.pageAlertIcon.textContent = type === 'error' ? 'error' : 'check_circle';
-        els.pageAlertMsg.textContent = message;
-    }
-
-    async function apiJson(url, options = {}) {
-        const opts = { ...options };
-        if (opts.body && !(opts.body instanceof FormData)) {
-            opts.headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-        }
-        const response = await fetch(url, opts);
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error(text || `${response.status} ${response.statusText}`);
-        }
-        const contentType = response.headers.get('content-type') || '';
-        return contentType.includes('application/json') ? response.json() : null;
-    }
-
-    async function loadReferenceData() {
-        if (!state.organizationId) return;
-        const [banks, vendors] = await Promise.all([
-            apiJson(`/api/accountant/bank-accounts/org/${state.organizationId}`),
-            apiJson(`/api/accountant/vendors/org/${state.organizationId}`)
-        ]);
-        state.bankAccounts = banks || [];
-        state.vendors = vendors || [];
-        els.runBankAccount.innerHTML = `<option value="">Select bank account...</option>` + state.bankAccounts
-            .map(bank => `<option value="${bank.id}">${bank.bankName || 'Bank'} ${bank.accountNumber || ''}</option>`).join('');
-        els.statementVendor.innerHTML = `<option value="">Select vendor...</option>` + state.vendors
-            .map(vendor => `<option value="${vendor.id}">${vendor.legalName || vendor.displayName || vendor.name}</option>`).join('');
-    }
-
-    async function loadSchedules() {
-        if (!state.organizationId) return;
-        setStatus('Loading schedules...');
-        const params = new URLSearchParams();
-        if (els.scheduleFrom.value) params.set('from', els.scheduleFrom.value);
-        if (els.scheduleTo.value) params.set('to', els.scheduleTo.value);
-        if (els.scheduleStatus.value && !state.dueOnly) params.set('status', els.scheduleStatus.value);
-        const url = state.dueOnly
-            ? `/api/accountant/payables/due/org/${state.organizationId}?${new URLSearchParams({ asOfDate: today() })}`
-            : `/api/accountant/payables/schedules/org/${state.organizationId}?${params}`;
-        state.schedules = await apiJson(url) || [];
-        renderSchedules();
-        setStatus('');
-    }
-
-    function renderSchedules() {
-        els.dueOnlyBtn.className = state.dueOnly
-            ? 'bg-primary text-on-primary rounded-lg px-3 py-2 font-bold text-body-sm'
-            : 'bg-white border border-outline-variant rounded-lg px-3 py-2 font-bold text-body-sm';
-        els.scheduleRows.innerHTML = state.schedules.map(schedule => `
-            <tr>
-                <td class="px-4 py-3">
-                    <input type="checkbox" class="schedule-select rounded border-outline-variant accent-primary" value="${schedule.id}" ${schedule.status === 'APPROVED' ? '' : 'disabled'} title="Select schedule for payment run">
-                </td>
-                <td class="px-4 py-3 font-semibold">${schedule.vendorName || '-'}</td>
-                <td class="px-4 py-3">${schedule.purchaseOrderNumber || `#${schedule.purchaseInvoiceId}`}</td>
-                <td class="px-4 py-3">${schedule.dueDate || '-'}</td>
-                <td class="px-4 py-3">${schedule.scheduledPaymentDate || '-'}</td>
-                <td class="px-4 py-3 text-right font-bold">${money(schedule.amountRemaining)}</td>
-                <td class="px-4 py-3">${schedule.priority ?? '-'}</td>
-                <td class="px-4 py-3">${badge(schedule.status)}</td>
-                <td class="px-4 py-3">
-                    <div class="flex justify-end gap-2">
-                        ${schedule.status === 'PLANNED' ? `<button data-action="approve-schedule" data-id="${schedule.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Approve</button>` : ''}
-                        ${!['PAID', 'CANCELLED'].includes(schedule.status) ? `<button data-action="hold-schedule" data-id="${schedule.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Hold</button>` : ''}
-                        ${!['PAID', 'CANCELLED'].includes(schedule.status) ? `<button data-action="reschedule-schedule" data-id="${schedule.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Reschedule</button>` : ''}
-                        ${schedule.status !== 'PAID' && schedule.status !== 'CANCELLED' ? `<button data-action="cancel-schedule" data-id="${schedule.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Cancel</button>` : ''}
-                    </div>
-                </td>
-            </tr>
-        `).join('') || `<tr><td colspan="9" class="px-4 py-8 text-center text-secondary">No payment schedules found.</td></tr>`;
-        document.querySelectorAll('.schedule-select').forEach(input => {
-            input.addEventListener('change', updateSelectedSchedulesHint);
-        });
-        updateSelectedSchedulesHint();
-    }
-
-    function selectedScheduleIds() {
-        return Array.from(document.querySelectorAll('.schedule-select:checked'))
-            .map(input => Number(input.value))
-            .filter(Boolean);
-    }
-
-    function updateSelectedSchedulesHint() {
-        const count = selectedScheduleIds().length;
-        const hint = document.getElementById('selectedSchedulesHint');
-        if (hint) hint.textContent = count
-            ? `${count} approved schedule${count === 1 ? '' : 's'} selected for the next payment run.`
-            : 'Select approved schedules or leave empty to use the cutoff date.';
-    }
-
-    async function loadForecast() {
-        if (!state.organizationId) return;
-        const params = new URLSearchParams({ bucket: state.forecastBucket });
-        if (els.forecastFrom.value) params.set('from', els.forecastFrom.value);
-        if (els.forecastTo.value) params.set('to', els.forecastTo.value);
-        const forecast = await apiJson(`/api/accountant/payables/forecast/org/${state.organizationId}?${params}`);
-        els.forecastSummary.innerHTML = `
-            <div class="bg-surface-container-low rounded-lg p-3"><div class="text-body-sm text-secondary">Scheduled</div><div class="font-bold text-lg">${money(forecast.totalScheduled)}</div></div>
-            <div class="bg-surface-container-low rounded-lg p-3"><div class="text-body-sm text-secondary">Overdue</div><div class="font-bold text-lg">${money(forecast.overdueAmount)}</div></div>
-            <div class="bg-surface-container-low rounded-lg p-3"><div class="text-body-sm text-secondary">Due soon</div><div class="font-bold text-lg">${money(forecast.dueSoonAmount)}</div></div>
-        `;
-        const max = Math.max(...(forecast.rows || []).map(row => Number(row.scheduledAmount || 0)), 1);
-        els.forecastRows.innerHTML = (forecast.rows || []).map(row => {
-            const width = Math.max(6, (Number(row.scheduledAmount || 0) / max) * 100);
-            return `<div class="border border-outline-variant rounded-lg p-3 bg-white">
-                <div class="flex justify-between text-body-sm mb-2"><span>${row.bucketStart} - ${row.bucketEnd}</span><strong>${money(row.scheduledAmount)}</strong></div>
-                <div class="h-2 bg-surface-container rounded"><div class="h-2 bg-primary rounded" style="width:${width}%"></div></div>
-            </div>`;
-        }).join('') || '<div class="text-secondary text-body-sm">No forecast rows.</div>';
-    }
-
-    async function loadRuns() {
-        if (!state.organizationId) return;
-        state.runs = await apiJson(`/api/accountant/payables/payment-runs/org/${state.organizationId}`) || [];
-        renderRuns();
-    }
-
-    function renderRuns() {
-        els.runRows.innerHTML = state.runs.map(run => `
-            <button data-action="select-run" data-id="${run.id}" class="w-full text-left border border-outline-variant rounded-lg p-4 bg-white hover:border-primary">
-                <div class="flex justify-between gap-3"><strong>Run #${run.id}</strong>${badge(run.status)}</div>
-                <div class="text-body-sm text-secondary mt-2">${run.runDate || '-'} · ${run.bankName || 'Bank'} · ${run.itemCount || 0} items</div>
-                <div class="font-bold mt-2">${money(run.totalAmount)}</div>
-            </button>
-        `).join('') || '<div class="text-secondary text-body-sm">No payment runs found.</div>';
-        renderRunDetail();
-    }
-
-    async function selectRun(id) {
-        state.selectedRun = await apiJson(`/api/accountant/payables/payment-runs/${id}`);
-        renderRunDetail();
-    }
-
-    function renderRunDetail() {
-        const run = state.selectedRun;
-        if (!run) {
-            els.runDetailTitle.textContent = 'Run detail';
-            els.runDetailActions.innerHTML = '';
-            els.runDetail.textContent = 'Select a payment run.';
-            return;
-        }
-        els.runDetailTitle.textContent = `Run #${run.id} · ${money(run.totalAmount)}`;
-        els.runDetailActions.innerHTML = `
-            ${run.status === 'DRAFT' ? `<button data-action="run-submit" data-id="${run.id}" class="px-2 py-1 rounded bg-white border border-outline-variant font-bold text-body-sm">Submit</button>` : ''}
-            ${run.status === 'READY_FOR_APPROVAL' ? `<button data-action="run-approve" data-id="${run.id}" class="px-2 py-1 rounded bg-white border border-outline-variant font-bold text-body-sm">Approve</button>` : ''}
-            ${run.status === 'APPROVED' ? `<button data-action="run-execute" data-id="${run.id}" class="px-2 py-1 rounded bg-primary text-on-primary font-bold text-body-sm">Execute</button>` : ''}
-            ${!['EXECUTED', 'PARTIALLY_EXECUTED', 'CANCELLED'].includes(run.status) ? `<button data-action="run-cancel" data-id="${run.id}" class="px-2 py-1 rounded bg-white border border-outline-variant font-bold text-body-sm">Cancel</button>` : ''}
-        `;
-        els.runDetail.innerHTML = `
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div><span class="text-secondary">Run date</span><div class="font-bold">${run.runDate || '-'}</div></div>
-                <div><span class="text-secondary">Cutoff</span><div class="font-bold">${run.cutoffDate || '-'}</div></div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[520px] text-left">
-                    <thead class="bg-surface-container-low"><tr><th class="px-3 py-2">Vendor</th><th class="px-3 py-2">PO</th><th class="px-3 py-2 text-right">Amount</th><th class="px-3 py-2">Status</th></tr></thead>
-                    <tbody class="divide-y divide-outline-variant">${(run.items || []).map(item => `
-                        <tr><td class="px-3 py-2">${item.vendorName || '-'}</td><td class="px-3 py-2">${item.purchaseOrderNumber || '-'}</td><td class="px-3 py-2 text-right font-bold">${money(item.amount)}</td><td class="px-3 py-2">${badge(item.status)}</td></tr>
-                    `).join('')}</tbody>
-                </table>
-            </div>
-        `;
-    }
-
-    async function loadStatements() {
-        if (!state.organizationId) return;
-        state.statements = await apiJson(`/api/accountant/payables/supplier-statements/org/${state.organizationId}`) || [];
-        renderStatements();
-    }
-
-    function renderStatements() {
-        els.statementRows.innerHTML = state.statements.map(statement => `
-            <button data-action="select-statement" data-id="${statement.id}" class="w-full text-left border border-outline-variant rounded-lg p-4 bg-white hover:border-primary">
-                <div class="flex justify-between gap-3"><strong>${statement.vendorName || '-'}</strong>${badge(statement.status)}</div>
-                <div class="text-body-sm text-secondary mt-2">${statement.statementDate || '-'} · ${money(statement.closingBalance)}</div>
-            </button>
-        `).join('') || '<div class="text-secondary text-body-sm">No supplier statements found.</div>';
-        renderStatementDetail();
-    }
-
-    async function selectStatement(id) {
-        state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statements/${id}`);
-        renderStatementDetail();
-    }
-
-    function renderStatementDetail() {
-        const statement = state.selectedStatement;
-        if (!statement) {
-            els.statementDetailTitle.textContent = 'Statement detail';
-            els.statementActions.innerHTML = '';
-            els.statementDetail.textContent = 'Select a statement.';
-            return;
-        }
-        const openLines = (statement.lines || []).filter(line => line.status === 'UNMATCHED').length;
-        els.statementDetailTitle.textContent = `${statement.vendorName} · ${statement.statementDate}`;
-        els.statementActions.innerHTML = `
-            ${statement.status !== 'COMPLETED' ? `<button data-action="statement-auto-match" data-id="${statement.id}" class="px-2 py-1 rounded bg-white border border-outline-variant font-bold text-body-sm">Auto-match</button>` : ''}
-            ${statement.status !== 'COMPLETED' && openLines === 0 ? `<button data-action="statement-complete" data-id="${statement.id}" class="px-2 py-1 rounded bg-primary text-on-primary font-bold text-body-sm">Complete</button>` : ''}
-        `;
-        els.statementDetail.innerHTML = `
-            <div class="grid grid-cols-3 gap-3 mb-4">
-                <div><span class="text-secondary">Opening</span><div class="font-bold">${money(statement.openingBalance)}</div></div>
-                <div><span class="text-secondary">Closing</span><div class="font-bold">${money(statement.closingBalance)}</div></div>
-                <div><span class="text-secondary">Open lines</span><div class="font-bold">${openLines}</div></div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[760px] text-left">
-                    <thead class="bg-surface-container-low"><tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Reference</th><th class="px-3 py-2 text-right">Debit</th><th class="px-3 py-2 text-right">Credit</th><th class="px-3 py-2">Match</th><th class="px-3 py-2">Status</th><th class="px-3 py-2"></th></tr></thead>
-                    <tbody class="divide-y divide-outline-variant">${(statement.lines || []).map(line => `
-                        <tr>
-                            <td class="px-3 py-2">${line.transactionDate || '-'}</td>
-                            <td class="px-3 py-2">${line.referenceNumber || '-'}</td>
-                            <td class="px-3 py-2 text-right">${money(line.debitAmount)}</td>
-                            <td class="px-3 py-2 text-right">${money(line.creditAmount)}</td>
-                            <td class="px-3 py-2">${line.matchedPurchaseInvoiceId ? `Invoice #${line.matchedPurchaseInvoiceId}` : line.matchedPaymentId ? `Payment #${line.matchedPaymentId}` : '-'}</td>
-                            <td class="px-3 py-2">${badge(line.status)}</td>
-                            <td class="px-3 py-2 text-right">${line.status !== 'DISPUTED' ? `<button data-action="statement-dispute-line" data-id="${line.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Dispute</button>` : ''}</td>
-                        </tr>
-                    `).join('')}</tbody>
-                </table>
-            </div>
-        `;
-    }
-
-    function addStatementLine() {
-        const row = document.createElement('div');
-        row.className = 'grid grid-cols-6 gap-2 statement-line';
-        row.innerHTML = `
-            <input type="date" class="line-date bg-white border border-outline-variant rounded p-2 text-body-sm">
-            <input class="line-ref bg-white border border-outline-variant rounded p-2 text-body-sm" placeholder="Reference">
-            <input class="line-desc col-span-2 bg-white border border-outline-variant rounded p-2 text-body-sm" placeholder="Description">
-            <input type="number" step="0.01" class="line-debit bg-white border border-outline-variant rounded p-2 text-body-sm" placeholder="Debit">
-            <input type="number" step="0.01" class="line-credit bg-white border border-outline-variant rounded p-2 text-body-sm" placeholder="Credit">
-        `;
-        els.statementLineInputs.appendChild(row);
-    }
-
-    function openScheduleModal(type, id) {
-        const schedule = state.schedules.find(item => String(item.id) === String(id));
-        document.getElementById('scheduleActionId').value = id;
-        document.getElementById('scheduleActionType').value = type;
-        document.getElementById('scheduleModalTitle').textContent = type[0].toUpperCase() + type.slice(1) + ' schedule';
-        document.getElementById('rescheduleFields').classList.toggle('hidden', type !== 'reschedule');
-        document.getElementById('scheduleReason').classList.toggle('hidden', type === 'approve');
-        document.getElementById('schedulePaymentDate').value = schedule?.scheduledPaymentDate || today();
-        document.getElementById('scheduleAmount').value = schedule?.amountRemaining || '';
-        document.getElementById('schedulePriority').value = schedule?.priority || 5;
-        document.getElementById('scheduleReason').value = '';
-        els.scheduleModal.classList.remove('hidden');
-        els.scheduleModal.classList.add('flex');
-    }
-
-    function closeScheduleModal() {
-        els.scheduleModal.classList.add('hidden');
-        els.scheduleModal.classList.remove('flex');
-    }
-
-    async function runAction(path, success, refreshRunId = null) {
-        await apiJson(path, { method: 'PATCH' });
-        alert(success);
-        await Promise.all([loadRuns(), loadSchedules(), loadForecast()]);
-        if (refreshRunId) {
-            await selectRun(refreshRunId);
-        }
-    }
-
-    async function initOrg() {
-        state.organizationId = els.orgSelector.value;
-        state.selectedRun = null;
-        state.selectedStatement = null;
-        if (!state.organizationId) return;
-        await loadReferenceData();
-        await Promise.all([loadSchedules(), loadForecast(), loadRuns(), loadStatements()]);
-    }
-
-    document.querySelectorAll('.tab-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(tab => {
-                tab.classList.toggle('tab-active', tab === button);
-                tab.classList.toggle('tab-idle', tab !== button);
-            });
-            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
-            document.getElementById(`${button.dataset.tab}Panel`).classList.remove('hidden');
-        });
-    });
-
-    document.querySelectorAll('.bucket-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            state.forecastBucket = button.dataset.bucket;
-            document.querySelectorAll('.bucket-btn').forEach(bucket => bucket.className = bucket === button
-                ? 'bucket-btn bg-primary text-on-primary rounded-lg py-2 font-bold text-body-sm'
-                : 'bucket-btn bg-white border border-outline-variant rounded-lg py-2 font-bold text-body-sm');
-            loadForecast().catch(err => alert(err.message, 'error'));
-        });
-    });
-
-    document.addEventListener('click', async event => {
-        const button = event.target.closest('button[data-action]');
-        if (!button) return;
-        const { action, id } = button.dataset;
-        try {
-            if (action === 'approve-schedule') await runAction(`/api/accountant/payables/schedules/${id}/approve`, 'Schedule approved.');
-            if (action === 'hold-schedule') openScheduleModal('hold', id);
-            if (action === 'reschedule-schedule') openScheduleModal('reschedule', id);
-            if (action === 'cancel-schedule') openScheduleModal('cancel', id);
-            if (action === 'select-run') await selectRun(id);
-            if (action === 'run-submit') await runAction(`/api/accountant/payables/payment-runs/${id}/submit`, 'Payment run submitted.', id);
-            if (action === 'run-approve') await runAction(`/api/accountant/payables/payment-runs/${id}/approve`, 'Payment run approved.', id);
-            if (action === 'run-execute') await runAction(`/api/accountant/payables/payment-runs/${id}/execute`, 'Payment run executed.', id);
-            if (action === 'run-cancel') await runAction(`/api/accountant/payables/payment-runs/${id}/cancel`, 'Payment run cancelled.', id);
-            if (action === 'select-statement') await selectStatement(id);
-            if (action === 'statement-auto-match') {
-                state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statements/${id}/auto-match`, { method: 'PATCH' });
-                await loadStatements();
-                renderStatementDetail();
-                alert('Supplier statement auto-match completed.');
-            }
-            if (action === 'statement-complete') {
-                state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statements/${id}/complete`, { method: 'PATCH' });
-                await loadStatements();
-                renderStatementDetail();
-                alert('Supplier statement completed.');
-            }
-            if (action === 'statement-dispute-line') {
-                const reason = prompt('Dispute reason') || '';
-                state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statement-lines/${id}/dispute`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ reason })
-                });
-                renderStatementDetail();
-                alert('Statement line disputed.');
-            }
-        } catch (err) {
-            alert(err.message, 'error');
-        }
-    });
-
-    document.querySelectorAll('.modal-close').forEach(button => button.addEventListener('click', closeScheduleModal));
-    document.getElementById('scheduleActionForm').addEventListener('submit', async event => {
-        event.preventDefault();
-        const id = document.getElementById('scheduleActionId').value;
-        const type = document.getElementById('scheduleActionType').value;
-        const payload = {
-            reason: document.getElementById('scheduleReason').value || null,
-            scheduledPaymentDate: document.getElementById('schedulePaymentDate').value || null,
-            amountScheduled: document.getElementById('scheduleAmount').value || null,
-            priority: document.getElementById('schedulePriority').value ? Number(document.getElementById('schedulePriority').value) : null
+        const els = {
+            orgSelector: document.getElementById('orgSelector'),
+            pageStatus: document.getElementById('pageStatus'),
+            pageAlert: document.getElementById('pageAlert'),
+            pageAlertInner: document.getElementById('pageAlertInner'),
+            pageAlertIcon: document.getElementById('pageAlertIcon'),
+            pageAlertMsg: document.getElementById('pageAlertMsg'),
+            scheduleRows: document.getElementById('scheduleRows'),
+            scheduleFrom: document.getElementById('scheduleFrom'),
+            scheduleTo: document.getElementById('scheduleTo'),
+            scheduleStatus: document.getElementById('scheduleStatus'),
+            dueOnlyBtn: document.getElementById('dueOnlyBtn'),
+            forecastFrom: document.getElementById('forecastFrom'),
+            forecastTo: document.getElementById('forecastTo'),
+            forecastSummary: document.getElementById('forecastSummary'),
+            forecastRows: document.getElementById('forecastRows'),
+            runBankAccount: document.getElementById('runBankAccount'),
+            runRows: document.getElementById('runRows'),
+            runDetail: document.getElementById('runDetail'),
+            runDetailTitle: document.getElementById('runDetailTitle'),
+            runDetailActions: document.getElementById('runDetailActions'),
+            statementVendor: document.getElementById('statementVendor'),
+            statementRows: document.getElementById('statementRows'),
+            statementDetail: document.getElementById('statementDetail'),
+            statementDetailTitle: document.getElementById('statementDetailTitle'),
+            statementActions: document.getElementById('statementActions'),
+            statementLineInputs: document.getElementById('statementLineInputs'),
+            scheduleModal: document.getElementById('scheduleModal')
         };
-        try {
-            await apiJson(`/api/accountant/payables/schedules/${id}/${type}`, { method: 'PATCH', body: JSON.stringify(payload) });
-            closeScheduleModal();
-            await loadSchedules();
-            await loadForecast();
-            alert('Schedule updated.');
-        } catch (err) {
-            alert(err.message, 'error');
-        }
-    });
 
-    document.getElementById('paymentRunForm').addEventListener('submit', async event => {
-        event.preventDefault();
-        try {
-            const created = await apiJson(`/api/accountant/payables/payment-runs/org/${state.organizationId}`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    bankAccountId: els.runBankAccount.value ? Number(els.runBankAccount.value) : null,
-                    runDate: document.getElementById('runDate').value || null,
-                    cutoffDate: document.getElementById('cutoffDate').value || null,
-                    scheduleIds: selectedScheduleIds()
-                })
+        function today(offset = 0) {
+            const date = new Date();
+            date.setDate(date.getDate() + offset);
+            return date.toISOString().slice(0, 10);
+        }
+
+        function money(value) {
+            return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function badge(status) {
+            const map = {
+                PLANNED: 'bg-slate-100 text-slate-700',
+                APPROVED: 'bg-emerald-50 text-emerald-700',
+                HELD: 'bg-amber-50 text-amber-700',
+                PAID: 'bg-blue-50 text-blue-700',
+                CANCELLED: 'bg-red-50 text-red-700',
+                DRAFT: 'bg-slate-100 text-slate-700',
+                READY_FOR_APPROVAL: 'bg-amber-50 text-amber-700',
+                EXECUTED: 'bg-blue-50 text-blue-700',
+                PARTIALLY_EXECUTED: 'bg-violet-50 text-violet-700',
+                MATCHING: 'bg-amber-50 text-amber-700',
+                COMPLETED: 'bg-blue-50 text-blue-700',
+                MATCHED: 'bg-emerald-50 text-emerald-700',
+                UNMATCHED: 'bg-slate-100 text-slate-700',
+                DISPUTED: 'bg-red-50 text-red-700'
+            };
+            return `<span class="inline-flex px-2 py-1 rounded text-[11px] font-bold ${map[status] || 'bg-slate-100 text-slate-700'}">${status || '-'}</span>`;
+        }
+
+        function setStatus(message) {
+            els.pageStatus.textContent = message || '';
+        }
+
+        function alert(message, type = 'info') {
+            els.pageAlert.classList.remove('hidden');
+            els.pageAlertInner.className = type === 'error'
+                ? 'flex items-start gap-3 px-4 py-3 rounded-lg border text-body-sm font-semibold bg-error-container text-on-error-container border-error/20'
+                : 'flex items-start gap-3 px-4 py-3 rounded-lg border text-body-sm font-semibold bg-white text-primary border-outline-variant';
+            els.pageAlertIcon.textContent = type === 'error' ? 'error' : 'check_circle';
+            els.pageAlertMsg.textContent = message;
+        }
+
+        async function apiJson(url, options = {}) {
+            const opts = { ...options };
+            if (opts.body && !(opts.body instanceof FormData)) {
+                opts.headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+            }
+            const response = await fetch(url, opts);
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || `${response.status} ${response.statusText}`);
+            }
+            const contentType = response.headers.get('content-type') || '';
+            return contentType.includes('application/json') ? response.json() : null;
+        }
+
+        async function loadReferenceData() {
+            if (!state.organizationId) return;
+            const [banks, vendors] = await Promise.all([
+                apiJson(`/api/accountant/bank-accounts/org/${state.organizationId}`),
+                apiJson(`/api/accountant/vendors/org/${state.organizationId}`)
+            ]);
+            state.bankAccounts = banks || [];
+            state.vendors = vendors || [];
+            els.runBankAccount.innerHTML = `<option value="">Select bank account...</option>` + state.bankAccounts
+                .map(bank => `<option value="${bank.id}">${bank.bankName || 'Bank'} ${bank.accountNumber || ''}</option>`).join('');
+            els.statementVendor.innerHTML = `<option value="">Select vendor...</option>` + state.vendors
+                .map(vendor => `<option value="${vendor.id}">${vendor.legalName || vendor.displayName || vendor.name}</option>`).join('');
+        }
+
+        async function loadSchedules() {
+            if (!state.organizationId) return;
+            setStatus('Loading schedules...');
+            const params = new URLSearchParams();
+            if (els.scheduleFrom.value) params.set('from', els.scheduleFrom.value);
+            if (els.scheduleTo.value) params.set('to', els.scheduleTo.value);
+            if (els.scheduleStatus.value && !state.dueOnly) params.set('status', els.scheduleStatus.value);
+            const url = state.dueOnly
+                ? `/api/accountant/payables/due/org/${state.organizationId}?${new URLSearchParams({ asOfDate: today() })}`
+                : `/api/accountant/payables/schedules/org/${state.organizationId}?${params}`;
+            state.schedules = await apiJson(url) || [];
+            renderSchedules();
+            setStatus('');
+        }
+
+        function renderSchedules() {
+            els.dueOnlyBtn.className = state.dueOnly
+                ? 'bg-primary text-on-primary rounded-lg px-3 py-2 font-bold text-body-sm'
+                : 'bg-white border border-outline-variant rounded-lg px-3 py-2 font-bold text-body-sm';
+            els.scheduleRows.innerHTML = state.schedules.map(schedule => `
+                <tr>
+                    <td class="px-4 py-3">
+                        <input type="checkbox" class="schedule-select rounded border-outline-variant accent-primary" value="${schedule.id}" ${schedule.status === 'APPROVED' ? '' : 'disabled'} title="Select schedule for payment run">
+                    </td>
+                    <td class="px-4 py-3 font-semibold">${schedule.vendorName || '-'}</td>
+                    <td class="px-4 py-3">${schedule.purchaseOrderNumber || `#${schedule.purchaseInvoiceId}`}</td>
+                    <td class="px-4 py-3">${schedule.dueDate || '-'}</td>
+                    <td class="px-4 py-3">${schedule.scheduledPaymentDate || '-'}</td>
+                    <td class="px-4 py-3 text-right font-bold">${money(schedule.amountRemaining)}</td>
+                    <td class="px-4 py-3">${schedule.priority ?? '-'}</td>
+                    <td class="px-4 py-3">${badge(schedule.status)}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-end gap-2">
+                            ${['PLANNED', 'READY_FOR_APPROVAL'].includes(schedule.status) ? `<button data-action="approve-schedule" data-id="${schedule.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Approve</button>` : ''}
+                            ${!['PAID', 'CANCELLED'].includes(schedule.status) ? `<button data-action="hold-schedule" data-id="${schedule.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Hold</button>` : ''}
+                            ${!['PAID', 'CANCELLED'].includes(schedule.status) ? `<button data-action="reschedule-schedule" data-id="${schedule.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Reschedule</button>` : ''}
+                            ${schedule.status !== 'PAID' && schedule.status !== 'CANCELLED' ? `<button data-action="cancel-schedule" data-id="${schedule.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Cancel</button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('') || `<tr><td colspan="9" class="px-4 py-8 text-center text-secondary">No payment schedules found.</td></tr>`;
+            document.querySelectorAll('.schedule-select').forEach(input => {
+                input.addEventListener('change', updateSelectedSchedulesHint);
             });
-            state.selectedRun = created;
-            await loadRuns();
+            updateSelectedSchedulesHint();
+        }
+
+        function selectedScheduleIds() {
+            return Array.from(document.querySelectorAll('.schedule-select:checked'))
+                .map(input => Number(input.value))
+                .filter(Boolean);
+        }
+
+        function updateSelectedSchedulesHint() {
+            const count = selectedScheduleIds().length;
+            const hint = document.getElementById('selectedSchedulesHint');
+            if (hint) hint.textContent = count
+                ? `${count} approved schedule${count === 1 ? '' : 's'} selected for the next payment run.`
+                : 'Select approved schedules or leave empty to use the cutoff date.';
+        }
+
+        async function loadForecast() {
+            if (!state.organizationId) return;
+            const params = new URLSearchParams({ bucket: state.forecastBucket });
+            if (els.forecastFrom.value) params.set('from', els.forecastFrom.value);
+            if (els.forecastTo.value) params.set('to', els.forecastTo.value);
+            const forecast = await apiJson(`/api/accountant/payables/forecast/org/${state.organizationId}?${params}`);
+            els.forecastSummary.innerHTML = `
+                <div class="bg-surface-container-low rounded-lg p-3"><div class="text-body-sm text-secondary">Scheduled</div><div class="font-bold text-lg">${money(forecast.totalScheduled)}</div></div>
+                <div class="bg-surface-container-low rounded-lg p-3"><div class="text-body-sm text-secondary">Overdue</div><div class="font-bold text-lg">${money(forecast.overdueAmount)}</div></div>
+                <div class="bg-surface-container-low rounded-lg p-3"><div class="text-body-sm text-secondary">Due soon</div><div class="font-bold text-lg">${money(forecast.dueSoonAmount)}</div></div>
+            `;
+            const max = Math.max(...(forecast.rows || []).map(row => Number(row.scheduledAmount || 0)), 1);
+            els.forecastRows.innerHTML = (forecast.rows || []).map(row => {
+                const width = Math.max(6, (Number(row.scheduledAmount || 0) / max) * 100);
+                return `<div class="border border-outline-variant rounded-lg p-3 bg-white">
+                    <div class="flex justify-between text-body-sm mb-2"><span>${row.bucketStart} - ${row.bucketEnd}</span><strong>${money(row.scheduledAmount)}</strong></div>
+                    <div class="h-2 bg-surface-container rounded"><div class="h-2 bg-primary rounded" style="width:${width}%"></div></div>
+                </div>`;
+            }).join('') || '<div class="text-secondary text-body-sm">No forecast rows.</div>';
+        }
+
+        async function loadRuns() {
+            if (!state.organizationId) return;
+            state.runs = await apiJson(`/api/accountant/payables/payment-runs/org/${state.organizationId}`) || [];
+            renderRuns();
+        }
+
+        function renderRuns() {
+            els.runRows.innerHTML = state.runs.map(run => `
+                <button data-action="select-run" data-id="${run.id}" class="w-full text-left border border-outline-variant rounded-lg p-4 bg-white hover:border-primary">
+                    <div class="flex justify-between gap-3"><strong>Run #${run.id}</strong>${badge(run.status)}</div>
+                    <div class="text-body-sm text-secondary mt-2">${run.runDate || '-'} · ${run.bankName || 'Bank'} · ${run.itemCount || 0} items</div>
+                    <div class="font-bold mt-2">${money(run.totalAmount)}</div>
+                </button>
+            `).join('') || '<div class="text-secondary text-body-sm">No payment runs found.</div>';
             renderRunDetail();
-            alert('Payment run created.');
-        } catch (err) {
-            alert(err.message, 'error');
         }
-    });
 
-    document.getElementById('statementForm').addEventListener('submit', async event => {
-        event.preventDefault();
-        const lines = [...document.querySelectorAll('.statement-line')].map(row => ({
-            transactionDate: row.querySelector('.line-date').value || null,
-            referenceNumber: row.querySelector('.line-ref').value || null,
-            description: row.querySelector('.line-desc').value || null,
-            debitAmount: row.querySelector('.line-debit').value || 0,
-            creditAmount: row.querySelector('.line-credit').value || 0
-        })).filter(line => line.transactionDate || line.referenceNumber);
-        try {
-            state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statements/org/${state.organizationId}`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    vendorId: document.getElementById('statementVendor').value ? Number(document.getElementById('statementVendor').value) : null,
-                    statementDate: document.getElementById('statementDate').value || null,
-                    startDate: document.getElementById('statementStartDate').value || null,
-                    endDate: document.getElementById('statementEndDate').value || null,
-                    openingBalance: document.getElementById('statementOpening').value || 0,
-                    closingBalance: document.getElementById('statementClosing').value || 0,
-                    lines
-                })
-            });
-            await loadStatements();
+        async function selectRun(id) {
+            state.selectedRun = await apiJson(`/api/accountant/payables/payment-runs/${id}`);
+            renderRunDetail();
+        }
+
+        function renderRunDetail() {
+            const run = state.selectedRun;
+            if (!run) {
+                els.runDetailTitle.textContent = 'Run detail';
+                els.runDetailActions.innerHTML = '';
+                els.runDetail.textContent = 'Select a payment run.';
+                return;
+            }
+            els.runDetailTitle.textContent = `Run #${run.id} · ${money(run.totalAmount)}`;
+            els.runDetailActions.innerHTML = `
+                ${run.status === 'DRAFT' ? `<button data-action="run-submit" data-id="${run.id}" class="px-2 py-1 rounded bg-white border border-outline-variant font-bold text-body-sm">Submit</button>` : ''}
+                ${run.status === 'READY_FOR_APPROVAL' ? `<button data-action="run-approve" data-id="${run.id}" class="px-2 py-1 rounded bg-white border border-outline-variant font-bold text-body-sm">Approve</button>` : ''}
+                ${run.status === 'APPROVED' ? `<button data-action="run-execute" data-id="${run.id}" class="px-2 py-1 rounded bg-primary text-on-primary font-bold text-body-sm">Execute</button>` : ''}
+                ${!['EXECUTED', 'PARTIALLY_EXECUTED', 'CANCELLED'].includes(run.status) ? `<button data-action="run-cancel" data-id="${run.id}" class="px-2 py-1 rounded bg-white border border-outline-variant font-bold text-body-sm">Cancel</button>` : ''}
+            `;
+            els.runDetail.innerHTML = `
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div><span class="text-secondary">Run date</span><div class="font-bold">${run.runDate || '-'}</div></div>
+                    <div><span class="text-secondary">Cutoff</span><div class="font-bold">${run.cutoffDate || '-'}</div></div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[520px] text-left">
+                        <thead class="bg-surface-container-low"><tr><th class="px-3 py-2">Vendor</th><th class="px-3 py-2">PO</th><th class="px-3 py-2 text-right">Amount</th><th class="px-3 py-2">Status</th></tr></thead>
+                        <tbody class="divide-y divide-outline-variant">${(run.items || []).map(item => `
+                            <tr><td class="px-3 py-2">${item.vendorName || '-'}</td><td class="px-3 py-2">${item.purchaseOrderNumber || '-'}</td><td class="px-3 py-2 text-right font-bold">${money(item.amount)}</td><td class="px-3 py-2">${badge(item.status)}${item.status === 'FAILED' && item.failureReason ? `<div class="text-body-sm text-red-600 mt-1">${item.failureReason}</div>` : ''}</td></tr>
+                        `).join('')}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function loadStatements() {
+            if (!state.organizationId) return;
+            state.statements = await apiJson(`/api/accountant/payables/supplier-statements/org/${state.organizationId}`) || [];
+            renderStatements();
+        }
+
+        function renderStatements() {
+            els.statementRows.innerHTML = state.statements.map(statement => `
+                <button data-action="select-statement" data-id="${statement.id}" class="w-full text-left border border-outline-variant rounded-lg p-4 bg-white hover:border-primary">
+                    <div class="flex justify-between gap-3"><strong>${statement.vendorName || '-'}</strong>${badge(statement.status)}</div>
+                    <div class="text-body-sm text-secondary mt-2">${statement.statementDate || '-'} · ${money(statement.closingBalance)}</div>
+                </button>
+            `).join('') || '<div class="text-secondary text-body-sm">No supplier statements found.</div>';
             renderStatementDetail();
-            alert('Supplier statement created.');
-        } catch (err) {
-            alert(err.message, 'error');
         }
-    });
 
-    els.orgSelector.addEventListener('change', () => initOrg().catch(err => alert(err.message, 'error')));
-    els.dueOnlyBtn.addEventListener('click', () => { state.dueOnly = !state.dueOnly; loadSchedules().catch(err => alert(err.message, 'error')); });
-    document.getElementById('refreshSchedulesBtn').addEventListener('click', () => loadSchedules().catch(err => alert(err.message, 'error')));
-    document.getElementById('selectAllSchedules').addEventListener('change', function () {
-        document.querySelectorAll('.schedule-select:not(:disabled)').forEach(input => { input.checked = this.checked; });
-        updateSelectedSchedulesHint();
-    });
-    document.getElementById('loadForecastBtn').addEventListener('click', () => loadForecast().catch(err => alert(err.message, 'error')));
-    document.getElementById('refreshRunsBtn').addEventListener('click', () => loadRuns().catch(err => alert(err.message, 'error')));
-    document.getElementById('refreshStatementsBtn').addEventListener('click', () => loadStatements().catch(err => alert(err.message, 'error')));
-    document.getElementById('addStatementLineBtn').addEventListener('click', addStatementLine);
+        async function selectStatement(id) {
+            state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statements/${id}`);
+            renderStatementDetail();
+        }
 
-    els.scheduleFrom.value = today(-30);
-    els.scheduleTo.value = today(30);
-    els.forecastFrom.value = today();
-    els.forecastTo.value = today(28);
-    document.getElementById('runDate').value = today();
-    document.getElementById('cutoffDate').value = today();
-    document.getElementById('statementDate').value = today();
-    document.getElementById('statementStartDate').value = today(-30);
-    document.getElementById('statementEndDate').value = today();
-    addStatementLine();
-    if (els.orgSelector.options.length > 1) {
-        els.orgSelector.selectedIndex = 1;
-        initOrg().catch(err => alert(err.message, 'error'));
-    }
-})();
+        function renderStatementDetail() {
+            const statement = state.selectedStatement;
+            if (!statement) {
+                els.statementDetailTitle.textContent = 'Statement detail';
+                els.statementActions.innerHTML = '';
+                els.statementDetail.textContent = 'Select a statement.';
+                return;
+            }
+            const openLines = (statement.lines || []).filter(line => line.status === 'UNMATCHED').length;
+            els.statementDetailTitle.textContent = `${statement.vendorName} · ${statement.statementDate}`;
+            els.statementActions.innerHTML = `
+                ${statement.status !== 'COMPLETED' ? `<button data-action="statement-auto-match" data-id="${statement.id}" class="px-2 py-1 rounded bg-white border border-outline-variant font-bold text-body-sm">Auto-match</button>` : ''}
+                ${statement.status !== 'COMPLETED' && openLines === 0 ? `<button data-action="statement-complete" data-id="${statement.id}" class="px-2 py-1 rounded bg-primary text-on-primary font-bold text-body-sm">Complete</button>` : ''}
+            `;
+            els.statementDetail.innerHTML = `
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <div><span class="text-secondary">Opening</span><div class="font-bold">${money(statement.openingBalance)}</div></div>
+                    <div><span class="text-secondary">Closing</span><div class="font-bold">${money(statement.closingBalance)}</div></div>
+                    <div><span class="text-secondary">Open lines</span><div class="font-bold">${openLines}</div></div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[760px] text-left">
+                        <thead class="bg-surface-container-low"><tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Reference</th><th class="px-3 py-2 text-right">Debit</th><th class="px-3 py-2 text-right">Credit</th><th class="px-3 py-2">Match</th><th class="px-3 py-2">Status</th><th class="px-3 py-2"></th></tr></thead>
+                        <tbody class="divide-y divide-outline-variant">${(statement.lines || []).map(line => `
+                            <tr>
+                                <td class="px-3 py-2">${line.transactionDate || '-'}</td>
+                                <td class="px-3 py-2">${line.referenceNumber || '-'}</td>
+                                <td class="px-3 py-2 text-right">${money(line.debitAmount)}</td>
+                                <td class="px-3 py-2 text-right">${money(line.creditAmount)}</td>
+                                <td class="px-3 py-2">${line.matchedPurchaseInvoiceId ? `Invoice #${line.matchedPurchaseInvoiceId}` : line.matchedPaymentId ? `Payment #${line.matchedPaymentId}` : '-'}</td>
+                                <td class="px-3 py-2">${badge(line.status)}</td>
+                                <td class="px-3 py-2 text-right">${line.status !== 'DISPUTED' ? `<button data-action="statement-dispute-line" data-id="${line.id}" class="px-2 py-1 rounded border border-outline-variant font-bold text-body-sm">Dispute</button>` : ''}</td>
+                            </tr>
+                        `).join('')}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function addStatementLine() {
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-6 gap-2 statement-line';
+            row.innerHTML = `
+                <input type="date" class="line-date bg-white border border-outline-variant rounded p-2 text-body-sm">
+                <input class="line-ref bg-white border border-outline-variant rounded p-2 text-body-sm" placeholder="Reference">
+                <input class="line-desc col-span-2 bg-white border border-outline-variant rounded p-2 text-body-sm" placeholder="Description">
+                <input type="number" step="0.01" class="line-debit bg-white border border-outline-variant rounded p-2 text-body-sm" placeholder="Debit">
+                <input type="number" step="0.01" class="line-credit bg-white border border-outline-variant rounded p-2 text-body-sm" placeholder="Credit">
+            `;
+            els.statementLineInputs.appendChild(row);
+        }
+
+        function openScheduleModal(type, id) {
+            const schedule = state.schedules.find(item => String(item.id) === String(id));
+            document.getElementById('scheduleActionId').value = id;
+            document.getElementById('scheduleActionType').value = type;
+            document.getElementById('scheduleModalTitle').textContent = type[0].toUpperCase() + type.slice(1) + ' schedule';
+            document.getElementById('rescheduleFields').classList.toggle('hidden', type !== 'reschedule');
+            document.getElementById('scheduleReason').classList.toggle('hidden', type === 'approve');
+            document.getElementById('schedulePaymentDate').value = schedule?.scheduledPaymentDate || today();
+            document.getElementById('scheduleAmount').value = schedule?.amountRemaining || '';
+            document.getElementById('schedulePriority').value = schedule?.priority || 5;
+            document.getElementById('scheduleReason').value = '';
+            els.scheduleModal.classList.remove('hidden');
+            els.scheduleModal.classList.add('flex');
+        }
+
+        function closeScheduleModal() {
+            els.scheduleModal.classList.add('hidden');
+            els.scheduleModal.classList.remove('flex');
+        }
+
+        async function runAction(path, success, refreshRunId = null) {
+            await apiJson(path, { method: 'PATCH' });
+            alert(success);
+            await Promise.all([loadRuns(), loadSchedules(), loadForecast()]);
+            if (refreshRunId) {
+                await selectRun(refreshRunId);
+            }
+        }
+
+        async function initOrg() {
+            state.organizationId = els.orgSelector.value;
+            state.selectedRun = null;
+            state.selectedStatement = null;
+            if (!state.organizationId) return;
+            await loadReferenceData();
+            await Promise.all([loadSchedules(), loadForecast(), loadRuns(), loadStatements()]);
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(tab => {
+                    tab.classList.toggle('tab-active', tab === button);
+                    tab.classList.toggle('tab-idle', tab !== button);
+                });
+                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+                document.getElementById(`${button.dataset.tab}Panel`).classList.remove('hidden');
+            });
+        });
+
+        document.querySelectorAll('.bucket-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                state.forecastBucket = button.dataset.bucket;
+                document.querySelectorAll('.bucket-btn').forEach(bucket => bucket.className = bucket === button
+                    ? 'bucket-btn bg-primary text-on-primary rounded-lg py-2 font-bold text-body-sm'
+                    : 'bucket-btn bg-white border border-outline-variant rounded-lg py-2 font-bold text-body-sm');
+                loadForecast().catch(err => alert(err.message, 'error'));
+            });
+        });
+
+        document.addEventListener('click', async event => {
+            const button = event.target.closest('button[data-action]');
+            if (!button) return;
+            const { action, id } = button.dataset;
+            try {
+                if (action === 'approve-schedule') await runAction(`/api/accountant/payables/schedules/${id}/approve`, 'Schedule approved.');
+                if (action === 'hold-schedule') openScheduleModal('hold', id);
+                if (action === 'reschedule-schedule') openScheduleModal('reschedule', id);
+                if (action === 'cancel-schedule') openScheduleModal('cancel', id);
+                if (action === 'select-run') await selectRun(id);
+                if (action === 'run-submit') await runAction(`/api/accountant/payables/payment-runs/${id}/submit`, 'Payment run submitted.', id);
+                if (action === 'run-approve') await runAction(`/api/accountant/payables/payment-runs/${id}/approve`, 'Payment run approved.', id);
+                if (action === 'run-execute') await runAction(`/api/accountant/payables/payment-runs/${id}/execute`, 'Payment run executed.', id);
+                if (action === 'run-cancel') await runAction(`/api/accountant/payables/payment-runs/${id}/cancel`, 'Payment run cancelled.', id);
+                if (action === 'select-statement') await selectStatement(id);
+                if (action === 'statement-auto-match') {
+                    state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statements/${id}/auto-match`, { method: 'PATCH' });
+                    await loadStatements();
+                    renderStatementDetail();
+                    alert('Supplier statement auto-match completed.');
+                }
+                if (action === 'statement-complete') {
+                    state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statements/${id}/complete`, { method: 'PATCH' });
+                    await loadStatements();
+                    renderStatementDetail();
+                    alert('Supplier statement completed.');
+                }
+                if (action === 'statement-dispute-line') {
+                    const reason = prompt('Dispute reason') || '';
+                    state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statement-lines/${id}/dispute`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ reason })
+                    });
+                    renderStatementDetail();
+                    alert('Statement line disputed.');
+                }
+            } catch (err) {
+                alert(err.message, 'error');
+            }
+        });
+
+        document.querySelectorAll('.modal-close').forEach(button => button.addEventListener('click', closeScheduleModal));
+        document.getElementById('scheduleActionForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            const id = document.getElementById('scheduleActionId').value;
+            const type = document.getElementById('scheduleActionType').value;
+            const payload = {
+                reason: document.getElementById('scheduleReason').value || null,
+                scheduledPaymentDate: document.getElementById('schedulePaymentDate').value || null,
+                amountScheduled: document.getElementById('scheduleAmount').value || null,
+                priority: document.getElementById('schedulePriority').value ? Number(document.getElementById('schedulePriority').value) : null
+            };
+            try {
+                await apiJson(`/api/accountant/payables/schedules/${id}/${type}`, { method: 'PATCH', body: JSON.stringify(payload) });
+                closeScheduleModal();
+                await loadSchedules();
+                await loadForecast();
+                alert('Schedule updated.');
+            } catch (err) {
+                alert(err.message, 'error');
+            }
+        });
+
+        document.getElementById('paymentRunForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            try {
+                const created = await apiJson(`/api/accountant/payables/payment-runs/org/${state.organizationId}`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        bankAccountId: els.runBankAccount.value ? Number(els.runBankAccount.value) : null,
+                        runDate: document.getElementById('runDate').value || null,
+                        cutoffDate: document.getElementById('cutoffDate').value || null,
+                        scheduleIds: selectedScheduleIds()
+                    })
+                });
+                state.selectedRun = created;
+                await loadRuns();
+                renderRunDetail();
+                alert('Payment run created.');
+            } catch (err) {
+                alert(err.message, 'error');
+            }
+        });
+
+        document.getElementById('statementForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            const lines = [...document.querySelectorAll('.statement-line')].map(row => ({
+                transactionDate: row.querySelector('.line-date').value || null,
+                referenceNumber: row.querySelector('.line-ref').value || null,
+                description: row.querySelector('.line-desc').value || null,
+                debitAmount: row.querySelector('.line-debit').value || 0,
+                creditAmount: row.querySelector('.line-credit').value || 0
+            })).filter(line => line.transactionDate || line.referenceNumber);
+            try {
+                state.selectedStatement = await apiJson(`/api/accountant/payables/supplier-statements/org/${state.organizationId}`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        vendorId: document.getElementById('statementVendor').value ? Number(document.getElementById('statementVendor').value) : null,
+                        statementDate: document.getElementById('statementDate').value || null,
+                        startDate: document.getElementById('statementStartDate').value || null,
+                        endDate: document.getElementById('statementEndDate').value || null,
+                        openingBalance: document.getElementById('statementOpening').value || 0,
+                        closingBalance: document.getElementById('statementClosing').value || 0,
+                        lines
+                    })
+                });
+                await loadStatements();
+                renderStatementDetail();
+                alert('Supplier statement created.');
+            } catch (err) {
+                alert(err.message, 'error');
+            }
+        });
+
+        els.orgSelector.addEventListener('change', () => initOrg().catch(err => alert(err.message, 'error')));
+        els.dueOnlyBtn.addEventListener('click', () => { state.dueOnly = !state.dueOnly; loadSchedules().catch(err => alert(err.message, 'error')); });
+        document.getElementById('refreshSchedulesBtn').addEventListener('click', () => loadSchedules().catch(err => alert(err.message, 'error')));
+        document.getElementById('selectAllSchedules').addEventListener('change', function () {
+            document.querySelectorAll('.schedule-select:not(:disabled)').forEach(input => { input.checked = this.checked; });
+            updateSelectedSchedulesHint();
+        });
+        document.getElementById('loadForecastBtn').addEventListener('click', () => loadForecast().catch(err => alert(err.message, 'error')));
+        document.getElementById('refreshRunsBtn').addEventListener('click', () => loadRuns().catch(err => alert(err.message, 'error')));
+        document.getElementById('refreshStatementsBtn').addEventListener('click', () => loadStatements().catch(err => alert(err.message, 'error')));
+        document.getElementById('addStatementLineBtn').addEventListener('click', addStatementLine);
+
+        els.scheduleFrom.value = today(-30);
+        els.scheduleTo.value = today(30);
+        els.forecastFrom.value = today();
+        els.forecastTo.value = today(28);
+        document.getElementById('runDate').value = today();
+        document.getElementById('cutoffDate').value = today();
+        document.getElementById('statementDate').value = today();
+        document.getElementById('statementStartDate').value = today(-30);
+        document.getElementById('statementEndDate').value = today();
+        addStatementLine();
+        if (els.orgSelector.options.length > 1) {
+            els.orgSelector.selectedIndex = 1;
+            initOrg().catch(err => alert(err.message, 'error'));
+        }
+    })();
 </script>
 </body>
 </html>

@@ -12,7 +12,10 @@ import com.justjava.ams.financeAdmin.service.ApprovalWorkflowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -35,6 +38,7 @@ public class PaymentRunService {
     private final PurchaseInvoiceService purchaseInvoiceService;
     private final PaymentScheduleService paymentScheduleService;
     private final ApprovalWorkflowService approvalWorkflowService;
+    private final PlatformTransactionManager transactionManager;
 
     public PaymentRunDTO createRun(Long organizationId, PaymentRunCreateRequest request, String createdBy) {
         Organization organization = organizationRepository.findById(organizationId)
@@ -155,20 +159,31 @@ public class PaymentRunService {
         List<PaymentRunItem> items = paymentRunItemRepository.findByPaymentRunIdOrderByIdAsc(runId);
         int paid = 0;
         int failed = 0;
+
+        // Each item is processed in its OWN transaction (REQUIRES_NEW). If one item's
+        // recordPayment/markPaid fails, only that inner transaction rolls back - it can no
+        // longer mark this outer executeRun() transaction as rollback-only, which is what
+        // was causing the UnexpectedRollbackException on the final commit.
+        TransactionTemplate itemTransaction = new TransactionTemplate(transactionManager);
+        itemTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
         for (PaymentRunItem item : items) {
             try {
-                PaymentRequest request = PaymentRequest.builder()
-                        .amount(item.getAmount())
-                        .bankAccountId(run.getBankAccount().getId())
-                        .paymentDate(run.getRunDate())
-                        .paidBy(executedBy)
-                        .notes("Payment run #" + run.getId())
-                        .build();
-                purchaseInvoiceService.recordPayment(item.getPurchaseInvoice().getId(), request, executedBy);
-                item.setStatus(PaymentRunItem.PaymentRunItemStatus.PAID);
-                item.setFailureReason(null);
-                paymentRunItemRepository.save(item);
-                paymentScheduleService.markPaid(item.getPaymentSchedule());
+                itemTransaction.executeWithoutResult(status -> {
+                    PaymentRequest request = PaymentRequest.builder()
+                            .amount(item.getAmount())
+                            .bankAccountId(run.getBankAccount().getId())
+                            .paymentDate(run.getRunDate())
+                            .paidBy(executedBy)
+                            .notes("Payment run #" + run.getId())
+                            .paymentRunId(run.getId())
+                            .build();
+                    purchaseInvoiceService.recordPayment(item.getPurchaseInvoice().getId(), request, executedBy);
+                    item.setStatus(PaymentRunItem.PaymentRunItemStatus.PAID);
+                    item.setFailureReason(null);
+                    paymentRunItemRepository.save(item);
+                    paymentScheduleService.markPaid(item.getPaymentSchedule());
+                });
                 paid++;
             } catch (Exception ex) {
                 item.setStatus(PaymentRunItem.PaymentRunItemStatus.FAILED);
@@ -220,8 +235,8 @@ public class PaymentRunService {
                     .filter(schedule -> !PaymentSchedule.ScheduleStatus.APPROVED.equals(schedule.getStatus())
                             || schedule.getAmountRemaining().compareTo(BigDecimal.ZERO) <= 0
                             || paymentRunItemRepository.existsByPaymentScheduleIdAndStatusIn(
-                                    schedule.getId(),
-                                    List.of(PaymentRunItem.PaymentRunItemStatus.PENDING)))
+                            schedule.getId(),
+                            List.of(PaymentRunItem.PaymentRunItemStatus.PENDING)))
                     .toList();
             if (!invalid.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selected schedules must be approved, unpaid, and not already pending in a payment run");

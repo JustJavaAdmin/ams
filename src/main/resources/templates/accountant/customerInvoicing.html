@@ -155,6 +155,10 @@
 
     <main class="p-outer-padding max-w-[1440px] mx-auto space-y-gutter w-full">
         <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding shadow-sm">
+            <div id="editingBanner" class="hidden mb-6 px-4 py-3 rounded-lg bg-secondary-container text-on-secondary-fixed-variant text-body-sm font-semibold flex items-center justify-between">
+                <span id="editingBannerText"></span>
+                <button id="cancelEditBtn" type="button" class="underline hover:opacity-70">Discard &amp; start new invoice</button>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-stack-md mb-8">
                 <div class="space-y-1.5">
                     <label class="block font-body-sm font-semibold text-primary">Customer Account Selector</label>
@@ -340,6 +344,11 @@
     let customers = [];
     let taxJurisdictions = [];
     let bankAccounts = [];
+    // When null, "Save as Draft" creates a new invoice. Once a draft has been
+    // saved or loaded for editing, both of these are set so subsequent saves
+    // update that same invoice instead of creating a duplicate with a new number.
+    let editingInvoiceId = null;
+    let editingInvoiceNumber = null;
 
     function formatCurrency(value) {
         return new Intl.NumberFormat('en-NG', {
@@ -402,13 +411,16 @@
         }
     });
 
-    function addRow() {
+    function addRow(line = null) {
         const tbody = document.querySelector('#invoice-table tbody');
         const newRow = document.createElement('tr');
         newRow.className = "group hover:bg-surface-bright transition-colors";
+        const description = line?.description ? String(line.description).replace(/"/g, '&quot;') : '';
+        const rate = line?.unitPrice ?? '0.00';
+        const qty = line?.quantity ?? 1;
         newRow.innerHTML = `
             <td class="py-4 px-4">
-                <input type="text" placeholder="Enter service description..." class="w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
+                <input type="text" placeholder="Enter service description..." class="w-full bg-transparent border-none focus:ring-0 text-body-md p-0" value="${description}">
             </td>
             <td class="py-4 px-4">
                 <select class="line-account-select w-full bg-transparent border-none focus:ring-0 text-body-md p-0">
@@ -416,10 +428,10 @@
                 </select>
             </td>
             <td class="py-4 px-4 text-right">
-                <input type="number" step="0.01" class="w-24 text-right bg-transparent border-none focus:ring-0 text-body-md p-0 rate-input" value="0.00">
+                <input type="number" step="0.01" class="w-24 text-right bg-transparent border-none focus:ring-0 text-body-md p-0 rate-input" value="${rate}">
             </td>
             <td class="py-4 px-4 text-center">
-                <input type="number" class="w-12 text-center bg-transparent border-none focus:ring-0 text-body-md p-0 qty-input" value="1">
+                <input type="number" class="w-12 text-center bg-transparent border-none focus:ring-0 text-body-md p-0 qty-input" value="${qty}">
             </td>
             <td class="py-4 px-4">
                 <span class="bg-secondary-container text-on-secondary-fixed-variant px-2 py-1 rounded text-[11px] font-label-md uppercase">Tax</span>
@@ -432,6 +444,9 @@
             </td>
         `;
         tbody.appendChild(newRow);
+        if (line?.chartAccountId) {
+            newRow.querySelector('.line-account-select').value = String(line.chartAccountId);
+        }
         updateTotals();
     }
 
@@ -494,10 +509,14 @@
         if (!customer) throw new Error('Select or create a customer first.');
         if (!revenueAccounts.length) throw new Error('Create at least one revenue account before entering customer invoices.');
         if (validLines.length === 0) throw new Error('Add at least one complete invoice line.');
+        // Only mint a new invoice number the first time this form is saved.
+        // Once set (either here, or by loading an existing draft), it's reused
+        // on every subsequent save so editing never changes the invoice's identity.
+        if (!editingInvoiceNumber) editingInvoiceNumber = `AR-${Date.now()}`;
         return {
             customerId: customer.id,
             customerName: customer.legalName,
-            invoiceNumber: `AR-${Date.now()}`,
+            invoiceNumber: editingInvoiceNumber,
             invoiceDate: document.getElementById('invoiceDate').value || today(),
             dueDate: document.getElementById('dueDate').value || document.getElementById('invoiceDate').value || today(),
             taxJurisdictionId: Number(document.getElementById('taxJurisdictionSelect').value || 0) || null,
@@ -538,10 +557,19 @@
     async function saveDraft() {
         try {
             setStatus('Saving draft...');
-            const invoice = await apiJson(`/api/accountant/customer-invoices/org/${currentOrgId}`, {
-                method: 'POST',
-                body: JSON.stringify(collectPayload())
-            });
+            const payload = collectPayload();
+            const invoice = editingInvoiceId
+                ? await apiJson(`/api/accountant/customer-invoices/${editingInvoiceId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                })
+                : await apiJson(`/api/accountant/customer-invoices/org/${currentOrgId}`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+            editingInvoiceId = invoice.id;
+            editingInvoiceNumber = invoice.invoiceNumber;
+            showEditingBanner(invoice.invoiceNumber);
             setStatus(`Draft ${invoice.invoiceNumber} saved.`);
             await loadInvoices();
             return invoice;
@@ -557,24 +585,62 @@
             await apiJson(`/api/accountant/customer-invoices/${draft.id}/send`, { method: 'PATCH' });
             await apiJson(`/api/accountant/customer-invoices/${draft.id}/post`, { method: 'PATCH' });
             setStatus(`Invoice ${draft.invoiceNumber} posted.`);
+            resetInvoiceForm();
             await loadInvoices();
         } catch (err) {
             setStatus(`Posting failed: ${err.message}`, 'error');
         }
     }
 
-    async function loadInvoices() {
-        const report = await apiJson(`/api/accountant/reports/aged-receivables/org/${currentOrgId}`);
-        const rows = Array.isArray(report) ? report : (report?.rows || []);
-        document.getElementById('invoiceList').innerHTML = rows.map(invoice => `
-            <div class="py-3 flex items-center justify-between gap-4">
-                <div>
-                    <div class="font-semibold text-primary">${invoice.invoiceNumber} · ${invoice.customerName}</div>
-                    <div class="text-secondary">${invoice.status} · Due ${invoice.dueDate}</div>
-                </div>
-                <div class="font-semibold">${formatCurrency((invoice.totalAmount || 0) - (invoice.amountPaid || 0))}</div>
-            </div>
-        `).join('') || '<div class="py-3 text-secondary">No open receivables.</div>';
+    function showEditingBanner(invoiceNumber) {
+        document.getElementById('editingBannerText').textContent = `Editing draft ${invoiceNumber}`;
+        document.getElementById('editingBanner').classList.remove('hidden');
+    }
+
+    function resetInvoiceForm() {
+        editingInvoiceId = null;
+        editingInvoiceNumber = null;
+        document.getElementById('customerSelect').value = '';
+        document.getElementById('invoiceDate').value = today();
+        document.getElementById('dueDate').value = today();
+        document.getElementById('taxJurisdictionSelect').value = '';
+        document.querySelector('#invoice-table tbody').innerHTML = '';
+        addRow();
+        document.getElementById('editingBanner').classList.add('hidden');
+    }
+
+    async function loadInvoiceForEdit(invoiceId) {
+        try {
+            setStatus('Loading draft...');
+            const invoice = await apiJson(`/api/accountant/customer-invoices/${invoiceId}`);
+            if (invoice.status !== 'DRAFT') {
+                setStatus('Only draft invoices can be edited.', 'error');
+                return;
+            }
+            editingInvoiceId = invoice.id;
+            editingInvoiceNumber = invoice.invoiceNumber;
+
+            document.getElementById('customerSelect').value = invoice.customerId ?? '';
+            document.getElementById('invoiceDate').value = invoice.invoiceDate || today();
+            document.getElementById('dueDate').value = invoice.dueDate || today();
+            document.getElementById('taxJurisdictionSelect').value = invoice.taxJurisdictionId ?? '';
+
+            const tbody = document.querySelector('#invoice-table tbody');
+            tbody.innerHTML = '';
+            const lines = invoice.lineItems ? Array.from(invoice.lineItems) : [];
+            if (lines.length) {
+                lines.forEach(line => addRow(line));
+            } else {
+                addRow();
+            }
+            updateTotals();
+
+            showEditingBanner(invoice.invoiceNumber);
+            setStatus(`Editing draft ${invoice.invoiceNumber}. Update the form and save.`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err) {
+            setStatus(`Failed to load draft: ${err.message}`, 'error');
+        }
     }
 
     async function loadInvoices() {
@@ -588,12 +654,16 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="font-semibold">${formatCurrency(invoice.outstandingAmount || 0)}</div>
+                    ${invoice.status === 'DRAFT' ? `<button data-edit-id="${invoice.documentId}" class="px-2 py-1 rounded border border-outline-variant text-body-sm font-bold">Edit</button>` : ''}
                     ${['POSTED', 'PARTIALLY_PAID'].includes(invoice.status) ? `<button data-payment-id="${invoice.documentId}" class="px-2 py-1 rounded border border-outline-variant text-body-sm font-bold">Record Payment</button>` : ''}
                 </div>
             </div>
         `).join('') || '<div class="py-3 text-secondary">No open receivables.</div>';
         document.querySelectorAll('[data-payment-id]').forEach(button => {
             button.addEventListener('click', () => recordInvoicePayment(button.dataset.paymentId));
+        });
+        document.querySelectorAll('[data-edit-id]').forEach(button => {
+            button.addEventListener('click', () => loadInvoiceForEdit(button.dataset.editId));
         });
     }
 
@@ -637,6 +707,7 @@
     document.getElementById('saveDraftBtn').addEventListener('click', () => saveDraft().catch(() => {}));
     document.getElementById('postInvoiceBtn').addEventListener('click', postInvoice);
     document.getElementById('refreshInvoicesBtn').addEventListener('click', loadInvoices);
+    document.getElementById('cancelEditBtn').addEventListener('click', () => { resetInvoiceForm(); setStatus('Ready.'); });
     loadContext().catch(err => setStatus(`Load failed: ${err.message}`, 'error'));
 </script>
 </body>

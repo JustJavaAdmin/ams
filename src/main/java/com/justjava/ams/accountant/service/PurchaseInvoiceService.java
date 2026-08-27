@@ -8,11 +8,14 @@ import com.justjava.ams.accountant.dto.AgingReportRowDTO;
 import com.justjava.ams.accountant.entity.BankAccount;
 import com.justjava.ams.accountant.entity.ChartOfAccounts;
 import com.justjava.ams.accountant.entity.GeneralLedger;
+import com.justjava.ams.accountant.entity.PaymentRun;
 import com.justjava.ams.accountant.entity.PurchaseInvoice;
 import com.justjava.ams.accountant.entity.PurchaseLineItem;
 import com.justjava.ams.accountant.entity.Vendor;
 import com.justjava.ams.accountant.repository.BankAccountRepository;
 import com.justjava.ams.accountant.repository.ChartOfAccountsRepository;
+import com.justjava.ams.accountant.repository.PaymentRunItemRepository;
+import com.justjava.ams.accountant.repository.PaymentRunRepository;
 import com.justjava.ams.accountant.repository.PurchaseInvoiceRepository;
 import com.justjava.ams.accountant.repository.PurchaseLineItemRepository;
 import com.justjava.ams.accountant.repository.VendorRepository;
@@ -58,6 +61,8 @@ public class PurchaseInvoiceService {
     private final BudgetControlService budgetControlService;
     private final PaymentScheduleService paymentScheduleService;
     private final ApprovalWorkflowService approvalWorkflowService;
+    private final PaymentRunRepository paymentRunRepository;
+    private final PaymentRunItemRepository paymentRunItemRepository;
 
     public PurchaseInvoiceDTO createPurchaseInvoice(Long organizationId, PurchaseInvoiceDTO dto, Long userId) {
         Organization organization = organizationRepository.findById(organizationId)
@@ -107,8 +112,8 @@ public class PurchaseInvoiceService {
 
     public List<PurchaseInvoiceDTO> getPurchaseInvoicesByStatus(Long organizationId, String status) {
         return purchaseInvoiceRepository.findByOrganizationIdAndStatus(
-                organizationId,
-                PurchaseInvoice.PurchaseStatus.valueOf(status))
+                        organizationId,
+                        PurchaseInvoice.PurchaseStatus.valueOf(status))
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
@@ -298,7 +303,7 @@ public class PurchaseInvoiceService {
         if (amount.compareTo(balance) > 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment exceeds purchase invoice balance");
         }
-        requireDirectPaymentAllowed(invoice.getOrganization().getId(), invoice.getId(), amount);
+        requireDirectPaymentAllowed(invoice, request.getPaymentRunId(), amount);
         LocalDate paymentDate = request.getPaymentDate() != null ? request.getPaymentDate() : LocalDate.now();
         fiscalPeriodService.requireOpenPeriod(invoice.getOrganization().getId(), paymentDate);
         BankAccount bankAccount = findBankAccount(request.getBankAccountId(), invoice.getOrganization().getId());
@@ -390,6 +395,12 @@ public class PurchaseInvoiceService {
     }
 
     private void approve(PurchaseInvoice invoice, String approvedBy) {
+        if (PurchaseInvoice.PurchaseStatus.APPROVED.equals(invoice.getStatus())) {
+            // submit() auto-approves invoices that don't require approval, skipping
+            // SUBMITTED entirely. Treat re-approval of those as a no-op success instead
+            // of a conflict so submit -> approve -> post flows don't break on them.
+            return;
+        }
         if (!PurchaseInvoice.PurchaseStatus.SUBMITTED.equals(invoice.getStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Only SUBMITTED purchase invoices can be approved");
         }
@@ -401,18 +412,44 @@ public class PurchaseInvoiceService {
         invoice.setApprovedDate(LocalDate.now());
     }
 
-    private void requireDirectPaymentAllowed(Long organizationId, Long invoiceId, BigDecimal amount) {
+    private void requireDirectPaymentAllowed(PurchaseInvoice invoice, Long paymentRunId, BigDecimal amount) {
+        if (isPartOfApprovedPaymentRun(paymentRunId, invoice)) {
+            // The payment run this came from already went through its own submit/approve
+            // workflow (see PaymentRunService.submitRun/approveRun) before executeRun() was
+            // allowed to run at all. Re-running the per-invoice approval check here would just
+            // reject a payment that's already been approved at the run level.
+            return;
+        }
         ApprovalDecisionDTO decision = approvalWorkflowService.evaluate(ApprovalEvaluationRequest.builder()
-                .organizationId(organizationId)
+                .organizationId(invoice.getOrganization().getId())
                 .moduleType(ModuleControl.ModuleType.PAYMENTS)
                 .transactionType("SUPPLIER_PAYMENT")
                 .entityType("PurchaseInvoice")
-                .entityId(invoiceId)
+                .entityId(invoice.getId())
                 .amount(amount)
                 .build());
         if (Boolean.TRUE.equals(decision.getApprovalRequired())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Supplier payment requires approval; use a payment run");
         }
+    }
+
+    // Confirms paymentRunId isn't just a self-asserted claim: the referenced run must genuinely
+    // exist, belong to the same organization, be APPROVED, and actually contain this invoice as
+    // one of its items. A forged or mismatched id gets no exemption and falls through to the
+    // normal direct-payment approval check above - this endpoint accepts PaymentRequest straight
+    // from the client, so the exemption can never be granted on trust alone.
+    private boolean isPartOfApprovedPaymentRun(Long paymentRunId, PurchaseInvoice invoice) {
+        if (paymentRunId == null) {
+            return false;
+        }
+        PaymentRun run = paymentRunRepository.findById(paymentRunId).orElse(null);
+        if (run == null
+                || !run.getOrganization().getId().equals(invoice.getOrganization().getId())
+                || !PaymentRun.PaymentRunStatus.APPROVED.equals(run.getStatus())) {
+            return false;
+        }
+        return paymentRunItemRepository.findByPaymentRunIdOrderByIdAsc(paymentRunId).stream()
+                .anyMatch(item -> item.getPurchaseInvoice().getId().equals(invoice.getId()));
     }
 
     private void replaceLineItems(PurchaseInvoice invoice, Set<PurchaseLineItemDTO> lineItemDtos) {
@@ -576,4 +613,3 @@ public class PurchaseInvoiceService {
 
     private record Totals(BigDecimal subtotal, BigDecimal taxAmount, BigDecimal totalAmount, TaxCalculationService.Result taxResult) {}
 }
-

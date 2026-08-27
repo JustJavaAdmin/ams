@@ -48,7 +48,8 @@ public class AuditLogService {
             "PaymentRun",
             "Customer",
             "Vendor",
-            "BankAccount"
+            "BankAccount",
+            "BulkImport"
     );
 
     private final AuditLogRepository auditLogRepository;
@@ -277,4 +278,3 @@ public class AuditLogService {
                 .build();
     }
 }
-

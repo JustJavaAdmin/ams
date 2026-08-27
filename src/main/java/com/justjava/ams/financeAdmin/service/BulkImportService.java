@@ -183,8 +183,8 @@ public class BulkImportService {
         BulkImport saved = bulkImportRepository.save(bulkImport);
         auditLogService.log(
                 saved.getOrganization().getId(),
-                saved.getImportType() == BulkImport.ImportType.BRANCHES ? "Branch" : "ChartOfAccounts",
-                null,
+                "BulkImport",
+                saved.getId(),
                 "CREATE",
                 null,
                 summary(saved),

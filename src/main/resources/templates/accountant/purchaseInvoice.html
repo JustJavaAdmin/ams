@@ -234,6 +234,7 @@
                     <div>
                         <h2 class="font-headline-sm text-headline-sm text-primary">Invoice Processing Form</h2>
                         <p class="font-body-sm text-body-sm text-slate-500">Verify extracted data and classify line items.</p>
+                        <p id="editingBanner" class="hidden font-body-sm text-body-sm text-amber-600 font-semibold mt-1"></p>
                     </div>
                     <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                         <span class="material-symbols-outlined text-[18px] text-green-600" style="font-variation-settings: 'FILL' 1;">check_circle</span>
@@ -353,7 +354,7 @@
                 </div>
                 <div class="mt-gutter border-t border-slate-100 pt-stack-md">
                     <div class="flex items-center justify-between mb-stack-sm">
-                        <h3 class="font-headline-sm text-[16px] text-primary uppercase tracking-tight">Open Payables</h3>
+                        <h3 class="font-headline-sm text-[16px] text-primary uppercase tracking-tight">Purchase Invoices</h3>
                         <button id="refreshInvoicesBtn" class="px-4 h-9 rounded-lg border border-slate-200 text-slate-600 font-semibold">Refresh</button>
                     </div>
                     <div id="invoiceList" class="divide-y divide-slate-100 text-body-sm"></div>
@@ -369,6 +370,7 @@
     let vendors = [];
     let taxJurisdictions = [];
     let bankAccounts = [];
+    let editingInvoiceId = null;
 
     function formatCurrency(value) {
       return new Intl.NumberFormat('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
@@ -465,6 +467,92 @@
       });
       const footer = document.querySelector('tfoot td:last-child');
       if (footer) footer.textContent = `₦ ${formatCurrency(subtotal)}`;
+      const totalDisplay = document.getElementById('purchaseTotalDisplay');
+      if (totalDisplay) totalDisplay.value = formatCurrency(subtotal);
+    }
+
+    function setFormMode() {
+      const saveBtn = document.getElementById('saveDraftBtn');
+      const banner = document.getElementById('editingBanner');
+      if (editingInvoiceId) {
+        saveBtn.textContent = 'Update Draft';
+        banner.classList.remove('hidden');
+        const po = document.getElementById('purchaseOrderNumber').value || `#${editingInvoiceId}`;
+        banner.innerHTML = `Editing draft ${po} — <button type="button" onclick="resetInvoiceForm()" class="underline">Cancel edit</button>`;
+      } else {
+        saveBtn.textContent = 'Save as Draft';
+        banner.classList.add('hidden');
+        banner.innerHTML = '';
+      }
+    }
+
+    function resetLineItemsToSingleEmptyRow() {
+      const tbody = document.getElementById('invoice-items');
+      const template = tbody.children[0];
+      if (!template) return;
+      while (tbody.children.length > 1) tbody.removeChild(tbody.lastElementChild);
+      template.querySelector('input[type="text"]').value = '';
+      template.querySelector('.qty-input').value = 1;
+      template.querySelector('.unit-input').value = '0.00';
+      const select = template.querySelector('.line-account-select');
+      if (select) select.selectedIndex = 0;
+      updateTotals();
+    }
+
+    function resetInvoiceForm() {
+      editingInvoiceId = null;
+      document.getElementById('vendorSelect').value = '';
+      document.getElementById('purchaseOrderNumber').value = '';
+      document.getElementById('purchaseDate').value = today();
+      document.getElementById('dueDate').value = today();
+      document.getElementById('taxJurisdictionSelect').value = '';
+      resetLineItemsToSingleEmptyRow();
+      setFormMode();
+    }
+
+    function populateFormFromInvoice(invoice) {
+      editingInvoiceId = invoice.id;
+      document.getElementById('vendorSelect').value = invoice.vendorId != null ? String(invoice.vendorId) : '';
+      document.getElementById('purchaseOrderNumber').value = invoice.purchaseOrderNumber || '';
+      document.getElementById('purchaseDate').value = invoice.purchaseDate || today();
+      document.getElementById('dueDate').value = invoice.dueDate || today();
+      document.getElementById('taxJurisdictionSelect').value = invoice.taxJurisdictionId != null ? String(invoice.taxJurisdictionId) : '';
+
+      const tbody = document.getElementById('invoice-items');
+      const template = tbody.children[0].cloneNode(true);
+      const lines = invoice.lineItems && invoice.lineItems.length ? Array.from(invoice.lineItems) : [];
+      tbody.innerHTML = '';
+      (lines.length ? lines : [null]).forEach(line => {
+        const row = template.cloneNode(true);
+        row.querySelector('input[type="text"]').value = line?.description || '';
+        row.querySelector('.qty-input').value = line?.quantity ?? 1;
+        row.querySelector('.unit-input').value = line?.unitPrice ?? '0.00';
+        tbody.appendChild(row);
+      });
+      populateLineAccountSelects();
+      Array.from(tbody.children).forEach((row, idx) => {
+        const line = lines[idx];
+        const select = row.querySelector('.line-account-select');
+        if (select && line?.chartAccountId != null) select.value = String(line.chartAccountId);
+      });
+      updateTotals();
+      setFormMode();
+      setStatus(`Editing draft ${invoice.purchaseOrderNumber}.`);
+      document.getElementById('vendorSelect').closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function editInvoice(invoiceId) {
+      try {
+        setStatus('Loading draft...');
+        const invoice = await apiJson(`/api/accountant/purchase-invoices/${invoiceId}`);
+        if (invoice.status !== 'DRAFT') {
+          setStatus('Only draft purchase invoices can be edited.', 'error');
+          return;
+        }
+        populateFormFromInvoice(invoice);
+      } catch (err) {
+        setStatus(`Failed to load draft: ${err.message}`, 'error');
+      }
     }
 
     async function loadContext() {
@@ -547,12 +635,19 @@
 
     async function saveDraft() {
       try {
-        setStatus('Saving draft...');
-        const invoice = await apiJson(`/api/accountant/purchase-invoices/org/${currentOrgId}`, {
-          method: 'POST',
-          body: JSON.stringify(collectPayload())
-        });
-        setStatus(`Draft ${invoice.purchaseOrderNumber} saved.`);
+        setStatus(editingInvoiceId ? 'Updating draft...' : 'Saving draft...');
+        const payload = collectPayload();
+        const invoice = editingInvoiceId
+          ? await apiJson(`/api/accountant/purchase-invoices/${editingInvoiceId}`, {
+              method: 'PUT',
+              body: JSON.stringify(payload)
+            })
+          : await apiJson(`/api/accountant/purchase-invoices/org/${currentOrgId}`, {
+              method: 'POST',
+              body: JSON.stringify(payload)
+            });
+        setStatus(`Draft ${invoice.purchaseOrderNumber} ${editingInvoiceId ? 'updated' : 'saved'}.`);
+        resetInvoiceForm();
         await loadInvoices();
         return invoice;
       } catch (err) {
@@ -564,8 +659,10 @@
     async function postInvoice() {
       try {
         const draft = await saveDraft();
-        await apiJson(`/api/accountant/purchase-invoices/${draft.id}/submit`, { method: 'PATCH' });
-        await apiJson(`/api/accountant/purchase-invoices/${draft.id}/approve`, { method: 'PATCH' });
+        const submitted = await apiJson(`/api/accountant/purchase-invoices/${draft.id}/submit`, { method: 'PATCH' });
+        if (submitted.status !== 'APPROVED') {
+          await apiJson(`/api/accountant/purchase-invoices/${draft.id}/approve`, { method: 'PATCH' });
+        }
         await apiJson(`/api/accountant/purchase-invoices/${draft.id}/post`, { method: 'PATCH' });
         setStatus(`Purchase invoice ${draft.purchaseOrderNumber} posted.`);
         await loadInvoices();
@@ -575,36 +672,31 @@
     }
 
     async function loadInvoices() {
-      const report = await apiJson(`/api/accountant/reports/aged-payables/org/${currentOrgId}`);
-      const rows = Array.isArray(report) ? report : (report?.rows || []);
-      document.getElementById('invoiceList').innerHTML = rows.map(invoice => `
+      const invoices = await apiJson(`/api/accountant/purchase-invoices/org/${currentOrgId}`);
+      const rows = (invoices || []).filter(invoice => !['PAID', 'CANCELLED'].includes(invoice.status));
+      document.getElementById('invoiceList').innerHTML = rows.map(invoice => {
+        const outstanding = Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0);
+        const canEdit = invoice.status === 'DRAFT';
+        const canPay = ['POSTED', 'PARTIALLY_PAID'].includes(invoice.status);
+        return `
         <div class="py-3 flex items-center justify-between gap-4">
           <div>
-            <div class="font-semibold text-primary">${invoice.purchaseOrderNumber} · ${invoice.vendorName}</div>
-            <div class="text-slate-500">${invoice.status} · Due ${invoice.dueDate}</div>
-          </div>
-          <div class="font-semibold">₦ ${formatCurrency((invoice.totalAmount || 0) - (invoice.amountPaid || 0))}</div>
-        </div>
-      `).join('') || '<div class="py-3 text-slate-500">No open payables.</div>';
-    }
-
-    async function loadInvoices() {
-      const report = await apiJson(`/api/accountant/reports/aged-payables/org/${currentOrgId}`);
-      const rows = Array.isArray(report) ? report : (report?.rows || []);
-      document.getElementById('invoiceList').innerHTML = rows.map(invoice => `
-        <div class="py-3 flex items-center justify-between gap-4">
-          <div>
-            <div class="font-semibold text-primary">${invoice.documentNumber} - ${invoice.partyName}</div>
+            <div class="font-semibold text-primary">${invoice.purchaseOrderNumber} - ${invoice.vendorName || '-'}</div>
             <div class="text-slate-500">${invoice.status} - Due ${invoice.dueDate}</div>
           </div>
           <div class="flex items-center gap-3">
-            <div class="font-semibold">NGN ${formatCurrency(invoice.outstandingAmount || 0)}</div>
-            ${['POSTED', 'PARTIALLY_PAID'].includes(invoice.status) ? `<button data-payment-id="${invoice.documentId}" class="px-2 py-1 rounded border border-slate-200 text-body-sm font-bold">Record Payment</button>` : ''}
+            <div class="font-semibold">NGN ${formatCurrency(outstanding)}</div>
+            ${canEdit ? `<button data-edit-id="${invoice.id}" class="px-2 py-1 rounded border border-slate-200 text-body-sm font-bold">Edit</button>` : ''}
+            ${canPay ? `<button data-payment-id="${invoice.id}" class="px-2 py-1 rounded border border-slate-200 text-body-sm font-bold">Record Payment</button>` : ''}
           </div>
         </div>
-      `).join('') || '<div class="py-3 text-slate-500">No open payables.</div>';
+      `;
+      }).join('') || '<div class="py-3 text-slate-500">No purchase invoices yet.</div>';
       document.querySelectorAll('[data-payment-id]').forEach(button => {
         button.addEventListener('click', () => recordInvoicePayment(button.dataset.paymentId));
+      });
+      document.querySelectorAll('[data-edit-id]').forEach(button => {
+        button.addEventListener('click', () => editInvoice(button.dataset.editId));
       });
     }
 
@@ -638,7 +730,7 @@
 
     document.getElementById('invoice-items').addEventListener('input', updateTotals);
     document.getElementById('taxJurisdictionSelect').addEventListener('change', updateTotals);
-    document.getElementById('organizationSelect').addEventListener('change', loadContext);
+    document.getElementById('organizationSelect').addEventListener('change', () => { resetInvoiceForm(); loadContext(); });
     document.getElementById('toggleVendorFormBtn').addEventListener('click', () => document.getElementById('vendorFormPanel').classList.toggle('hidden'));
     document.getElementById('cancelVendorBtn').addEventListener('click', resetVendorForm);
     document.getElementById('saveVendorBtn').addEventListener('click', () => saveVendor().catch(err => setStatus(err.message, 'error')));

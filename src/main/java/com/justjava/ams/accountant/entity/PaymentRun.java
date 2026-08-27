@@ -39,13 +39,16 @@ public class PaymentRun {
     private LocalDate cutoffDate;
 
     @Column(nullable = false, precision = 19, scale = 2)
+    @Builder.Default
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer itemCount = 0;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private PaymentRunStatus status = PaymentRunStatus.DRAFT;
 
     @Column
@@ -64,6 +67,7 @@ public class PaymentRun {
     private String approvalRuleName;
 
     @Column
+    @Builder.Default
     private Integer requiredApprovals = 1;
 
     @Column
