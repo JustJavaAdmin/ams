@@ -42,12 +42,15 @@ public class BudgetLine {
     private BigDecimal allocatedAmount = BigDecimal.ZERO;
 
     @Column(nullable = false, precision = 5, scale = 2)
+    @Builder.Default
     private BigDecimal warningThresholdPercent = new BigDecimal("90.00");
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean hardStopEnabled = true;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean active = true;
 
     @Column

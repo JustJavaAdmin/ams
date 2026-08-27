@@ -59,6 +59,9 @@ public class BudgetService {
                 .totalBudget(dto.getTotalBudget())
                 .allocatedAmount(BigDecimal.ZERO)
                 .spentAmount(BigDecimal.ZERO)
+                .status(Budget.BudgetStatus.DRAFT)
+                .approved(false)
+                .requiredApprovals(1)
                 .departmentName(dto.getDepartmentName())
                 .notes(dto.getNotes())
                 .build();
@@ -346,4 +349,3 @@ public class BudgetService {
         return value != null && !value.trim().isEmpty() ? value.trim() : null;
     }
 }
-

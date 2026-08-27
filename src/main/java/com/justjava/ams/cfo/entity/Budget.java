@@ -45,16 +45,20 @@ public class Budget {
     private BigDecimal totalBudget;
 
     @Column(nullable = false, precision = 19, scale = 2)
+    @Builder.Default
     private BigDecimal allocatedAmount = BigDecimal.ZERO;
 
     @Column(nullable = false, precision = 19, scale = 2)
+    @Builder.Default
     private BigDecimal spentAmount = BigDecimal.ZERO;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private BudgetStatus status = BudgetStatus.DRAFT;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean approved = false;
 
     @Column
@@ -67,6 +71,7 @@ public class Budget {
     private String approvalRuleName;
 
     @Column
+    @Builder.Default
     private Integer requiredApprovals = 1;
 
     @Column
@@ -93,4 +98,3 @@ public class Budget {
         CLOSED
     }
 }
-

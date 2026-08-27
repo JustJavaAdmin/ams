@@ -2,7 +2,7 @@
 
 Use this guide to test the non-admin AMS roles end to end. It assumes the four role users already exist in Keycloak and are assigned to `/financeAdmin`, `/accountant`, `/cfo`, and `/auditor`.
 
-Today's test date is `2026-08-25`, so the test period is Q3 2026 and all operational dates are realistic for an August 2026 finance cycle.
+Today's test date is `2026-08-27`, so the test period is Q3 2026 and all operational dates are realistic for an August 2026 finance cycle.
 
 ## Step 1: Finance Admin Creates The Organization
 
@@ -72,7 +72,7 @@ Open `/financeAdmin/fiscalConfiguration`, select `Greenfield Foods Limited`, and
 - Multi Currency Enabled: unchecked
 - Require Approval For Transactions: checked
 - Allow Negative Inventory: unchecked
-- Notes: `Q3 2026 UAT configuration saved on 2026-08-25`
+- Notes: `Q3 2026 UAT configuration saved on 2026-08-27`
 
 In **Create Fiscal Period**, create the open Q3 period:
 
@@ -173,7 +173,7 @@ Click **Refresh**, find the schedule for `PI-2026-08-001`, and click **Approve**
 Go to the **Payment Runs** tab and create a payment run:
 
 - Bank account: `GTBank - 0123456789`
-- Run date: `2026-08-25`
+- Run date: `2026-08-27`
 - Cutoff date: `2026-09-04`
 - Select the approved schedule for `PI-2026-08-001`; if the UI allows leaving selection empty, leave it empty and rely on the cutoff date.
 
@@ -210,25 +210,25 @@ In the invoice list, find the posted customer invoice for `Abuja Retail Mart Ltd
 
 - Payment amount: `200000`
 
-Expected result: the invoice remains outstanding with `NGN 250,000` unpaid, which is overdue as of `2026-08-25`.
+Expected result: the invoice remains outstanding with `NGN 250,000` unpaid, which is overdue as of `2026-08-27`.
 
 ## Step 10: Accountant Generates Collections And Customer Statement
 
-Open `/accountant/receivablesCollections`, select `Greenfield Foods Limited`, and set **As Of Date** to `2026-08-25`.
+Open `/accountant/receivablesCollections`, select `Greenfield Foods Limited`, and set **As Of Date** to `2026-08-27`.
 
 Click **Generate**, open the collection case for `Abuja Retail Mart Ltd`, and perform these actions:
 
 1. Click **Assign**, enter Collector `acct.greenfield`, Notes `Assigned for same-day follow-up on overdue Abuja invoice.`, then Apply.
 2. Click **Activity**, choose Activity Type `CALL`, Subject `Payment follow-up`, Notes `Customer confirmed balance and requested 7 days to clear the outstanding amount.`, then Apply.
-3. Click **Promise**, enter Promised Amount `250000`, Promised Date `2026-09-01`, Notes `Customer promised full balance by bank transfer.`, then Apply.
+3. Click **Promise**, enter Promised Amount `250000`, Promised Date `2026-09-03`, Notes `Customer promised full balance by bank transfer.`, then Apply.
 4. Click **Dunning** to record a formal reminder.
 
 Switch to **Customer Statements**, generate a statement for:
 
 - Customer: `CUS-ABJ-001 - Abuja Retail Mart Ltd`
-- Statement date: `2026-08-25`
+- Statement date: `2026-08-27`
 - Start date: `2026-08-01`
-- End date: `2026-08-25`
+- End date: `2026-08-27`
 
 Open the generated statement and click **Send**.
 
@@ -241,7 +241,7 @@ Open `/accountant/manualJournal`, select `Greenfield Foods Limited`, and click *
 Create this journal:
 
 - Entry Description: `GTBank August account maintenance charge`
-- Transaction Date: `2026-08-25`
+- Transaction Date: `2026-08-27`
 - Branch: `Lagos HQ Operations (LG-HQ)`
 
 Add two lines:
@@ -259,7 +259,7 @@ Log out, then log in as your CFO user, for example `cfo.greenfield`, and open `/
 
 Select `Greenfield Foods Limited`, find the journal `GTBank August account maintenance charge`, and open **Review**. Confirm:
 
-- Date: `2026-08-25`
+- Date: `2026-08-27`
 - Debit total: `NGN 12,500`
 - Credit total: `NGN 12,500`
 - Debit account: `7010 - Bank Charges Expense`
@@ -279,11 +279,11 @@ Expected result: the journal status becomes `POSTED`, and the General Ledger ent
 
 ## Step 14: Accountant Reconciles The Bank Charge
 
-Create a small CSV file on your machine named `gtbank-2026-08-25.csv` with this exact content:
+Create a small CSV file on your machine named `gtbank-2026-08-27.csv` with this exact content:
 
 ```csv
 date,amount,description,reference
-2026-08-25,-12500,GTBank August account maintenance charge,BANK-FEE-AUG-2026
+2026-08-27,-12500,GTBank August account maintenance charge,BANK-FEE-AUG-2026
 ```
 
 Open `/accountant/cashAndBank`, select:
@@ -293,10 +293,10 @@ Open `/accountant/cashAndBank`, select:
 
 In **Import Statement**, enter:
 
-- Statement Date: `2026-08-25`
+- Statement Date: `2026-08-27`
 - Opening: `1000000`
 - Closing Balance: `987500`
-- Statement File: upload `gtbank-2026-08-25.csv`
+- Statement File: upload `gtbank-2026-08-27.csv`
 
 Click **Process Statement Import**. If the row does not auto-match, load candidates on the unmatched line, select the posted GL entry for `NGN -12,500`, and click **Match**. Then click **Complete**.
 
@@ -316,7 +316,7 @@ Open `/accountant/depreciationJournals`, select `Greenfield Foods Limited`, and 
 
 - External System: `FixedAssetApp`
 - External Batch ID: `DEP-2026-08-GFL`
-- Journal Date: `2026-08-25`
+- Journal Date: `2026-08-27`
 - Description: `August 2026 depreciation import`
 - Branch Code: `LG-HQ`
 - CSV or XLSX File: upload `depreciation-2026-08.csv`
@@ -353,7 +353,7 @@ Log in as `cfo.greenfield`, open `/cfo/budgetControl`, select `Greenfield Foods 
 
 Create this budget:
 
-- Budget code: `BUD-OPS-2026`
+- Budget code: `BUD-OPS-2026`  
 - Budget name: `2026 Operations Expense Budget`
 - Year: `2026`
 - Total budget: `1500000`
@@ -376,14 +376,14 @@ Expected result: the budget status becomes active and the dashboard shows the op
 
 ## Step 19: CFO Generates Trial Balance And Financial Reports
 
-Open `/cfo/trialBalance`, select `Greenfield Foods Limited`, enter **As Of Date** `2026-08-25`, and click **Generate Report**.
+Open `/cfo/trialBalance`, select `Greenfield Foods Limited`, enter **As Of Date** `2026-08-27`, and click **Generate Report**.
 
 Confirm total debits equal total credits, then click **Save Snapshot** and **Confirm Save**.
 
 Open `/cfo/financialReports`, select `Greenfield Foods Limited`, and set:
 
 - From date: `2026-08-01`
-- To date: `2026-08-25`
+- To date: `2026-08-27`
 
 Generate these reports one by one:
 
@@ -399,8 +399,8 @@ Log out, then log in as your Auditor user, for example `audit.greenfield`, and o
 
 Select `Greenfield Foods Limited`, filter:
 
-- Start Date: `2026-08-25`
-- End Date: `2026-08-25`
+- Start Date: `2026-08-27`
+- End Date: `2026-08-27`
 - Entity Type: `Manual Journal`
 - Action: `APPROVE`
 
@@ -418,8 +418,8 @@ Expected result: exported audit log includes the approval and posting evidence f
 Open `/auditor/securityEvents`, select `Greenfield Foods Limited`, and filter:
 
 - Status: `Unacknowledged`
-- Start Date: `2026-08-25`
-- End Date: `2026-08-25`
+- Start Date: `2026-08-27`
+- End Date: `2026-08-27`
 
 Open each event created by module control changes or report generation, click **View**, confirm the event type, severity, timestamp, description, IP address, and user agent are populated where available, then click **Acknowledge** and confirm.
 
@@ -441,7 +441,7 @@ Expected result: Q3 2026 changes from `OPEN` to `CLOSED` to `LOCKED`, and no fur
 
 ## Step 23: Final Negative Control Check
 
-Log in as `acct.greenfield`, open `/accountant/manualJournal`, select `Greenfield Foods Limited`, and attempt a new journal dated `2026-08-25`:
+Log in as `acct.greenfield`, open `/accountant/manualJournal`, select `Greenfield Foods Limited`, and attempt a new journal dated `2026-08-27`:
 
 - Entry Description: `Blocked posting test after Q3 lock`
 - Branch: `Lagos HQ Operations (LG-HQ)`

@@ -32,12 +32,14 @@ public class SchemaCompatibilityConfig {
                         'LOGOUT',
                         'SUBMIT',
                         'POST',
+                        'CLOSE',
+                        'LOCK',
                         'APPROVE',
                         'REJECT'
                     ))
                     """);
         } catch (Exception ex) {
-            log.debug("Audit log action constraint alignment skipped: {}", ex.getMessage());
+            log.warn("Audit log action constraint alignment failed: {}", ex.getMessage());
         }
     }
 }
