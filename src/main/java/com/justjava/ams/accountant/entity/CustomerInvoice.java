@@ -86,6 +86,50 @@ public class CustomerInvoice {
     private InvoiceStatus status = InvoiceStatus.DRAFT;
 
     @Column
+    @Enumerated(EnumType.STRING)
+    private TransactionClassification transactionClassification;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ComplianceStatus complianceStatus = ComplianceStatus.NOT_REQUIRED;
+
+    @Column
+    private String supplierTaxId;
+
+    @Column
+    private String buyerTaxId;
+
+    @Column
+    private String nrsIrn;
+
+    @Column
+    private String nrsQrCode;
+
+    @Column
+    private String nrsDigitalStamp;
+
+    @Column
+    private String nrsReceiptReference;
+
+    @Column
+    private LocalDateTime nrsClearedAt;
+
+    @Column
+    private LocalDateTime buyerReviewDeadline;
+
+    @Column
+    private LocalDateTime finalLockedAt;
+
+    @Column
+    private LocalDateTime rejectedAt;
+
+    @Column
+    private String rejectionReason;
+
+    @Column
+    private LocalDateTime complianceBreachAt;
+
+    @Column
     private LocalDate postedDate;
 
     @Column
@@ -121,6 +165,22 @@ public class CustomerInvoice {
         PAID,
         OVERDUE,
         CANCELLED
+    }
+
+    public enum TransactionClassification {
+        B2B,
+        B2G,
+        B2C
+    }
+
+    public enum ComplianceStatus {
+        NOT_REQUIRED,
+        PENDING_CLEARANCE,
+        CLEARED,
+        FAILED,
+        BREACH,
+        REJECTED_VOID,
+        FINAL_LOCKED
     }
 }
 

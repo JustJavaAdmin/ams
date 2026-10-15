@@ -23,6 +23,8 @@ public class HomeController {
 
         if (authenticationManager.isAdmin()) {
             return "redirect:/admin/users";
+        } else if (authenticationManager.isSystemAdmin()) {
+            return "redirect:/system-admin";
         } else if (authenticationManager.isAccountant()) {
             return "redirect:/accountant/manualJournal";
         } else if (authenticationManager.isAuditor()) {

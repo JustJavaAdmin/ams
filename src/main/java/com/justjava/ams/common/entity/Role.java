@@ -35,6 +35,7 @@ public class Role {
 
     public enum RoleType {
         ADMIN,
+        SYSTEM_ADMIN,
         FINANCE_ADMIN,
         ACCOUNTANT,
         CFO,

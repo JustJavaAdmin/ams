@@ -655,6 +655,9 @@
                 <div class="flex items-center gap-3">
                     <div class="font-semibold">${formatCurrency(invoice.outstandingAmount || 0)}</div>
                     ${invoice.status === 'DRAFT' ? `<button data-edit-id="${invoice.documentId}" class="px-2 py-1 rounded border border-outline-variant text-body-sm font-bold">Edit</button>` : ''}
+                    <button data-download-id="${invoice.documentId}" data-download-format="pdf" class="px-2 py-1 rounded border border-outline-variant text-body-sm font-bold">PDF</button>
+                    <button data-download-id="${invoice.documentId}" data-download-format="json" class="px-2 py-1 rounded border border-outline-variant text-body-sm font-bold">JSON</button>
+                    <button data-download-id="${invoice.documentId}" data-download-format="xml" class="px-2 py-1 rounded border border-outline-variant text-body-sm font-bold">XML</button>
                     ${['POSTED', 'PARTIALLY_PAID'].includes(invoice.status) ? `<button data-payment-id="${invoice.documentId}" class="px-2 py-1 rounded border border-outline-variant text-body-sm font-bold">Record Payment</button>` : ''}
                 </div>
             </div>
@@ -665,6 +668,13 @@
         document.querySelectorAll('[data-edit-id]').forEach(button => {
             button.addEventListener('click', () => loadInvoiceForEdit(button.dataset.editId));
         });
+        document.querySelectorAll('[data-download-id]').forEach(button => {
+            button.addEventListener('click', () => downloadInvoice(button.dataset.downloadId, button.dataset.downloadFormat));
+        });
+    }
+
+    function downloadInvoice(invoiceId, format) {
+        window.location.href = `/api/accountant/customer-invoices/${invoiceId}/download?format=${encodeURIComponent(format)}`;
     }
 
     async function recordInvoicePayment(invoiceId) {
