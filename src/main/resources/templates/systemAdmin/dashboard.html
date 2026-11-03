@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>System Admin | AMS</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: "Hanken Grotesk", sans-serif; }
+        .panel { border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+        .icon-btn { width: 2.5rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; }
+        input, select { border-radius: 8px !important; border-color: #cbd5e1 !important; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-950">
+<div class="min-h-screen flex">
+    <aside class="w-[260px] min-h-screen border-r border-slate-200 bg-white flex flex-col py-5 shrink-0">
+        <div class="px-6 pb-7">
+            <img alt="Accounting Management System" class="w-12 h-12 rounded-lg mb-4" th:src="@{/images/logoams.png}">
+            <h1 class="text-xl font-extrabold">AMS</h1>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">System Admin</p>
+        </div>
+        <nav class="flex-1 px-3 space-y-1">
+            <a href="#integrations" class="flex items-center px-3 py-3 rounded-lg bg-slate-100 font-bold">
+                <span class="material-symbols-outlined mr-3">settings_applications</span>
+                <span>Technical Setup</span>
+            </a>
+        </nav>
+        <div class="px-4 mt-auto border-t border-slate-200 pt-4">
+            <div class="flex items-center p-2 rounded-lg">
+                <span class="material-symbols-outlined text-4xl text-slate-500 mr-3">account_circle</span>
+                <span class="font-bold" th:text="${userName}">User</span>
+            </div>
+            <a class="flex items-center p-2 mt-1 text-red-700 hover:bg-red-50 rounded-lg" th:href="@{/users/logout}">
+                <span class="material-symbols-outlined mr-3">logout</span>
+                <span class="text-xs font-bold uppercase">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-6 lg:p-8 space-y-6" id="integrations">
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-extrabold">Technical Setup</h2>
+                <p id="statusLine" class="text-sm text-slate-500">Loading configuration...</p>
+            </div>
+            <button id="refreshBtn" class="icon-btn border border-slate-300 bg-white hover:bg-slate-100" title="Refresh">
+                <span class="material-symbols-outlined">refresh</span>
+            </button>
+        </header>
+
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <form id="nrsForm" class="panel p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-extrabold">NRS Integration</h3>
+                    <label class="flex items-center gap-2 text-sm font-bold">
+                        <input id="nrsEnabled" type="checkbox">
+                        Enabled
+                    </label>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="text-sm font-bold">Environment
+                        <select id="nrsEnvironment" class="mt-1 w-full">
+                            <option value="SANDBOX">Sandbox</option>
+                            <option value="PRODUCTION">Production</option>
+                        </select>
+                    </label>
+                    <label class="text-sm font-bold">Access Point Provider
+                        <input id="accessPointProvider" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold md:col-span-2">Base URL
+                        <input id="nrsBaseUrl" class="mt-1 w-full" type="url">
+                    </label>
+                    <label class="text-sm font-bold md:col-span-2">Token URL
+                        <input id="nrsTokenUrl" class="mt-1 w-full" type="url">
+                    </label>
+                    <label class="text-sm font-bold">Client ID
+                        <input id="nrsClientId" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold">Client Secret Reference
+                        <input id="nrsClientSecretReference" class="mt-1 w-full" type="password" autocomplete="new-password" placeholder="Leave masked value unchanged">
+                    </label>
+                    <label class="text-sm font-bold">Scope
+                        <input id="nrsScope" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold">Timeouts
+                        <div class="mt-1 grid grid-cols-2 gap-2">
+                            <input id="nrsConnectTimeout" type="number" min="1" placeholder="Connect">
+                            <input id="nrsReadTimeout" type="number" min="1" placeholder="Read">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex gap-2 justify-end">
+                    <button type="button" id="testNrsBtn" class="px-4 py-2 rounded-lg border border-slate-300 font-bold">Test</button>
+                    <button class="px-4 py-2 rounded-lg bg-slate-950 text-white font-bold">Save</button>
+                </div>
+            </form>
+
+            <form id="signingForm" class="panel p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-extrabold">Signing Keys</h3>
+                    <label class="flex items-center gap-2 text-sm font-bold">
+                        <input id="signingActive" type="checkbox">
+                        Active
+                    </label>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="text-sm font-bold">Algorithm
+                        <input id="signingAlgorithm" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold">Key Provider
+                        <input id="keyProvider" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold">Key Alias
+                        <input id="keyAlias" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold">Key Reference
+                        <input id="keyReference" class="mt-1 w-full" type="password" autocomplete="new-password" placeholder="Leave masked value unchanged">
+                    </label>
+                    <label class="text-sm font-bold">Last Rotation
+                        <input id="lastRotatedAt" class="mt-1 w-full" type="datetime-local">
+                    </label>
+                    <label class="text-sm font-bold">Next Rotation
+                        <input id="nextRotationDueAt" class="mt-1 w-full" type="datetime-local">
+                    </label>
+                </div>
+                <div class="flex gap-2 justify-end">
+                    <button type="button" id="testSigningBtn" class="px-4 py-2 rounded-lg border border-slate-300 font-bold">Test</button>
+                    <button class="px-4 py-2 rounded-lg bg-slate-950 text-white font-bold">Save</button>
+                </div>
+            </form>
+
+            <form id="webhookForm" class="panel p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-extrabold">Webhook Platform</h3>
+                    <label class="flex items-center gap-2 text-sm font-bold">
+                        <input id="webhookEnabled" type="checkbox">
+                        Enabled
+                    </label>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="text-sm font-bold">Signing Algorithm
+                        <input id="webhookSigningAlgorithm" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold">Max Attempts
+                        <input id="webhookMaxAttempts" class="mt-1 w-full" type="number" min="1">
+                    </label>
+                    <label class="text-sm font-bold">Timeouts
+                        <div class="mt-1 grid grid-cols-2 gap-2">
+                            <input id="webhookConnectTimeout" type="number" min="1" placeholder="Connect">
+                            <input id="webhookReadTimeout" type="number" min="1" placeholder="Read">
+                        </div>
+                    </label>
+                    <label class="text-sm font-bold">Dead-letter Days
+                        <input id="deadLetterRetentionDays" class="mt-1 w-full" type="number" min="1">
+                    </label>
+                    <label class="text-sm font-bold md:col-span-2">Allowed Domain Pattern
+                        <input id="allowedDomainPattern" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="flex items-center gap-2 text-sm font-bold">
+                        <input id="retryEnabled" type="checkbox">
+                        Retry Enabled
+                    </label>
+                </div>
+                <div class="flex justify-end">
+                    <button class="px-4 py-2 rounded-lg bg-slate-950 text-white font-bold">Save</button>
+                </div>
+            </form>
+
+            <form id="storageForm" class="panel p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-extrabold">Storage And Retention</h3>
+                    <label class="flex items-center gap-2 text-sm font-bold">
+                        <input id="encryptionEnabled" type="checkbox">
+                        Encrypted
+                    </label>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="text-sm font-bold">Artifact Storage
+                        <input id="artifactStorageLocation" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold">Archive Storage
+                        <input id="archiveStorageLocation" class="mt-1 w-full" type="text">
+                    </label>
+                    <label class="text-sm font-bold">Encryption Key Reference
+                        <input id="encryptionKeyReference" class="mt-1 w-full" type="password" autocomplete="new-password" placeholder="Leave masked value unchanged">
+                    </label>
+                    <label class="text-sm font-bold">Retention Years
+                        <input id="retentionYears" class="mt-1 w-full" type="number" min="1">
+                    </label>
+                    <label class="flex items-center gap-2 text-sm font-bold">
+                        <input id="wormRequired" type="checkbox">
+                        WORM Required
+                    </label>
+                    <label class="flex items-center gap-2 text-sm font-bold">
+                        <input id="immutableArchiveEnabled" type="checkbox">
+                        Immutable Archive
+                    </label>
+                </div>
+                <div class="flex justify-end">
+                    <button class="px-4 py-2 rounded-lg bg-slate-950 text-white font-bold">Save</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div class="panel p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-extrabold">API Clients</h3>
+                    <button id="createClientBtn" class="px-3 py-2 rounded-lg border border-slate-300 font-bold">Create</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <input id="clientName" type="text" placeholder="Client name">
+                    <input id="clientId" type="text" placeholder="Client ID">
+                    <input id="clientSecretReference" type="password" placeholder="Secret reference">
+                    <input id="clientScopes" type="text" placeholder="Scopes">
+                </div>
+                <div id="apiClients" class="divide-y divide-slate-200 text-sm"></div>
+            </div>
+
+            <div class="panel p-5 space-y-4">
+                <h3 class="text-lg font-extrabold">Background Jobs</h3>
+                <div id="jobs" class="divide-y divide-slate-200 text-sm"></div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div class="panel p-5 space-y-4">
+                <h3 class="text-lg font-extrabold">Integration Health</h3>
+                <div id="health" class="space-y-2 text-sm"></div>
+            </div>
+            <div class="panel p-5 space-y-4">
+                <h3 class="text-lg font-extrabold">Configuration Audit</h3>
+                <div id="auditLogs" class="divide-y divide-slate-200 text-sm max-h-[360px] overflow-auto"></div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    const apiBase = '/api/system-admin';
+
+    function setStatus(message, type = 'info') {
+        const line = document.getElementById('statusLine');
+        line.textContent = message;
+        line.className = type === 'error' ? 'text-sm text-red-700 font-bold' : 'text-sm text-slate-500';
+    }
+
+    async function apiJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options
+        });
+        if (!response.ok) {
+            let message = response.statusText;
+            try {
+                const body = await response.json();
+                message = body.message || body.error || message;
+            } catch (ignored) {}
+            throw new Error(message);
+        }
+        return response.status === 204 ? null : response.json();
+    }
+
+    function localValue(value) {
+        return value ? String(value).slice(0, 16) : '';
+    }
+
+    function isoOrNull(value) {
+        return value ? `${value}:00` : null;
+    }
+
+    function fillNrs(data) {
+        document.getElementById('nrsEnabled').checked = !!data.enabled;
+        document.getElementById('nrsEnvironment').value = data.environment || 'SANDBOX';
+        document.getElementById('accessPointProvider').value = data.accessPointProvider || '';
+        document.getElementById('nrsBaseUrl').value = data.baseUrl || '';
+        document.getElementById('nrsTokenUrl').value = data.tokenUrl || '';
+        document.getElementById('nrsClientId').value = data.clientId || '';
+        document.getElementById('nrsClientSecretReference').value = data.clientSecretReference || '';
+        document.getElementById('nrsScope').value = data.scope || '';
+        document.getElementById('nrsConnectTimeout').value = data.connectTimeoutSeconds || 10;
+        document.getElementById('nrsReadTimeout').value = data.readTimeoutSeconds || 30;
+    }
+
+    function collectNrs() {
+        return {
+            enabled: document.getElementById('nrsEnabled').checked,
+            environment: document.getElementById('nrsEnvironment').value,
+            accessPointProvider: document.getElementById('accessPointProvider').value,
+            baseUrl: document.getElementById('nrsBaseUrl').value,
+            tokenUrl: document.getElementById('nrsTokenUrl').value,
+            clientId: document.getElementById('nrsClientId').value,
+            clientSecretReference: document.getElementById('nrsClientSecretReference').value,
+            scope: document.getElementById('nrsScope').value,
+            connectTimeoutSeconds: Number(document.getElementById('nrsConnectTimeout').value || 10),
+            readTimeoutSeconds: Number(document.getElementById('nrsReadTimeout').value || 30)
+        };
+    }
+
+    function fillSigning(data) {
+        document.getElementById('signingActive').checked = !!data.active;
+        document.getElementById('signingAlgorithm').value = data.algorithm || 'ECDSA';
+        document.getElementById('keyProvider').value = data.keyProvider || '';
+        document.getElementById('keyAlias').value = data.keyAlias || '';
+        document.getElementById('keyReference').value = data.keyReference || '';
+        document.getElementById('lastRotatedAt').value = localValue(data.lastRotatedAt);
+        document.getElementById('nextRotationDueAt').value = localValue(data.nextRotationDueAt);
+    }
+
+    function collectSigning() {
+        return {
+            active: document.getElementById('signingActive').checked,
+            algorithm: document.getElementById('signingAlgorithm').value,
+            keyProvider: document.getElementById('keyProvider').value,
+            keyAlias: document.getElementById('keyAlias').value,
+            keyReference: document.getElementById('keyReference').value,
+            lastRotatedAt: isoOrNull(document.getElementById('lastRotatedAt').value),
+            nextRotationDueAt: isoOrNull(document.getElementById('nextRotationDueAt').value)
+        };
+    }
+
+    function fillWebhook(data) {
+        document.getElementById('webhookEnabled').checked = !!data.enabled;
+        document.getElementById('webhookSigningAlgorithm').value = data.signingAlgorithm || 'HMAC_SHA256';
+        document.getElementById('retryEnabled').checked = !!data.retryEnabled;
+        document.getElementById('webhookMaxAttempts').value = data.maxAttempts || 5;
+        document.getElementById('webhookConnectTimeout').value = data.connectTimeoutSeconds || 10;
+        document.getElementById('webhookReadTimeout').value = data.readTimeoutSeconds || 30;
+        document.getElementById('allowedDomainPattern').value = data.allowedDomainPattern || '';
+        document.getElementById('deadLetterRetentionDays').value = data.deadLetterRetentionDays || 90;
+    }
+
+    function collectWebhook() {
+        return {
+            enabled: document.getElementById('webhookEnabled').checked,
+            signingAlgorithm: document.getElementById('webhookSigningAlgorithm').value,
+            retryEnabled: document.getElementById('retryEnabled').checked,
+            maxAttempts: Number(document.getElementById('webhookMaxAttempts').value || 5),
+            connectTimeoutSeconds: Number(document.getElementById('webhookConnectTimeout').value || 10),
+            readTimeoutSeconds: Number(document.getElementById('webhookReadTimeout').value || 30),
+            allowedDomainPattern: document.getElementById('allowedDomainPattern').value,
+            deadLetterRetentionDays: Number(document.getElementById('deadLetterRetentionDays').value || 90)
+        };
+    }
+
+    function fillStorage(data) {
+        document.getElementById('artifactStorageLocation').value = data.artifactStorageLocation || '';
+        document.getElementById('archiveStorageLocation').value = data.archiveStorageLocation || '';
+        document.getElementById('encryptionEnabled').checked = !!data.encryptionEnabled;
+        document.getElementById('encryptionKeyReference').value = data.encryptionKeyReference || '';
+        document.getElementById('retentionYears').value = data.retentionYears || 6;
+        document.getElementById('wormRequired').checked = !!data.wormRequired;
+        document.getElementById('immutableArchiveEnabled').checked = !!data.immutableArchiveEnabled;
+    }
+
+    function collectStorage() {
+        return {
+            artifactStorageLocation: document.getElementById('artifactStorageLocation').value,
+            archiveStorageLocation: document.getElementById('archiveStorageLocation').value,
+            encryptionEnabled: document.getElementById('encryptionEnabled').checked,
+            encryptionKeyReference: document.getElementById('encryptionKeyReference').value,
+            retentionYears: Number(document.getElementById('retentionYears').value || 6),
+            wormRequired: document.getElementById('wormRequired').checked,
+            immutableArchiveEnabled: document.getElementById('immutableArchiveEnabled').checked
+        };
+    }
+
+    function renderClients(rows) {
+        const target = document.getElementById('apiClients');
+        target.innerHTML = rows.map(row => `
+            <div class="py-3 flex items-center justify-between gap-3">
+                <div>
+                    <div class="font-bold">${row.clientName}</div>
+                    <div class="text-slate-500">${row.clientId} | ${row.scopes || '-'} | ${row.active ? 'Active' : 'Revoked'}</div>
+                </div>
+                ${row.active ? `<button data-revoke-client="${row.id}" class="px-3 py-1.5 rounded-lg border border-slate-300 font-bold">Revoke</button>` : ''}
+            </div>
+        `).join('') || '<div class="py-3 text-slate-500">No API clients configured.</div>';
+        document.querySelectorAll('[data-revoke-client]').forEach(button => {
+            button.addEventListener('click', async () => {
+                await apiJson(`${apiBase}/api-clients/${button.dataset.revokeClient}/revoke`, { method: 'POST' });
+                await loadAll();
+            });
+        });
+    }
+
+    function renderJobs(rows) {
+        const target = document.getElementById('jobs');
+        target.innerHTML = rows.map(row => `
+            <div class="py-3 flex items-center justify-between gap-3">
+                <div>
+                    <div class="font-bold">${row.jobName}</div>
+                    <div class="text-slate-500">${row.scheduleExpression || '-'} | max retries ${row.maxRetryAttempts}</div>
+                </div>
+                <label class="flex items-center gap-2 font-bold">
+                    <input data-job-toggle="${row.id}" type="checkbox" ${row.enabled ? 'checked' : ''}>
+                    Enabled
+                </label>
+            </div>
+        `).join('');
+        document.querySelectorAll('[data-job-toggle]').forEach(toggle => {
+            toggle.addEventListener('change', async () => {
+                await apiJson(`${apiBase}/jobs/${toggle.dataset.jobToggle}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ enabled: toggle.checked })
+                });
+                await loadAll();
+            });
+        });
+    }
+
+    function renderHealth(rows) {
+        document.getElementById('health').innerHTML = rows.map(row => `
+            <div class="p-3 rounded-lg border border-slate-200">
+                <div class="font-bold">${row.component}: ${row.status}</div>
+                <div class="text-slate-500">${row.message}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderAudit(rows) {
+        document.getElementById('auditLogs').innerHTML = rows.map(row => `
+            <div class="py-3">
+                <div class="font-bold">${row.configType} ${row.action}</div>
+                <div class="text-slate-500">${row.summary || ''}</div>
+                <div class="text-xs text-slate-400">${row.changedBy} | ${row.createdAt || ''}</div>
+            </div>
+        `).join('') || '<div class="py-3 text-slate-500">No configuration changes yet.</div>';
+    }
+
+    async function loadAll() {
+        try {
+            setStatus('Loading configuration...');
+            const [nrs, signing, webhook, storage, clients, jobs, health, audit] = await Promise.all([
+                apiJson(`${apiBase}/nrs/config`),
+                apiJson(`${apiBase}/signing/config`),
+                apiJson(`${apiBase}/webhook-platform/config`),
+                apiJson(`${apiBase}/storage-retention/config`),
+                apiJson(`${apiBase}/api-clients`),
+                apiJson(`${apiBase}/jobs`),
+                apiJson(`${apiBase}/health/integrations`),
+                apiJson(`${apiBase}/audit/config-changes`)
+            ]);
+            fillNrs(nrs);
+            fillSigning(signing);
+            fillWebhook(webhook);
+            fillStorage(storage);
+            renderClients(clients);
+            renderJobs(jobs);
+            renderHealth(health);
+            renderAudit(audit);
+            setStatus('Configuration loaded.');
+        } catch (err) {
+            setStatus(`Load failed: ${err.message}`, 'error');
+        }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadAll);
+    document.getElementById('nrsForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        await apiJson(`${apiBase}/nrs/config`, { method: 'PUT', body: JSON.stringify(collectNrs()) });
+        await loadAll();
+    });
+    document.getElementById('signingForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        await apiJson(`${apiBase}/signing/config`, { method: 'PUT', body: JSON.stringify(collectSigning()) });
+        await loadAll();
+    });
+    document.getElementById('webhookForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        await apiJson(`${apiBase}/webhook-platform/config`, { method: 'PUT', body: JSON.stringify(collectWebhook()) });
+        await loadAll();
+    });
+    document.getElementById('storageForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        await apiJson(`${apiBase}/storage-retention/config`, { method: 'PUT', body: JSON.stringify(collectStorage()) });
+        await loadAll();
+    });
+    document.getElementById('testNrsBtn').addEventListener('click', async () => {
+        const result = await apiJson(`${apiBase}/nrs/test-connection`, { method: 'POST' });
+        setStatus(`${result.component}: ${result.status} - ${result.message}`);
+    });
+    document.getElementById('testSigningBtn').addEventListener('click', async () => {
+        const result = await apiJson(`${apiBase}/signing/test`, { method: 'POST' });
+        setStatus(`${result.component}: ${result.status} - ${result.message}`);
+    });
+    document.getElementById('createClientBtn').addEventListener('click', async () => {
+        await apiJson(`${apiBase}/api-clients`, {
+            method: 'POST',
+            body: JSON.stringify({
+                clientName: document.getElementById('clientName').value,
+                clientId: document.getElementById('clientId').value,
+                clientSecretReference: document.getElementById('clientSecretReference').value,
+                scopes: document.getElementById('clientScopes').value,
+                active: true
+            })
+        });
+        document.getElementById('clientName').value = '';
+        document.getElementById('clientId').value = '';
+        document.getElementById('clientSecretReference').value = '';
+        document.getElementById('clientScopes').value = '';
+        await loadAll();
+    });
+
+    loadAll();
+</script>
+</body>
+</html>

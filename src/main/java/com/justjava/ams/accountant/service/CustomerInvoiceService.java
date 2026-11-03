@@ -85,6 +85,10 @@ public class CustomerInvoiceService {
                 .totalAmount(totals.totalAmount())
                 .amountPaid(BigDecimal.ZERO)
                 .status(CustomerInvoice.InvoiceStatus.DRAFT)
+                .transactionClassification(parseClassificationOrNull(dto.getTransactionClassification()))
+                .complianceStatus(parseComplianceStatusOrDefault(dto.getComplianceStatus()))
+                .supplierTaxId(trimToNull(dto.getSupplierTaxId()))
+                .buyerTaxId(trimToNull(dto.getBuyerTaxId()))
                 .notes(dto.getNotes())
                 .createdByUser(user)
                 .build();
@@ -149,6 +153,20 @@ public class CustomerInvoiceService {
                 .totalAmount(invoice.getTotalAmount())
                 .amountPaid(invoice.getAmountPaid())
                 .status(invoice.getStatus().toString())
+                .transactionClassification(invoice.getTransactionClassification() != null ? invoice.getTransactionClassification().name() : null)
+                .complianceStatus(invoice.getComplianceStatus() != null ? invoice.getComplianceStatus().name() : CustomerInvoice.ComplianceStatus.NOT_REQUIRED.name())
+                .supplierTaxId(invoice.getSupplierTaxId())
+                .buyerTaxId(invoice.getBuyerTaxId())
+                .nrsIrn(invoice.getNrsIrn())
+                .nrsQrCode(invoice.getNrsQrCode())
+                .nrsDigitalStamp(invoice.getNrsDigitalStamp())
+                .nrsReceiptReference(invoice.getNrsReceiptReference())
+                .nrsClearedAt(invoice.getNrsClearedAt())
+                .buyerReviewDeadline(invoice.getBuyerReviewDeadline())
+                .finalLockedAt(invoice.getFinalLockedAt())
+                .rejectedAt(invoice.getRejectedAt())
+                .rejectionReason(invoice.getRejectionReason())
+                .complianceBreachAt(invoice.getComplianceBreachAt())
                 .notes(invoice.getNotes())
                 .createdByUserId(invoice.getCreatedByUser() != null ? invoice.getCreatedByUser().getId() : null)
                 .lineItems(invoiceLineItemRepository.findByInvoiceId(invoice.getId()).stream()
@@ -231,6 +249,24 @@ public class CustomerInvoiceService {
         if (dto.getCustomerAddress() != null) invoice.setCustomerAddress(dto.getCustomerAddress());
         if (dto.getInvoiceDate() != null) invoice.setInvoiceDate(dto.getInvoiceDate());
         if (dto.getDueDate() != null) invoice.setDueDate(dto.getDueDate());
+        if (dto.getTransactionClassification() != null) {
+            invoice.setTransactionClassification(parseClassificationOrNull(dto.getTransactionClassification()));
+        }
+        if (dto.getComplianceStatus() != null) {
+            invoice.setComplianceStatus(parseComplianceStatusOrDefault(dto.getComplianceStatus()));
+        }
+        if (dto.getSupplierTaxId() != null) invoice.setSupplierTaxId(trimToNull(dto.getSupplierTaxId()));
+        if (dto.getBuyerTaxId() != null) invoice.setBuyerTaxId(trimToNull(dto.getBuyerTaxId()));
+        if (dto.getNrsIrn() != null) invoice.setNrsIrn(trimToNull(dto.getNrsIrn()));
+        if (dto.getNrsQrCode() != null) invoice.setNrsQrCode(trimToNull(dto.getNrsQrCode()));
+        if (dto.getNrsDigitalStamp() != null) invoice.setNrsDigitalStamp(trimToNull(dto.getNrsDigitalStamp()));
+        if (dto.getNrsReceiptReference() != null) invoice.setNrsReceiptReference(trimToNull(dto.getNrsReceiptReference()));
+        if (dto.getNrsClearedAt() != null) invoice.setNrsClearedAt(dto.getNrsClearedAt());
+        if (dto.getBuyerReviewDeadline() != null) invoice.setBuyerReviewDeadline(dto.getBuyerReviewDeadline());
+        if (dto.getFinalLockedAt() != null) invoice.setFinalLockedAt(dto.getFinalLockedAt());
+        if (dto.getRejectedAt() != null) invoice.setRejectedAt(dto.getRejectedAt());
+        if (dto.getRejectionReason() != null) invoice.setRejectionReason(trimToNull(dto.getRejectionReason()));
+        if (dto.getComplianceBreachAt() != null) invoice.setComplianceBreachAt(dto.getComplianceBreachAt());
         if (dto.getNotes() != null) invoice.setNotes(dto.getNotes());
         if (dto.getLineItems() != null) {
             Totals totals = calculateTotals(invoice.getOrganization().getId(), dto.getLineItems(), dto.getTaxJurisdictionId());
@@ -401,6 +437,28 @@ public class CustomerInvoiceService {
         }
     }
 
+    private CustomerInvoice.TransactionClassification parseClassificationOrNull(String classification) {
+        if (classification == null || classification.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return CustomerInvoice.TransactionClassification.valueOf(classification.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported transaction classification");
+        }
+    }
+
+    private CustomerInvoice.ComplianceStatus parseComplianceStatusOrDefault(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            return CustomerInvoice.ComplianceStatus.NOT_REQUIRED;
+        }
+        try {
+            return CustomerInvoice.ComplianceStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported compliance status");
+        }
+    }
+
     private void requireStatus(CustomerInvoice invoice, CustomerInvoice.InvoiceStatus requiredStatus) {
         if (!requiredStatus.equals(invoice.getStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invoice must be " + requiredStatus);
@@ -473,6 +531,10 @@ public class CustomerInvoiceService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
         }
         return value.trim();
+    }
+
+    private String trimToNull(String value) {
+        return value == null || value.trim().isEmpty() ? null : value.trim();
     }
 
     private String currentUserName() {

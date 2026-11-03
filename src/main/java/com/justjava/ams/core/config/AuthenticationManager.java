@@ -37,6 +37,12 @@ public class AuthenticationManager {
     }
 
     @SuppressWarnings("unchecked")
+    public boolean isSystemAdmin() {
+        List<String> groups = (List<String>) this.get("groups");
+        return groups != null && groups.contains("/systemAdmin");
+    }
+
+    @SuppressWarnings("unchecked")
     public boolean isAccountant() {
         List<String> groups = (List<String>) this.get("groups");
         return groups != null && groups.contains("/accountant");

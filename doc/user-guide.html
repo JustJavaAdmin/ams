@@ -6,438 +6,219 @@
     <title>AMS User Guide</title>
     <style>
         :root {
-            --ink: #1e252b;
-            --muted: #64707d;
-            --line: #dce3ea;
+            --ink: #1f2933;
+            --muted: #596775;
+            --line: #d7dee8;
             --paper: #ffffff;
             --soft: #f5f7fa;
-            --blue: #0058be;
-            --teal: #00796b;
-            --gold: #a06000;
-            --red: #b3261e;
-            --green: #1b7f4c;
-            --nav: #17212b;
+            --nav: #17202a;
+            --blue: #0759b8;
+            --green: #166534;
+            --amber: #92400e;
+            --red: #b42318;
         }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
             margin: 0;
             color: var(--ink);
             background: var(--soft);
             font-family: Arial, Helvetica, sans-serif;
-            line-height: 1.58;
+            line-height: 1.6;
         }
-
-        a {
-            color: var(--blue);
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        .shell {
+        a { color: var(--blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .layout {
             display: grid;
-            grid-template-columns: 292px minmax(0, 1fr);
+            grid-template-columns: 290px minmax(0, 1fr);
             min-height: 100vh;
         }
-
-        .sidebar {
+        aside {
             position: sticky;
             top: 0;
             height: 100vh;
-            padding: 28px 22px;
-            background: var(--nav);
-            color: #eef4fb;
             overflow-y: auto;
+            padding: 26px 22px;
+            background: var(--nav);
+            color: #f8fafc;
         }
-
         .brand {
-            margin-bottom: 28px;
-            padding-bottom: 22px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+            padding-bottom: 18px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid rgba(255,255,255,.16);
         }
-
         .brand-mark {
             display: inline-grid;
             place-items: center;
-            width: 46px;
-            height: 46px;
-            margin-bottom: 14px;
+            width: 44px;
+            height: 44px;
+            margin-bottom: 12px;
             border-radius: 8px;
             background: #ffffff;
             color: var(--blue);
             font-weight: 800;
-            letter-spacing: 0;
         }
-
-        .brand h1 {
-            margin: 0;
-            font-size: 24px;
-            line-height: 1.15;
-        }
-
-        .brand p {
-            margin: 8px 0 0;
-            color: #b8c5d3;
-            font-size: 13px;
-        }
-
+        .brand h1 { margin: 0; font-size: 23px; line-height: 1.15; }
+        .brand p { margin: 7px 0 0; color: #bfccd9; font-size: 13px; }
         .nav-title {
-            margin: 22px 0 8px;
-            color: #95a5b6;
+            margin: 20px 0 8px;
+            color: #9fb0c2;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .08em;
         }
-
-        .sidebar a {
+        aside a {
             display: block;
             padding: 8px 10px;
             border-radius: 7px;
-            color: #eef4fb;
+            color: #f8fafc;
             font-size: 14px;
         }
-
-        .sidebar a:hover {
-            background: rgba(255, 255, 255, 0.09);
-            text-decoration: none;
-        }
-
-        main {
-            min-width: 0;
-            padding: 34px;
-        }
-
-        .page {
-            max-width: 1180px;
-            margin: 0 auto;
-        }
-
-        .hero {
-            padding: 42px;
-            border-radius: 8px;
-            background: #ffffff;
+        aside a:hover { background: rgba(255,255,255,.09); text-decoration: none; }
+        main { min-width: 0; padding: 34px; }
+        .page { max-width: 1160px; margin: 0 auto; }
+        .hero, .section {
+            background: var(--paper);
             border: 1px solid var(--line);
-            box-shadow: 0 18px 50px rgba(23, 33, 43, 0.08);
+            border-radius: 8px;
+            box-shadow: 0 14px 42px rgba(23,32,42,.07);
         }
-
+        .hero { padding: 40px; }
+        .section { margin-top: 24px; padding: 30px; }
         .eyebrow {
             display: inline-block;
-            margin-bottom: 12px;
-            color: var(--teal);
+            margin-bottom: 10px;
+            color: var(--green);
             font-size: 12px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: .08em;
         }
-
-        h1, h2, h3, h4 {
-            margin: 0 0 12px;
-            line-height: 1.18;
-            letter-spacing: 0;
-        }
-
-        h1 {
-            max-width: 780px;
-            font-size: 44px;
-        }
-
-        h2 {
-            margin-top: 44px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--line);
-            font-size: 28px;
-        }
-
-        h3 {
-            margin-top: 26px;
-            font-size: 20px;
-        }
-
-        h4 {
-            margin-top: 20px;
-            font-size: 16px;
-        }
-
-        p {
-            margin: 0 0 14px;
-        }
-
-        .lead {
-            max-width: 860px;
-            color: var(--muted);
-            font-size: 18px;
-        }
-
-        .meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 24px;
-        }
-
+        h1, h2, h3, h4 { margin: 0 0 12px; line-height: 1.22; }
+        h1 { max-width: 850px; font-size: 42px; }
+        h2 { margin-top: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--line); font-size: 28px; }
+        h3 { margin-top: 24px; font-size: 20px; }
+        h4 { margin-top: 18px; font-size: 16px; }
+        p { margin: 0 0 14px; }
+        .lead { max-width: 890px; color: var(--muted); font-size: 18px; }
+        .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
         .pill {
             display: inline-flex;
-            align-items: center;
             min-height: 30px;
+            align-items: center;
             padding: 5px 11px;
             border: 1px solid var(--line);
             border-radius: 999px;
             background: #f8fafc;
-            color: #33404d;
             font-size: 13px;
             font-weight: 700;
         }
-
-        .section {
-            margin-top: 24px;
-            padding: 30px;
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--paper);
-        }
-
         .grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 16px;
             margin: 18px 0;
         }
-
-        .grid.two {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
+        .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .card {
-            padding: 18px;
             border: 1px solid var(--line);
             border-radius: 8px;
-            background: #ffffff;
+            padding: 16px;
+            background: #fbfdff;
         }
-
-        .card h3 {
-            margin-top: 0;
-            font-size: 18px;
+        .card h3, .card h4 { margin-top: 0; }
+        .note, .success, .warning {
+            margin: 16px 0;
+            padding: 14px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            background: #f8fafc;
         }
-
-        .role {
-            border-top: 4px solid var(--blue);
-        }
-
-        .role.admin {
-            border-top-color: var(--red);
-        }
-
-        .role.finance {
-            border-top-color: var(--teal);
-        }
-
-        .role.accountant {
-            border-top-color: var(--green);
-        }
-
-        .role.cfo {
-            border-top-color: var(--gold);
-        }
-
-        .role.auditor {
-            border-top-color: #5b5fc7;
-        }
-
-        ul, ol {
-            margin: 0 0 16px 22px;
-            padding: 0;
-        }
-
-        li {
-            margin: 6px 0;
-        }
-
-        .steps {
-            counter-reset: step;
-            list-style: none;
-            margin-left: 0;
-        }
-
-        .steps li {
-            position: relative;
-            min-height: 38px;
-            margin: 0 0 12px;
-            padding: 8px 0 8px 48px;
-        }
-
-        .steps li::before {
-            counter-increment: step;
-            content: counter(step);
-            position: absolute;
-            left: 0;
-            top: 6px;
-            display: grid;
-            place-items: center;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: var(--blue);
-            color: #fff;
-            font-weight: 800;
-            font-size: 13px;
-        }
-
+        .success { border-color: #bbf7d0; background: #f0fdf4; }
+        .warning { border-color: #fde68a; background: #fffbeb; }
+        ul, ol { margin: 10px 0 18px 22px; padding: 0; }
+        li { margin: 6px 0; }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 16px 0;
-            overflow: hidden;
-            border: 1px solid var(--line);
-            border-radius: 8px;
+            margin: 16px 0 22px;
+            background: #ffffff;
         }
-
         th, td {
-            padding: 12px 13px;
-            border-bottom: 1px solid var(--line);
+            padding: 11px 12px;
+            border: 1px solid var(--line);
             text-align: left;
             vertical-align: top;
         }
-
-        th {
-            background: #edf2f7;
-            color: #2f3d4a;
-            font-size: 13px;
-        }
-
-        tr:last-child td {
-            border-bottom: 0;
-        }
-
+        th { background: #eef3f8; font-size: 13px; }
         code {
             padding: 2px 5px;
             border-radius: 5px;
-            background: #eef2f6;
-            color: #24313d;
+            background: #eef3f8;
             font-family: Consolas, Monaco, monospace;
-            font-size: .92em;
+            font-size: .94em;
         }
-
-        .callout {
-            margin: 18px 0;
-            padding: 16px 18px;
-            border-left: 4px solid var(--blue);
+        .route {
+            display: inline-block;
+            margin: 3px 4px 3px 0;
+            padding: 3px 7px;
             border-radius: 6px;
-            background: #eef6ff;
-        }
-
-        .warning {
-            border-left-color: var(--gold);
-            background: #fff7e8;
-        }
-
-        .success {
-            border-left-color: var(--green);
-            background: #eefaf4;
-        }
-
-        .toc-mobile {
-            display: none;
-        }
-
-        .footer {
-            margin: 30px 0 10px;
-            color: var(--muted);
+            background: #eef3f8;
+            color: #263645;
+            font-family: Consolas, Monaco, monospace;
             font-size: 13px;
+        }
+        .status {
+            display: inline-block;
+            min-width: 84px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #eef3f8;
+            font-size: 12px;
+            font-weight: 700;
             text-align: center;
         }
-
+        .status.good { background: #dcfce7; color: var(--green); }
+        .status.warn { background: #fef3c7; color: var(--amber); }
+        .status.bad { background: #fee2e2; color: var(--red); }
         @media (max-width: 980px) {
-            .shell {
-                display: block;
-            }
-
-            .sidebar {
-                position: static;
-                height: auto;
-            }
-
-            main {
-                padding: 18px;
-            }
-
-            .hero {
-                padding: 26px;
-            }
-
-            h1 {
-                font-size: 34px;
-            }
-
-            .grid,
-            .grid.two {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media print {
-            body {
-                background: #fff;
-            }
-
-            .shell {
-                display: block;
-            }
-
-            .sidebar {
-                display: none;
-            }
-
-            main {
-                padding: 0;
-            }
-
-            .section,
-            .hero {
-                box-shadow: none;
-                break-inside: avoid;
-            }
-
-            a {
-                color: inherit;
-            }
+            .layout { display: block; }
+            aside { position: static; height: auto; }
+            main { padding: 18px; }
+            .hero, .section { padding: 22px; }
+            .grid, .grid.two { grid-template-columns: 1fr; }
+            h1 { font-size: 32px; }
         }
     </style>
 </head>
 <body>
-<div class="shell">
-    <aside class="sidebar">
+<div class="layout">
+    <aside>
         <div class="brand">
             <div class="brand-mark">AMS</div>
             <h1>User Guide</h1>
-            <p>Accounting Management System</p>
+            <p>Plain-language guide for daily users of the Accounting Management System.</p>
         </div>
 
         <div class="nav-title">Start Here</div>
         <a href="#overview">Overview</a>
-        <a href="#access">Access And Roles</a>
-        <a href="#end-to-end">End-To-End Operating Flow</a>
+        <a href="#login">Login and Navigation</a>
+        <a href="#roles">Roles</a>
+        <a href="#common">Common Actions</a>
 
         <div class="nav-title">Role Guides</div>
-        <a href="#admin">System Administrator</a>
-        <a href="#finance-admin">Finance Administrator</a>
+        <a href="#admin">Admin</a>
+        <a href="#system-admin">System Admin</a>
+        <a href="#finance-admin">Finance Admin</a>
         <a href="#accountant">Accountant</a>
-        <a href="#cfo">Chief Financial Officer</a>
+        <a href="#cfo">CFO</a>
         <a href="#auditor">Auditor</a>
 
-        <div class="nav-title">Daily Work</div>
-        <a href="#month-end">Month-End Close</a>
-        <a href="#controls">Controls And Auditability</a>
+        <div class="nav-title">Special Work</div>
+        <a href="#einvoicing">E-Invoicing</a>
+        <a href="#external">External Access</a>
+        <a href="#status">Statuses</a>
         <a href="#troubleshooting">Troubleshooting</a>
         <a href="#glossary">Glossary</a>
     </aside>
@@ -445,575 +226,531 @@
     <main>
         <div class="page">
             <section class="hero" id="overview">
-                <span class="eyebrow">Detailed Product Guide</span>
-                <h1>AMS Accounting Management System User Guide</h1>
-                <p class="lead">
-                    This guide explains how to use AMS from initial setup through day-to-day accounting,
-                    approvals, reporting, and audit review. It is organized by role so each user can follow
-                    the steps that apply to their responsibilities.
-                </p>
+                <span class="eyebrow">Accounting Management System</span>
+                <h1>How to use AMS for finance setup, accounting work, approvals, reporting, audit review, and technical administration.</h1>
+                <p class="lead">AMS helps different finance teams work in one controlled system. Finance Admins set up the organization and rules, Accountants record transactions, CFOs approve and review results, Auditors inspect history, Admins manage users, and System Admins manage technical integrations.</p>
                 <div class="meta">
-                    <span class="pill">Application type: Spring Boot and Thymeleaf web app</span>
-                    <span class="pill">Authentication: OAuth2 / Keycloak</span>
-                    <span class="pill">Primary modules: Admin, Finance Admin, Accountant, CFO, Auditor</span>
-                    <span class="pill">Generated: August 23, 2026</span>
+                    <span class="pill">Application address: http://localhost:9078</span>
+                    <span class="pill">Logout path: /users/logout</span>
+                    <span class="pill">Updated for current implementation</span>
                 </div>
             </section>
 
-            <section class="section">
-                <h2>What AMS Does</h2>
-                <p>
-                    AMS is an enterprise accounting and financial governance application. It supports
-                    organization and branch setup, chart of accounts administration, fiscal period control,
-                    journal entry processing, invoicing, payables automation, cash and bank reconciliation,
-                    external depreciation journal imports, CFO approvals, trial balance generation, financial reports,
-                    budget monitoring, audit log review, and security event acknowledgement.
-                </p>
-
-                <div class="grid">
-                    <div class="card">
-                        <h3>Governed Accounting</h3>
-                        <p>Create accounting records with structured status flows such as draft, submitted,
-                            approved, posted, rejected, paid, completed, closed, or locked depending on the
-                            transaction type.</p>
-                    </div>
-                    <div class="card">
-                        <h3>Role-Based Workspaces</h3>
-                        <p>Users see the workspace for their assigned Keycloak group: admin, financeAdmin,
-                            accountant, cfo, or auditor.</p>
-                    </div>
-                    <div class="card">
-                        <h3>Traceable Decisions</h3>
-                        <p>Key accounting and control changes are recorded through audit logs, approval
-                            histories, timestamps, and user attribution.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section" id="access">
-                <h2>Access And Roles</h2>
-                <p>
-                    Users sign in from the public landing page through Keycloak. After login, AMS checks the
-                    user's group claim and redirects the user to the correct workspace.
-                </p>
+            <section class="section" id="login">
+                <h2>Login And Navigation</h2>
+                <p>Open AMS in your browser. If you are not signed in, you will see the public welcome page. Select the login option and sign in with your organization account.</p>
+                <p>After login, AMS sends you to the correct workspace based on your assigned group. If you belong to more than one group, your administrator should confirm which group should be used for your daily work.</p>
 
                 <table>
                     <thead>
-                    <tr>
-                        <th>Role / Group</th>
-                        <th>Landing Page After Login</th>
-                        <th>Main Responsibility</th>
-                    </tr>
+                    <tr><th>Your responsibility</th><th>Where AMS takes you</th><th>What you can do there</th></tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <td><code>/admin</code></td>
-                        <td><code>/admin/users</code></td>
-                        <td>Create users, enable or disable users, reset passwords, create groups, and assign users to groups.</td>
-                    </tr>
-                    <tr>
-                        <td><code>/financeAdmin</code></td>
-                        <td><code>/financeAdmin/organizationSetup</code></td>
-                        <td>Set up organizations, branches, chart of accounts, fiscal periods, tax jurisdictions, module controls, and approval rules.</td>
-                    </tr>
-                    <tr>
-                        <td><code>/accountant</code></td>
-                        <td><code>/accountant/manualJournal</code></td>
-                        <td>Record journals, invoices, payments, collections, bank reconciliations, and depreciation journals imported from the external fixed asset application.</td>
-                    </tr>
-                    <tr>
-                        <td><code>/cfo</code></td>
-                        <td><code>/cfo/approvalsHub</code></td>
-                        <td>Review and approve finance submissions, generate reports, review trial balance, and monitor budgets.</td>
-                    </tr>
-                    <tr>
-                        <td><code>/auditor</code></td>
-                        <td><code>/auditor/auditLogExplorer</code></td>
-                        <td>Review audit logs, investigate security events, filter activity history, and acknowledge control events.</td>
-                    </tr>
+                    <tr><td>Admin</td><td><span class="route">/admin/users</span></td><td>Create users, manage groups, enable or disable accounts, send reset emails.</td></tr>
+                    <tr><td>System Admin</td><td><span class="route">/system-admin</span></td><td>Set up NRS, signing keys, webhooks, storage, API clients, jobs, and integration health.</td></tr>
+                    <tr><td>Finance Admin</td><td><span class="route">/financeAdmin/organizationSetup</span></td><td>Set up organizations, branches, accounts, periods, modules, taxes, approval rules, and imports.</td></tr>
+                    <tr><td>Accountant</td><td><span class="route">/accountant/manualJournal</span></td><td>Create and process journals, invoices, payments, collections, bank reconciliations, expenses, and depreciation imports.</td></tr>
+                    <tr><td>CFO</td><td><span class="route">/cfo/approvalsHub</span></td><td>Approve journals, manage budgets, review trial balance, and handle financial reports.</td></tr>
+                    <tr><td>Auditor</td><td><span class="route">/auditor/auditLogExplorer</span></td><td>Review audit logs and security events.</td></tr>
                     </tbody>
                 </table>
 
-                <div class="callout">
-                    <strong>Important:</strong> Users must belong to the correct Keycloak group. A user without a
-                    recognized group may authenticate successfully but will not reach a role workspace.
+                <div class="warning">
+                    <strong>If you see the wrong page after login:</strong> contact an Admin to check your group membership. AMS uses your assigned group to decide which screens and actions you can access.
                 </div>
             </section>
 
-            <section class="section" id="end-to-end">
-                <h2>End-To-End Operating Flow</h2>
-                <p>
-                    The most reliable way to roll out AMS is to configure master data first, then open fiscal
-                    periods, then process transactions, then review and report.
-                </p>
+            <section class="section" id="roles">
+                <h2>Roles At A Glance</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Admin</h3>
+                        <p>Manages who can use AMS. This includes creating users, assigning groups, disabling access, and password reset emails.</p>
+                    </div>
+                    <div class="card">
+                        <h3>System Admin</h3>
+                        <p>Manages technical settings behind e-invoicing, signing, webhooks, file retention, API clients, and background jobs.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Finance Admin</h3>
+                        <p>Sets up the finance foundation: organizations, branches, chart of accounts, fiscal periods, modules, tax rules, and approval rules.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Accountant</h3>
+                        <p>Records the daily finance work: journals, invoices, vendor bills, customer collections, payments, expenses, bank reconciliation, and depreciation imports.</p>
+                    </div>
+                    <div class="card">
+                        <h3>CFO</h3>
+                        <p>Reviews and approves finance activity, controls budgets, checks trial balance, and manages financial report approval.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Auditor</h3>
+                        <p>Reviews evidence of what happened in the system, including business activity, security events, and acknowledgements.</p>
+                    </div>
+                </div>
+            </section>
 
-                <ol class="steps">
-                    <li><strong>Admin creates users and groups.</strong> Create each user in Keycloak through AMS Admin and assign the correct role group.</li>
-                    <li><strong>Finance Admin creates the organization.</strong> Add the company name, registration details, tax details, address details, contact details, and active status.</li>
-                    <li><strong>Finance Admin creates branches.</strong> Add operating branches under the organization for branch-level posting and reporting.</li>
-                    <li><strong>Finance Admin configures accounting controls.</strong> Build the chart of accounts, tax jurisdictions, fiscal periods, approval rules, and module controls.</li>
-                    <li><strong>Accountant creates operational records.</strong> Add customers, vendors, bank accounts, invoices, journals, payment runs, collections cases, and reconciliation data.</li>
-                    <li><strong>CFO reviews approvals and reports.</strong> Approve or reject submitted journals, budgets, and reports, then generate financial statements and trial balances.</li>
-                    <li><strong>Auditor reviews evidence.</strong> Filter audit logs and security events to confirm who changed what, when, and why.</li>
-                </ol>
+            <section class="section" id="common">
+                <h2>Common Actions</h2>
+                <h3>Selecting An Organization</h3>
+                <p>Many pages begin with an organization selector. Choose the organization before adding or viewing records. Lists, forms, reports, and totals usually change after you select an organization.</p>
+
+                <h3>Saving A Draft</h3>
+                <p>A draft is work that has been entered but is not final. Drafts can normally be edited. Use drafts for invoices, journals, or expenses that need review before submission or posting.</p>
+
+                <h3>Submitting For Approval</h3>
+                <p>Submit means you are asking another responsible person or rule to review the item. After submission, some fields may stop being editable.</p>
+
+                <h3>Approving Or Rejecting</h3>
+                <p>Approval allows the item to move forward. Rejection sends the item back or stops it. When rejecting, enter a clear reason so the person who created the item knows what to fix.</p>
+
+                <h3>Posting</h3>
+                <p>Posting is the accounting step that records the transaction in the general ledger. Posted items affect reports, balances, and audit records. Do not post until the figures and accounts are correct.</p>
+
+                <h3>Refreshing Lists</h3>
+                <p>Some pages include a refresh button. Use it after another person approves, posts, pays, or changes records that you are viewing.</p>
             </section>
 
             <section class="section" id="admin">
-                <h2>System Administrator Guide</h2>
-                <div class="card role admin">
-                    <h3>Workspace</h3>
-                    <p>Open <code>/admin/users</code>. This page manages Keycloak users and groups for AMS access.</p>
-                </div>
+                <h2>Admin Guide</h2>
+                <p>Use User Management to control access to AMS.</p>
+                <p><span class="route">/admin/users</span></p>
 
                 <h3>Create A User</h3>
                 <ol>
-                    <li>Go to <strong>Admin &gt; Users</strong>.</li>
-                    <li>Select the option to create a user.</li>
-                    <li>Enter first name, last name, username, email, password, and realm.</li>
-                    <li>Submit the form. AMS creates the user in Keycloak and returns to the user list.</li>
-                    <li>Assign the user to the correct group, such as <code>/accountant</code> or <code>/cfo</code>.</li>
+                    <li>Open User Management.</li>
+                    <li>Enter the person's first name, last name, username, email, and temporary password.</li>
+                    <li>Choose the group that matches the person's job, such as Accountant, CFO, Finance Admin, Auditor, System Admin, or Admin.</li>
+                    <li>Save the user.</li>
+                </ol>
+                <p class="success"><strong>Expected result:</strong> the user appears in the list and can sign in with the assigned access.</p>
+
+                <h3>Change A User's Access</h3>
+                <ol>
+                    <li>Select the user.</li>
+                    <li>Add or remove groups as needed.</li>
+                    <li>Ask the user to sign out and sign in again.</li>
+                </ol>
+                <p>Access changes normally apply on the next login.</p>
+
+                <h3>Disable, Enable, Reset, Or Delete</h3>
+                <p>Disable a user when access should be paused. Enable restores access. Use reset password email when a user cannot sign in. Delete should be reserved for test users or users that your organization policy allows you to remove.</p>
+            </section>
+
+            <section class="section" id="system-admin">
+                <h2>System Admin Guide</h2>
+                <p>Use Technical Setup to manage integration and platform settings. This section is intended for users responsible for connectivity, security settings, and technical configuration.</p>
+                <p><span class="route">/system-admin</span></p>
+
+                <h3>NRS Integration</h3>
+                <p>NRS settings control how AMS prepares and submits e-invoice information to the external reporting or clearance service.</p>
+                <ol>
+                    <li>Open Technical Setup.</li>
+                    <li>Find NRS Integration.</li>
+                    <li>Turn the integration on or off.</li>
+                    <li>Choose the environment.</li>
+                    <li>Enter provider, base URL, token URL, client ID, scope, and timeouts.</li>
+                    <li>Leave the secret field unchanged if it already shows a masked value and you do not want to replace it.</li>
+                    <li>Save, then use Test to confirm connectivity.</li>
                 </ol>
 
-                <h3>Manage User Access</h3>
-                <ul>
-                    <li><strong>Search users:</strong> Use the search field to locate a user by identifying information.</li>
-                    <li><strong>Enable user:</strong> Restores access for a disabled user.</li>
-                    <li><strong>Disable user:</strong> Suspends access without deleting the identity.</li>
-                    <li><strong>Reset password email:</strong> Sends the user a password reset email from Keycloak.</li>
-                    <li><strong>Delete user:</strong> Removes the user from Keycloak. Use only when the account should no longer exist.</li>
-                    <li><strong>Create group:</strong> Add a new Keycloak group if the organization needs a new access category.</li>
-                    <li><strong>Add or remove group:</strong> Changes the user's AMS role access.</li>
-                </ul>
+                <h3>Signing Keys</h3>
+                <p>Signing settings tell AMS which key and algorithm to use when a document or message needs a digital signature.</p>
+                <ol>
+                    <li>Enable signing if required.</li>
+                    <li>Enter the algorithm, provider, key alias, and key reference.</li>
+                    <li>Set last rotation and next rotation dates if your policy requires them.</li>
+                    <li>Save and test.</li>
+                </ol>
 
-                <div class="callout warning">
-                    Prefer disabling a user over deletion when audit traceability matters. Deleted users may be harder
-                    to reconcile against historical business records.
-                </div>
+                <h3>Webhook Platform</h3>
+                <p>Webhook settings control how AMS sends events to other systems.</p>
+                <ol>
+                    <li>Enable or disable the platform.</li>
+                    <li>Set the signing algorithm, maximum attempts, timeouts, retry setting, allowed domain pattern, and dead letter retention.</li>
+                    <li>Save the settings.</li>
+                </ol>
+
+                <h3>Storage And Retention</h3>
+                <p>Storage settings control where invoice artifacts and archives are kept and how long they are retained.</p>
+                <ol>
+                    <li>Choose whether encryption is enabled.</li>
+                    <li>Enter artifact and archive storage locations.</li>
+                    <li>Enter the encryption key reference if required.</li>
+                    <li>Set retention years, WORM requirement, and immutable archive option.</li>
+                    <li>Save the settings.</li>
+                </ol>
+
+                <h3>API Clients, Jobs, Health, And Audit</h3>
+                <p>Use API Clients to create access records for external systems. Use Background Jobs to review and update scheduled work. Use Integration Health to check whether connected services are healthy. Use Configuration Audit to see who changed technical settings.</p>
             </section>
 
             <section class="section" id="finance-admin">
-                <h2>Finance Administrator Guide</h2>
-                <div class="grid two">
-                    <div class="card role finance">
-                        <h3>Workspace Navigation</h3>
-                        <ul>
-                            <li>Organization Setup</li>
-                            <li>Chart of Accounts</li>
-                            <li>Fiscal Configuration</li>
-                            <li>Module Controls</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h3>Primary Outcome</h3>
-                        <p>Prepare the financial structure that accountants and CFOs depend on. Most transaction pages require an organization, branch, active accounts, fiscal periods, and module settings.</p>
-                    </div>
-                </div>
+                <h2>Finance Admin Guide</h2>
+                <p>Finance Admin work should usually be completed before daily accounting begins. These settings determine which organizations exist, which accounts can be used, which periods are open, which modules are enabled, and which approvals are required.</p>
 
                 <h3>Organization Setup</h3>
+                <p><span class="route">/financeAdmin/organizationSetup</span></p>
                 <ol>
-                    <li>Open <code>/financeAdmin/organizationSetup</code>.</li>
-                    <li>Create the organization with company name, registration number, tax ID, address, email, phone, and active status.</li>
-                    <li>Configure base currency and fiscal period behavior under <code>/financeAdmin/fiscalConfiguration</code>.</li>
-                    <li>Select the organization from the registered companies list.</li>
-                    <li>Add branches with branch code, name, address, city, state, country, postal code, phone, email, and active status.</li>
-                    <li>Review the branches table to confirm branch records are available for journal entry and reporting workflows.</li>
+                    <li>Create the organization.</li>
+                    <li>Enter legal name, registration number, tax ID, country, address, phone, email, and description.</li>
+                    <li>Mark the organization active if users should work with it.</li>
+                    <li>Add branches for the organization.</li>
+                    <li>Refresh and confirm the organization and branches appear correctly.</li>
                 </ol>
 
                 <h3>Chart Of Accounts</h3>
+                <p><span class="route">/financeAdmin/chartOfAccounts</span></p>
+                <p>The chart of accounts is the list of accounts used by journals, invoices, payments, budgets, and reports.</p>
                 <ol>
-                    <li>Open <code>/financeAdmin/chartOfAccounts</code> and select an organization.</li>
-                    <li>Create accounts with account code, account name, description, account type, account subtype, and normal balance.</li>
-                    <li>Use standard accounting account types: Asset, Liability, Equity, Revenue, and Expense.</li>
-                    <li>Review the account table for active status and account metadata.</li>
-                    <li>Edit accounts when names, descriptions, or classifications need correction.</li>
-                    <li>Deactivate accounts that should no longer be used for new postings.</li>
+                    <li>Select an organization.</li>
+                    <li>Create accounts for bank, receivables, payables, tax, retained earnings, revenue, expenses, and depreciation where needed.</li>
+                    <li>Use clear account codes and names.</li>
+                    <li>Set the correct account type and normal balance.</li>
+                    <li>Edit accounts when details change.</li>
+                    <li>Deactivate or delete only accounts that are safe to remove.</li>
                 </ol>
 
                 <h3>Fiscal Configuration</h3>
+                <p><span class="route">/financeAdmin/fiscalConfiguration</span></p>
+                <p>Fiscal settings control accounting years and periods. Periods decide whether transactions can be posted for a date range.</p>
                 <ol>
-                    <li>Open <code>/financeAdmin/fiscalConfiguration</code> and choose the organization.</li>
-                    <li>Create fiscal periods by entering year, quarter, start date, and end date.</li>
-                    <li>Use period status controls to close a period after accounting work is complete.</li>
-                    <li>Lock a period when postings should no longer change except through controlled adjustment processes.</li>
-                    <li>Create tax jurisdictions with tax type, tax rate or method, effective dates, and active status.</li>
-                    <li>Deactivate tax jurisdictions that should no longer be used.</li>
+                    <li>Select the organization.</li>
+                    <li>Create or update fiscal configuration.</li>
+                    <li>Create fiscal periods for the months or quarters users will post into.</li>
+                    <li>Keep periods open while work is still being entered.</li>
+                    <li>Close a period after all reconciliations, approvals, payment runs, and reports are resolved.</li>
+                    <li>Lock a closed period when it should no longer accept changes.</li>
                 </ol>
 
-                <h3>Module Controls And Approval Rules</h3>
+                <h3>Module Controls</h3>
+                <p><span class="route">/financeAdmin/moduleControls</span></p>
+                <p>Module controls decide which finance features are enabled and how strongly they are controlled.</p>
                 <ol>
-                    <li>Open <code>/financeAdmin/moduleControls</code> and select an organization.</li>
-                    <li>Initialize default modules if no module controls exist.</li>
-                    <li>For each module, set whether it is enabled, user configurable, approval required, audit trail enabled, notifications enabled, and subject to a maximum transaction amount limit.</li>
-                    <li>Use notes and configuration JSON for module-specific policy details.</li>
-                    <li>Create approval rules for transaction types and thresholds where review is required.</li>
-                    <li>Deactivate rules that should no longer route approvals.</li>
+                    <li>Create default modules if none exist.</li>
+                    <li>Turn modules on or off.</li>
+                    <li>Set whether approval is required.</li>
+                    <li>Set transaction limits, audit trail, notifications, and notes.</li>
+                    <li>Save and confirm the enabled module list is correct.</li>
                 </ol>
 
-                <div class="callout success">
-                    Setup is complete when organizations, branches, accounts, fiscal periods, tax jurisdictions,
-                    module controls, and approval rules are visible for the selected organization.
-                </div>
+                <h3>Tax Jurisdictions</h3>
+                <p>Tax jurisdictions define tax rules used on customer invoices. Create active tax rules before Accountants create taxable invoices. Inactive tax rules should not be used for new invoices.</p>
+
+                <h3>Approval Rules</h3>
+                <p>Approval rules decide when submitted work requires review. For example, a high-value manual journal or payment run can be routed for approval before posting or execution.</p>
+
+                <h3>Bulk Imports</h3>
+                <p>Use bulk import when many branches or accounts need to be loaded at once.</p>
+                <ol>
+                    <li>Download the correct template.</li>
+                    <li>Fill in the template carefully.</li>
+                    <li>Upload the file for validation.</li>
+                    <li>Review accepted and rejected rows.</li>
+                    <li>Download the error file if there are rejected rows.</li>
+                    <li>Fix errors and upload again, or confirm the import if the preview is correct.</li>
+                </ol>
             </section>
 
             <section class="section" id="accountant">
                 <h2>Accountant Guide</h2>
-                <div class="grid">
-                    <div class="card role accountant">
-                        <h3>Manual Journal</h3>
-                        <p>Create balanced journal entries, add debit and credit lines, submit for review, and post approved journals to the general ledger.</p>
-                    </div>
-                    <div class="card role accountant">
-                        <h3>Invoicing And Payables</h3>
-                        <p>Manage customer invoices, purchase invoices, vendors, payment schedules, payment runs, supplier statements, and expense records.</p>
-                    </div>
-                    <div class="card role accountant">
-                        <h3>Cash, Depreciation, Collections</h3>
-                        <p>Import bank statements, reconcile bank lines, manage receivables collections, and import depreciation journals generated by the external fixed asset application.</p>
-                    </div>
-                </div>
+                <p>Accountants record daily finance work. Most Accountant pages start with an organization selector. Select the organization first so the page loads the correct customers, vendors, accounts, invoices, and balances.</p>
 
-                <h3>Manual Journal Workflow</h3>
+                <h3>Manual Journals</h3>
+                <p><span class="route">/accountant/manualJournal</span></p>
                 <ol>
-                    <li>Open <code>/accountant/manualJournal</code>.</li>
-                    <li>Select an organization. AMS loads branches and chart of accounts for that organization.</li>
-                    <li>Create or select a journal.</li>
-                    <li>Enter the journal header: branch, journal date, and description.</li>
-                    <li>Add journal lines. Each line needs an account, debit or credit amount, optional department code, project code, branch code, narration, and sequence.</li>
+                    <li>Create a new journal.</li>
+                    <li>Add a short description and journal date.</li>
+                    <li>Add debit and credit lines.</li>
                     <li>Confirm total debits equal total credits.</li>
-                    <li>Save the journal, then submit it for approval.</li>
-                    <li>After CFO approval, post the journal to the general ledger.</li>
-                    <li>Review the generated general ledger entries from the journal view.</li>
+                    <li>Save the draft.</li>
+                    <li>Submit the journal when ready.</li>
+                    <li>Wait for CFO approval if approval is required.</li>
+                    <li>Post the approved journal.</li>
+                    <li>Review the general ledger lines created by the posting.</li>
+                </ol>
+                <p class="warning"><strong>Important:</strong> posting affects financial reports. Check dates, accounts, and amounts before posting.</p>
+
+                <h3>Customer Invoices</h3>
+                <p><span class="route">/accountant/customerInvoicing</span></p>
+                <ol>
+                    <li>Select the organization.</li>
+                    <li>Select an existing customer or create a new customer.</li>
+                    <li>Enter invoice date and due date.</li>
+                    <li>Select the tax jurisdiction if tax applies.</li>
+                    <li>Add invoice lines with description, quantity, price, and account information.</li>
+                    <li>Save the invoice as a draft if it is not ready.</li>
+                    <li>Post the invoice when it is correct.</li>
+                    <li>Generate or download documents such as PDF, JSON, or XML when needed.</li>
+                    <li>Send the invoice and check dispatch history.</li>
+                    <li>Record payment when the customer pays.</li>
+                </ol>
+                <p>When an invoice is posted, AMS increases customer receivables and revenue. When payment is recorded, AMS reduces the outstanding receivable.</p>
+
+                <h3>Receivables Collections</h3>
+                <p><span class="route">/accountant/receivablesCollections</span></p>
+                <ol>
+                    <li>Review aged receivables to find overdue customer invoices.</li>
+                    <li>Generate collection cases.</li>
+                    <li>Open a case to review customer and invoice details.</li>
+                    <li>Assign the case to a collector if needed.</li>
+                    <li>Add activities such as calls, emails, or notes.</li>
+                    <li>Send dunning notices when appropriate.</li>
+                    <li>Record a promise to pay when the customer gives a payment date.</li>
+                    <li>Reconcile promises after payments arrive.</li>
+                    <li>Escalate or close the case based on the outcome.</li>
+                    <li>Create and send customer statements when needed.</li>
                 </ol>
 
-                <h3>Purchase Invoice Workflow</h3>
+                <h3>Purchase Invoices</h3>
+                <p><span class="route">/accountant/purchaseInvoice</span></p>
                 <ol>
-                    <li>Open <code>/accountant/purchaseInvoice</code>.</li>
-                    <li>Select the organization and choose or create a vendor.</li>
-                    <li>Enter invoice number, vendor details, invoice date, due date, currency, line items, tax, and account mapping.</li>
-                    <li>Save the invoice as a draft.</li>
-                    <li>Use the posting action to move the invoice through submit, approve, and post when the current workflow permits it.</li>
-                    <li>Reject or correct the invoice if source details, line classification, tax, or account mapping are wrong.</li>
-                    <li>Record supplier payment when payment is made.</li>
-                    <li>Use aged payables and payment schedules to track open balances.</li>
+                    <li>Select the organization.</li>
+                    <li>Select an existing vendor or create a new vendor.</li>
+                    <li>Enter invoice details and line items.</li>
+                    <li>Save as draft while checking the details.</li>
+                    <li>Submit for approval if required.</li>
+                    <li>Post the invoice after approval.</li>
+                    <li>Record payment when the vendor is paid.</li>
+                    <li>Review aged payables to confirm the outstanding balance is correct.</li>
                 </ol>
 
                 <h3>Payables Automation</h3>
+                <p><span class="route">/accountant/payablesAutomation</span></p>
+                <p>Use this page to manage payment schedules, payment runs, supplier statements, and cash needs.</p>
                 <ol>
-                    <li>Open <code>/accountant/payablesAutomation</code>.</li>
-                    <li>Select the organization. AMS loads bank accounts, vendors, payment schedules, payment runs, forecasts, and supplier statements.</li>
-                    <li>Review payment schedules by date range or status. Use the due list to identify payable items due as of today or another selected date.</li>
-                    <li>Submit, approve, reject, hold, reschedule, or cancel payment schedules as needed.</li>
-                    <li>Create a payment run by selecting eligible schedule items and the payment bank account.</li>
-                    <li>Submit the payment run, approve it, then execute it when payments should be recorded.</li>
-                    <li>Use the cash requirement panel to estimate outgoing cash by date bucket.</li>
-                    <li>Create supplier statements and use auto-match to reconcile supplier statement lines to internal payables.</li>
-                    <li>Mark disputed supplier statement lines when vendor balances do not agree.</li>
-                    <li>Complete the supplier statement once all lines are matched, cleared, or disputed.</li>
+                    <li>Review payment schedules created from posted purchase invoices.</li>
+                    <li>Approve, hold, reschedule, cancel, submit, or reject schedules as needed.</li>
+                    <li>Create a payment run for approved due schedules.</li>
+                    <li>Submit the run for approval if required.</li>
+                    <li>Approve and execute the run when ready.</li>
+                    <li>Review the cash requirement forecast.</li>
+                    <li>Create supplier statements and auto-match statement lines.</li>
+                    <li>Dispute incorrect supplier statement lines.</li>
+                    <li>Complete the statement once matching and disputes are resolved.</li>
                 </ol>
 
-                <h3>Customer Invoicing</h3>
+                <h3>Cash And Bank</h3>
+                <p><span class="route">/accountant/cashAndBank</span></p>
                 <ol>
-                    <li>Open <code>/accountant/customerInvoicing</code>.</li>
-                    <li>Select the organization. AMS loads customers, chart of accounts, and tax jurisdictions.</li>
-                    <li>Create or select a customer.</li>
-                    <li>Enter invoice header information, invoice lines, tax details, due date, and receivables account mapping.</li>
-                    <li>Review credit compliance, accounts receivable impact, and GL mapping indicators.</li>
-                    <li>Create the invoice, send it, and post it to the general ledger.</li>
-                    <li>Record customer payments when cash is received.</li>
-                    <li>Use the open receivables and aged receivables view to monitor collection exposure.</li>
+                    <li>Create a bank account and link it to the correct chart account.</li>
+                    <li>Select the bank account.</li>
+                    <li>Import a bank statement file or create a reconciliation.</li>
+                    <li>Review imported statement lines.</li>
+                    <li>Use auto-match to match clear transactions.</li>
+                    <li>Review suggested candidates for unmatched lines.</li>
+                    <li>Manually match or unmatch lines where needed.</li>
+                    <li>Complete the reconciliation when the difference is resolved.</li>
                 </ol>
 
-                <h3>Receivables Collections</h3>
+                <h3>Expenses</h3>
+                <p>Use expenses to record staff or operating costs that are not handled through purchase invoices.</p>
                 <ol>
-                    <li>Open <code>/accountant/receivablesCollections</code>.</li>
-                    <li>Select the organization and review aging information.</li>
-                    <li>Generate collection cases from overdue receivables.</li>
-                    <li>Open a case to review customer, invoice, balance, due date, days overdue, and status.</li>
-                    <li>Assign the case to a collector when ownership is needed.</li>
-                    <li>Add collection activities such as calls, emails, notes, or follow-up actions.</li>
-                    <li>Create dunning notices for formal customer reminders.</li>
-                    <li>Create promises to pay with promised amount and promised date.</li>
-                    <li>Reconcile promises to pay against current payment status.</li>
-                    <li>Escalate serious cases or place the customer on credit hold when risk policy requires it.</li>
-                    <li>Release credit hold when the issue is resolved.</li>
-                    <li>Create and send customer statements for account-level communication.</li>
-                    <li>Close collection cases once the balance is resolved or no further collection action is required.</li>
+                    <li>Create the expense.</li>
+                    <li>Add line details and accounts.</li>
+                    <li>Submit for approval if required.</li>
+                    <li>Post after approval.</li>
+                    <li>Record payment.</li>
                 </ol>
+                <p>Budget controls may block expenses when the selected budget is exceeded.</p>
 
-                <h3>Cash And Bank Reconciliation</h3>
+                <h3>Fixed Assets And Depreciation Journals</h3>
+                <p><span class="route">/accountant/fixedAssets</span> <span class="route">/accountant/depreciationJournals</span></p>
+                <p>Use depreciation journal imports to bring depreciation entries from an external fixed asset process into AMS.</p>
                 <ol>
-                    <li>Open <code>/accountant/cashAndBank</code>.</li>
-                    <li>Select the organization and bank account.</li>
-                    <li>Create or import a bank reconciliation by entering statement date, opening balance, closing balance, and a statement file.</li>
-                    <li>Review imported statement lines in the verification queue.</li>
-                    <li>Run auto-match to match statement lines against candidate general ledger entries by available matching criteria.</li>
-                    <li>For unmatched lines, open candidates and manually match the correct general ledger entry.</li>
-                    <li>Unmatch a line if it was matched incorrectly.</li>
-                    <li>Complete the reconciliation when all required lines are verified and the reconciliation is balanced.</li>
-                </ol>
-
-                <h3>External Fixed Assets And Depreciation Journals</h3>
-                <ol>
-                    <li>Maintain the fixed asset register, asset additions, disposals, valuation, and depreciation calculations in the external fixed asset application.</li>
-                    <li>Use <code>/accountant/fixedAssets</code> to confirm the integration scope and review AMS depreciation import history.</li>
-                    <li>Use <code>/accountant/depreciationJournals</code> to import depreciation journals from an external fixed asset system.</li>
-                    <li>Upload the depreciation import file with external system, external batch ID, journal date, optional description, optional branch code, and auto-submit choice.</li>
-                    <li>Review import history for batch totals, source information, import status, and linked manual journal ID.</li>
-                    <li>Open the linked manual journal for review, submission, approval, and posting.</li>
+                    <li>Select the organization.</li>
+                    <li>Enter the source system and batch information.</li>
+                    <li>Upload the depreciation import file or enter the import details provided by your finance process.</li>
+                    <li>Review validation results.</li>
+                    <li>Correct rejected rows before relying on the import.</li>
+                    <li>Review import history for status and totals.</li>
                 </ol>
             </section>
 
             <section class="section" id="cfo">
-                <h2>Chief Financial Officer Guide</h2>
-                <div class="grid">
-                    <div class="card role cfo">
-                        <h3>Approvals Hub</h3>
-                        <p>Review submitted manual journals, inspect journal lines, approve valid entries, and reject entries with a reason.</p>
-                    </div>
-                    <div class="card role cfo">
-                        <h3>Reporting</h3>
-                        <p>Generate trial balances and financial reports, save snapshots, submit reports, and approve or reject report versions.</p>
-                    </div>
-                    <div class="card role cfo">
-                        <h3>Budget Control</h3>
-                        <p>Create budgets and lines, approve budgets, activate budgets, and review dashboard consumption and alerts.</p>
-                    </div>
-                </div>
+                <h2>CFO Guide</h2>
+                <p>CFO users review finance activity, approve controlled work, and use reports to confirm that the ledger is accurate.</p>
 
-                <h3>Approve Or Reject Manual Journals</h3>
+                <h3>Approvals Hub</h3>
+                <p><span class="route">/cfo/approvalsHub</span></p>
                 <ol>
-                    <li>Open <code>/cfo/approvalsHub</code>.</li>
-                    <li>Select the organization.</li>
-                    <li>Review the pending journal queue.</li>
-                    <li>Open a journal to inspect header details, branch, submitted user, total debits, total credits, approval rule, and all journal lines.</li>
-                    <li>Approve the journal if it is complete, balanced, properly supported, and posted to the correct accounts.</li>
-                    <li>Reject the journal when correction is required. Enter a clear rejection reason so the accountant can resolve the issue.</li>
+                    <li>Open the pending approvals list.</li>
+                    <li>Select a submitted journal.</li>
+                    <li>Review description, date, debit lines, credit lines, and totals.</li>
+                    <li>Approve if the entry is correct.</li>
+                    <li>Reject with a clear reason if corrections are needed.</li>
                 </ol>
 
-                <h3>Generate Trial Balance</h3>
+                <h3>Budget Control</h3>
+                <p><span class="route">/cfo/budgetControl</span></p>
                 <ol>
-                    <li>Open <code>/cfo/trialBalance</code>.</li>
-                    <li>Select the organization and as-of date.</li>
-                    <li>Generate the trial balance.</li>
-                    <li>Review account codes, account names, debit balances, credit balances, and totals.</li>
-                    <li>Confirm total debits equal total credits.</li>
-                    <li>Save a trial balance snapshot when the report should be retained for audit evidence or period close records.</li>
-                    <li>Retrieve saved snapshots for the same report date when historical review is required.</li>
+                    <li>Create a budget for the organization and period.</li>
+                    <li>Add budget lines for controlled expense accounts.</li>
+                    <li>Submit and approve the budget.</li>
+                    <li>Activate the budget when it should start controlling spend.</li>
+                    <li>Review dashboard values for approved, consumed, and remaining budget.</li>
+                    <li>Watch warning thresholds and hard stop blocks.</li>
                 </ol>
 
-                <h3>Generate Financial Reports</h3>
+                <h3>Trial Balance</h3>
+                <p><span class="route">/cfo/trialBalance</span></p>
                 <ol>
-                    <li>Open <code>/cfo/financialReports</code>.</li>
-                    <li>Select the organization and report period.</li>
-                    <li>Choose report type: Income Statement, Balance Sheet, Cash Flow Statement, Equity Statement, Budget Variance, or Custom Report.</li>
-                    <li>Generate the report. AMS can persist the generated report to report history.</li>
-                    <li>Review totals and line details.</li>
-                    <li>Submit a report for approval when it is ready for management review.</li>
-                    <li>Approve reports that are final and suitable for publication.</li>
-                    <li>Reject reports that require correction, including a reason.</li>
-                    <li>Use report history filters by type and date range to retrieve prior report versions.</li>
+                    <li>Select the organization and reporting dates.</li>
+                    <li>Generate or refresh the trial balance.</li>
+                    <li>Confirm total debits and total credits are equal.</li>
+                    <li>Create a snapshot when the report should be preserved.</li>
+                    <li>Review previous snapshots when comparing periods.</li>
                 </ol>
 
-                <h3>Manage Budgets</h3>
+                <h3>Financial Reports</h3>
+                <p><span class="route">/cfo/financialReports</span></p>
                 <ol>
-                    <li>Open <code>/cfo/budgetControl</code>.</li>
-                    <li>Select the organization and year.</li>
-                    <li>Create a budget with name, year, period dates, and status.</li>
-                    <li>Add budget lines by account, amount, period, department, or other available dimensions.</li>
-                    <li>Submit the budget for review.</li>
-                    <li>Approve the budget when it is ready for use.</li>
-                    <li>Activate the budget so it can be used in budget control and spend monitoring.</li>
-                    <li>Review the budget dashboard for allocation, spend, remaining balance, utilization, variance trend, and alerts.</li>
+                    <li>Select the organization and date range.</li>
+                    <li>Generate the report.</li>
+                    <li>Review report lines and totals.</li>
+                    <li>Submit the report for review if needed.</li>
+                    <li>Approve the report when final.</li>
+                    <li>Reject with a reason if it needs correction.</li>
                 </ol>
             </section>
 
             <section class="section" id="auditor">
                 <h2>Auditor Guide</h2>
-                <div class="grid two">
-                    <div class="card role auditor">
-                        <h3>Audit Log Explorer</h3>
-                        <p>Search accounting activity by organization, entity type, entity ID, date range, user, and action.</p>
-                    </div>
-                    <div class="card role auditor">
-                        <h3>Security Events</h3>
-                        <p>Review security events by severity, acknowledgement state, and date range. Acknowledge events after investigation.</p>
-                    </div>
-                </div>
+                <p>Auditors review what happened in AMS. Audit screens are read-focused, except for security event acknowledgement.</p>
 
-                <h3>Review Audit Logs</h3>
+                <h3>Audit Log Explorer</h3>
+                <p><span class="route">/auditor/auditLogExplorer</span></p>
                 <ol>
-                    <li>Open <code>/auditor/auditLogExplorer</code>.</li>
                     <li>Select the organization.</li>
-                    <li>Filter by entity type when investigating a class of records, such as journals, invoices, users, module controls, or fiscal periods.</li>
-                    <li>Filter by entity ID when investigating one exact record.</li>
-                    <li>Filter by start and end date to review activity for a period.</li>
-                    <li>Review old value, new value, action, user ID, IP address, user agent, description, and timestamp.</li>
-                    <li>Reset filters when starting a new search.</li>
-                    <li>Export filtered records to CSV when audit evidence needs to be shared or retained outside the application.</li>
+                    <li>Filter logs by date range or entity when needed.</li>
+                    <li>Review who performed the action, what changed, when it happened, and request details such as IP address or browser information when available.</li>
+                    <li>Use the results as evidence for transaction and control review.</li>
                 </ol>
 
-                <h3>Review Security Events</h3>
+                <h3>Security Events</h3>
+                <p><span class="route">/auditor/securityEvents</span></p>
                 <ol>
-                    <li>Open <code>/auditor/securityEvents</code>.</li>
                     <li>Select the organization.</li>
-                    <li>Review unacknowledged events first.</li>
-                    <li>Filter by event type, severity, user, or date range when investigating a pattern.</li>
-                    <li>Open each event detail modal and assess the title, description, IP address, user agent, created time, severity, event type, and acknowledgement state.</li>
-                    <li>Acknowledge the event after investigation. AMS records the acknowledgement user and time.</li>
-                    <li>Export filtered security events to CSV when event evidence is required for compliance review.</li>
+                    <li>Review all or unacknowledged events.</li>
+                    <li>Filter by date or user when investigating an issue.</li>
+                    <li>Acknowledge events after they have been reviewed according to your organization's process.</li>
                 </ol>
             </section>
 
-            <section class="section" id="month-end">
-                <h2>Recommended Month-End Close Flow</h2>
-                <ol class="steps">
-                    <li><strong>Confirm setup.</strong> Verify the period exists, is open, and has the required chart of accounts, branches, tax jurisdictions, and module controls.</li>
-                    <li><strong>Post operational transactions.</strong> Ensure customer invoices, purchase invoices, expenses, payments, and manual journals are posted where applicable.</li>
-                    <li><strong>Review payables and receivables.</strong> Run aged payables, aged receivables, collection cases, and supplier or customer statements.</li>
-                    <li><strong>Reconcile banks.</strong> Import bank statements, auto-match, manually match exceptions, and complete reconciliations.</li>
-                    <li><strong>Post depreciation.</strong> Import externally generated depreciation journal batches and post the linked journals after review and approval.</li>
-                    <li><strong>Resolve approvals.</strong> CFO reviews pending journals, budgets, and financial reports.</li>
-                    <li><strong>Generate trial balance.</strong> Confirm debits and credits agree. Save a snapshot for evidence.</li>
-                    <li><strong>Generate reports.</strong> Produce income statement, balance sheet, cash flow, equity statement, budget variance, or custom reports.</li>
-                    <li><strong>Audit review.</strong> Auditor reviews audit logs and security events for the close period.</li>
-                    <li><strong>Close and lock period.</strong> Finance Admin closes the fiscal period, then locks it after final review.</li>
+            <section class="section" id="einvoicing">
+                <h2>E-Invoicing And Invoice Documents</h2>
+                <p>AMS includes e-invoicing support for customer invoices. This includes invoice payload preparation, NRS submission tracking, document generation, archive storage, and invoice dispatch history.</p>
+
+                <h3>What Users Need To Know</h3>
+                <ul>
+                    <li>Customer invoices can have downloadable documents such as PDF, JSON, and XML.</li>
+                    <li>Some business-to-business invoices may require NRS clearance before documents can be downloaded.</li>
+                    <li>Business-to-consumer invoices can be allowed to download before clearance depending on the invoice type and rules.</li>
+                    <li>Missing tax IDs, invalid VAT rates, or missing zero-tax reasons can block payload generation.</li>
+                    <li>Every NRS submission keeps metadata and archive details for later review.</li>
+                </ul>
+
+                <h3>Basic E-Invoice Flow</h3>
+                <ol>
+                    <li>Create and post a customer invoice.</li>
+                    <li>Confirm customer and supplier tax details are complete.</li>
+                    <li>Generate the NRS payload if required.</li>
+                    <li>Submit the invoice for NRS processing.</li>
+                    <li>Review submission status and archive information.</li>
+                    <li>Generate or download invoice documents after clearance rules are satisfied.</li>
+                    <li>Send the invoice and review dispatch history.</li>
                 </ol>
             </section>
 
-            <section class="section" id="controls">
-                <h2>Controls And Auditability</h2>
+            <section class="section" id="external">
+                <h2>External Access And Webhooks</h2>
+                <p>Some organizations connect AMS to other systems. These features are usually managed by System Admins or integration teams.</p>
+
+                <h3>External Invoice API</h3>
+                <p>The external invoice API lets approved systems search invoices and retrieve invoice details, documents, events, and dispatch history. If an external system cannot find an invoice, first confirm that the invoice exists in AMS and that the external user or API client has the correct access.</p>
+
+                <h3>Webhooks</h3>
+                <p>Webhooks allow AMS to notify another system when certain events happen.</p>
+                <ol>
+                    <li>Create the webhook endpoint.</li>
+                    <li>Use a secure URL unless your environment specifically allows local testing.</li>
+                    <li>Choose authentication settings.</li>
+                    <li>Provide a secret reference for HMAC signing.</li>
+                    <li>Send a test webhook.</li>
+                    <li>Review delivery history.</li>
+                    <li>Update or delete endpoints when they are no longer needed.</li>
+                </ol>
+                <p class="warning"><strong>Security reminder:</strong> secret values should be stored as references. AMS masks secret references in responses so users do not accidentally expose credentials.</p>
+            </section>
+
+            <section class="section" id="status">
+                <h2>Status Guide</h2>
+                <p>Statuses show where an item is in its process. The exact status names can vary by record type, but these meanings are common across AMS.</p>
                 <table>
                     <thead>
-                    <tr>
-                        <th>Control Area</th>
-                        <th>How AMS Supports It</th>
-                        <th>User Responsibility</th>
-                    </tr>
+                    <tr><th>Status</th><th>Meaning</th><th>What to do next</th></tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <td>Access control</td>
-                        <td>OAuth2 login and Keycloak group-based routing.</td>
-                        <td>Admin keeps user groups accurate and disables inactive users promptly.</td>
-                    </tr>
-                    <tr>
-                        <td>Approval control</td>
-                        <td>Journals, budgets, financial reports, payment schedules, and payment runs support submit, approve, and reject actions.</td>
-                        <td>Approvers must review source details and give clear rejection reasons.</td>
-                    </tr>
-                    <tr>
-                        <td>Posting control</td>
-                        <td>Journals and invoices create general ledger impact only after posting workflows are completed.</td>
-                        <td>Accountants should post only complete, approved, and balanced records.</td>
-                    </tr>
-                    <tr>
-                        <td>Period control</td>
-                        <td>Fiscal periods can be created, closed, and locked.</td>
-                        <td>Finance Admin should close and lock periods after the month-end checklist is complete.</td>
-                    </tr>
-                    <tr>
-                        <td>Audit trail</td>
-                        <td>Audit logs capture entity changes, users, timestamps, old values, and new values.</td>
-                        <td>Auditors should review exception patterns and preserve evidence for significant items.</td>
-                    </tr>
-                    <tr>
-                        <td>Security monitoring</td>
-                        <td>Security events can be filtered and acknowledged.</td>
-                        <td>Auditors should prioritize unacknowledged and high-severity events.</td>
-                    </tr>
+                    <tr><td><span class="status">Draft</span></td><td>The item has been started but is not final.</td><td>Edit, save, or submit when ready.</td></tr>
+                    <tr><td><span class="status warn">Submitted</span></td><td>The item is waiting for review or approval.</td><td>Wait for the approver or follow up if overdue.</td></tr>
+                    <tr><td><span class="status good">Approved</span></td><td>The item passed review.</td><td>Post, execute, or complete the next step if your role allows it.</td></tr>
+                    <tr><td><span class="status bad">Rejected</span></td><td>The item was not accepted.</td><td>Read the reason, correct the issue, and resubmit if allowed.</td></tr>
+                    <tr><td><span class="status good">Posted</span></td><td>The item has affected the general ledger.</td><td>Review reports or record payment if applicable.</td></tr>
+                    <tr><td><span class="status">Paid</span></td><td>The amount has been paid.</td><td>Confirm the outstanding balance is correct.</td></tr>
+                    <tr><td><span class="status">Closed</span></td><td>The work is finished.</td><td>No further action unless a correction process is required.</td></tr>
+                    <tr><td><span class="status">Locked</span></td><td>The period or record should no longer accept changes.</td><td>Contact Finance Admin if a correction is required.</td></tr>
                     </tbody>
                 </table>
             </section>
 
             <section class="section" id="troubleshooting">
                 <h2>Troubleshooting</h2>
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Issue</th>
-                        <th>Likely Cause</th>
-                        <th>What To Do</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>User logs in but lands on the public page or cannot access a workspace.</td>
-                        <td>The user is not assigned to a recognized Keycloak group.</td>
-                        <td>Admin should assign the user to <code>/admin</code>, <code>/financeAdmin</code>, <code>/accountant</code>, <code>/cfo</code>, or <code>/auditor</code>.</td>
-                    </tr>
-                    <tr>
-                        <td>Organization dropdown is empty.</td>
-                        <td>No organization exists or the user lacks permission to retrieve organization data.</td>
-                        <td>Finance Admin should create the organization. Confirm the user is authenticated.</td>
-                    </tr>
-                    <tr>
-                        <td>Journal cannot be submitted or posted.</td>
-                        <td>Journal lines may be incomplete, unbalanced, missing accounts, or not in the required status.</td>
-                        <td>Review line details, debit and credit totals, journal status, and approval state.</td>
-                    </tr>
-                    <tr>
-                        <td>Invoice does not post correctly.</td>
-                        <td>Missing customer or vendor, missing account mapping, missing line item data, or invalid tax setup.</td>
-                        <td>Verify master data, chart of accounts, tax jurisdictions, line totals, and status workflow.</td>
-                    </tr>
-                    <tr>
-                        <td>Bank line has no match candidates.</td>
-                        <td>No matching general ledger entries exist for the date, amount, or account context.</td>
-                        <td>Confirm the related GL entry has been posted and review bank account mapping.</td>
-                    </tr>
-                    <tr>
-                        <td>Financial report totals look incomplete.</td>
-                        <td>Transactions may remain in draft, submitted, or approved states but not posted.</td>
-                        <td>Post all approved accounting entries before generating final reports.</td>
-                    </tr>
-                    <tr>
-                        <td>Period cannot be safely locked.</td>
-                        <td>Outstanding reconciliation, unposted journal, open invoice, or unresolved approval may remain.</td>
-                        <td>Run the month-end close flow and resolve open work before locking the period.</td>
-                    </tr>
-                    </tbody>
-                </table>
+                <h3>I cannot log in</h3>
+                <p>Confirm your username and password. If you still cannot sign in, ask an Admin to check whether your account is enabled and whether a password reset email is needed.</p>
+
+                <h3>I logged in but see the wrong page</h3>
+                <p>Your group may be missing or incorrect. Ask an Admin to check your group assignment.</p>
+
+                <h3>I cannot see an organization</h3>
+                <p>Confirm the organization is active. If it is missing, ask a Finance Admin to create or update it.</p>
+
+                <h3>I cannot post a transaction</h3>
+                <p>Common reasons include an unbalanced journal, missing approval, locked fiscal period, exceeded budget, inactive account, inactive tax rule, missing required field, or unresolved validation error.</p>
+
+                <h3>A file import failed</h3>
+                <p>Download the error file if available. Correct the row listed in the error, then upload the corrected file again. Use the official template whenever possible.</p>
+
+                <h3>An invoice document will not download</h3>
+                <p>The invoice may require NRS clearance first, or required tax details may be missing. Review the invoice, customer tax ID, supplier tax ID, tax rate, and NRS submission status.</p>
+
+                <h3>A webhook test failed</h3>
+                <p>Check that the URL is secure, reachable, allowed by the platform settings, and has the correct authentication or secret reference.</p>
             </section>
 
             <section class="section" id="glossary">
                 <h2>Glossary</h2>
-                <div class="grid two">
-                    <div class="card">
-                        <h3>Chart Of Accounts</h3>
-                        <p>The list of accounts used for accounting postings, grouped by account type such as Asset, Liability, Equity, Revenue, and Expense.</p>
-                    </div>
-                    <div class="card">
-                        <h3>Fiscal Period</h3>
-                        <p>A defined accounting period with start and end dates. Periods can be closed and locked to control posting.</p>
-                    </div>
-                    <div class="card">
-                        <h3>General Ledger</h3>
-                        <p>The official accounting record created by posted journals, invoices, expenses, payments, and other accounting events.</p>
-                    </div>
-                    <div class="card">
-                        <h3>Manual Journal</h3>
-                        <p>A direct accounting entry with debit and credit lines. It must balance before it can be posted.</p>
-                    </div>
-                    <div class="card">
-                        <h3>Aged Receivables</h3>
-                        <p>A report that groups unpaid customer invoices by how long they have been outstanding.</p>
-                    </div>
-                    <div class="card">
-                        <h3>Aged Payables</h3>
-                        <p>A report that groups unpaid supplier obligations by due date or overdue age.</p>
-                    </div>
-                    <div class="card">
-                        <h3>Payment Run</h3>
-                        <p>A batch of payable schedule items selected for payment, then submitted, approved, and executed.</p>
-                    </div>
-                    <div class="card">
-                        <h3>Audit Log</h3>
-                        <p>A record of system activity showing the entity changed, action taken, user, old value, new value, timestamp, and technical request details.</p>
-                    </div>
-                </div>
+                <table>
+                    <thead>
+                    <tr><th>Term</th><th>Meaning</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr><td>Approval rule</td><td>A rule that decides whether a transaction needs review before it can continue.</td></tr>
+                    <tr><td>Audit log</td><td>A record of important actions in AMS, including who did them and when.</td></tr>
+                    <tr><td>Bank reconciliation</td><td>The process of matching bank statement lines to accounting records.</td></tr>
+                    <tr><td>Budget hard stop</td><td>A budget control that blocks a transaction when spending would exceed the allowed amount.</td></tr>
+                    <tr><td>Chart of accounts</td><td>The list of accounts used to classify financial activity.</td></tr>
+                    <tr><td>Credit hold</td><td>A customer restriction that can block invoice sending.</td></tr>
+                    <tr><td>Dispatch</td><td>An attempt to send an invoice document or message to a recipient.</td></tr>
+                    <tr><td>Fiscal period</td><td>A date range used for accounting, such as a month, quarter, or year.</td></tr>
+                    <tr><td>General ledger</td><td>The official accounting record created by posted transactions.</td></tr>
+                    <tr><td>NRS payload</td><td>The structured invoice information prepared for external e-invoicing submission.</td></tr>
+                    <tr><td>Payment run</td><td>A group of scheduled vendor payments prepared for approval and execution.</td></tr>
+                    <tr><td>Posting</td><td>The action that records a transaction in the general ledger.</td></tr>
+                    <tr><td>Trial balance</td><td>A report that checks whether total debits equal total credits.</td></tr>
+                    <tr><td>Webhook</td><td>An automatic message sent from AMS to another system after an event.</td></tr>
+                    </tbody>
+                </table>
             </section>
-
-            <p class="footer">AMS User Guide. Prepared for application users, finance operations, management reviewers, and auditors.</p>
         </div>
     </main>
 </div>

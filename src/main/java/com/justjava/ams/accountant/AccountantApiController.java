@@ -52,11 +52,18 @@ import com.justjava.ams.accountant.service.SupplierStatementService;
 import com.justjava.ams.accountant.service.VendorService;
 import com.justjava.ams.financeAdmin.dto.TaxJurisdictionDTO;
 import com.justjava.ams.financeAdmin.service.TaxJurisdictionService;
+import com.justjava.ams.invoicing.delivery.dto.InvoiceDispatchDTO;
+import com.justjava.ams.invoicing.delivery.service.InvoiceDeliveryService;
+import com.justjava.ams.invoicing.document.dto.InvoiceDocumentDTO;
+import com.justjava.ams.invoicing.document.service.InvoiceDocumentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -94,6 +101,8 @@ public class AccountantApiController {
     private final PaymentRunService paymentRunService;
     private final SupplierStatementService supplierStatementService;
     private final ReceivablesCollectionService receivablesCollectionService;
+    private final InvoiceDocumentService invoiceDocumentService;
+    private final InvoiceDeliveryService invoiceDeliveryService;
 
     @GetMapping("/manual-journals/org/{organizationId}")
     public List<ManualJournalDTO> getManualJournals(@PathVariable Long organizationId) {
@@ -474,6 +483,25 @@ public class AccountantApiController {
         return customerInvoiceService.generateInvoice(invoiceId);
     }
 
+    @PostMapping("/customer-invoices/{invoiceId}/send")
+    @ResponseStatus(HttpStatus.CREATED)
+    public InvoiceDispatchDTO sendCustomerInvoiceDelivery(@PathVariable Long invoiceId, Principal principal) {
+        return invoiceDeliveryService.sendCustomerInvoice(invoiceId, getUserName(principal));
+    }
+
+    @GetMapping("/customer-invoices/{invoiceId}/dispatches")
+    public List<InvoiceDispatchDTO> getCustomerInvoiceDispatches(@PathVariable Long invoiceId) {
+        return invoiceDeliveryService.getCustomerInvoiceDispatches(invoiceId);
+    }
+
+    @PostMapping("/customer-invoices/{invoiceId}/dispatches/{dispatchId}/retry")
+    public InvoiceDispatchDTO retryCustomerInvoiceDispatch(
+            @PathVariable Long invoiceId,
+            @PathVariable Long dispatchId,
+            Principal principal) {
+        return invoiceDeliveryService.retryCustomerInvoiceDispatch(invoiceId, dispatchId, getUserName(principal));
+    }
+
     @PatchMapping("/customer-invoices/{invoiceId}/post")
     public CustomerInvoiceDTO postCustomerInvoice(@PathVariable Long invoiceId, Principal principal) {
         return customerInvoiceService.postInvoice(invoiceId, getUserName(principal));
@@ -485,6 +513,35 @@ public class AccountantApiController {
             @Valid @RequestBody PaymentRequest request,
             Principal principal) {
         return customerInvoiceService.recordPayment(invoiceId, request, getUserName(principal));
+    }
+
+    @PostMapping("/customer-invoices/{invoiceId}/documents")
+    @ResponseStatus(HttpStatus.CREATED)
+    public InvoiceDocumentDTO generateCustomerInvoiceDocument(
+            @PathVariable Long invoiceId,
+            @RequestParam(defaultValue = "pdf") String format,
+            Principal principal) {
+        return invoiceDocumentService.generateCustomerInvoiceDocument(invoiceId, format, getUserName(principal));
+    }
+
+    @GetMapping("/customer-invoices/{invoiceId}/documents")
+    public List<InvoiceDocumentDTO> getCustomerInvoiceDocuments(@PathVariable Long invoiceId) {
+        return invoiceDocumentService.getCustomerInvoiceDocuments(invoiceId);
+    }
+
+    @GetMapping("/customer-invoices/{invoiceId}/download")
+    public ResponseEntity<byte[]> downloadCustomerInvoice(
+            @PathVariable Long invoiceId,
+            @RequestParam(defaultValue = "pdf") String format,
+            Principal principal) {
+        InvoiceDocumentService.DownloadedInvoiceDocument document =
+                invoiceDocumentService.generateCustomerInvoiceDownload(invoiceId, format, getUserName(principal));
+        return invoiceDownload(document);
+    }
+
+    @GetMapping("/customer-invoices/documents/{documentId}/download")
+    public ResponseEntity<byte[]> downloadCustomerInvoiceDocument(@PathVariable Long documentId) {
+        return invoiceDownload(invoiceDocumentService.getCustomerInvoiceDocumentContent(documentId));
     }
 
     @GetMapping("/purchase-invoices/org/{organizationId}")
@@ -796,5 +853,17 @@ public class AccountantApiController {
 
     private String getUserName(Principal principal) {
         return principal != null ? principal.getName() : "system";
+    }
+
+    private ResponseEntity<byte[]> invoiceDownload(InvoiceDocumentService.DownloadedInvoiceDocument document) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(document.fileName())
+                                .build()
+                                .toString())
+                .header("X-Content-SHA256", document.checksum())
+                .contentType(MediaType.parseMediaType(document.contentType()))
+                .body(document.content());
     }
 }
