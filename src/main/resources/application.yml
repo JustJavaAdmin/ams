@@ -38,7 +38,7 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri: ${ISSUER_URI:https://ngcloak-production.up.railway.app/realms/ams}
+            issuer-uri: ${ISSUER_URI:https://ngcloak.justjava.tech/realms/ams}
             user-name-attribute: preferred_username
         registration:
           keycloak:
@@ -55,7 +55,7 @@ flowable:
 
 # Keycloak Admin Configuration
 keycloak:
-  base-url: ${KEYCLOAK_BASE_URL:https://ngcloak-production.up.railway.app}
+  base-url: ${KEYCLOAK_BASE_URL:https://ngcloak.justjava.tech}
   realm: ams
   base-realm: master
   admin-client-id: admin-cli-client
