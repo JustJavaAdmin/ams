@@ -18,18 +18,27 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.util.List;
 
 /**
  * - STAGE 1 (D1): bearer-token security for service-to-service calls.
- * - Applies ONLY to /api/integrations/**. All other paths stay with Oauth2SecurityConfig.
+ * - Applies ONLY to /api/integrations/**, EXCEPT /api/integrations/webhooks/**.
+ * - The existing webhook endpoints predate Stage 1 and keep their session-based behaviour,
+ * - so they stay with Oauth2SecurityConfig. All other paths also stay with Oauth2SecurityConfig.
  */
 @Slf4j
 @Configuration
 public class IntegrationSecurityConfig {
 
     private static final String INTEGRATION_PATH = "/api/integrations/**";
+
+    // Existing (pre-Stage 1) endpoints that must keep the login-session behaviour.
+    private static final String WEBHOOK_PATH = "/api/integrations/webhooks/**";
 
     // Defaults to the AMS realm issuer already configured for login. No secrets here.
     @Value("${integration.security.issuer-uri:${spring.security.oauth2.client.provider.keycloak.issuer-uri}}")
@@ -42,7 +51,11 @@ public class IntegrationSecurityConfig {
     @Order(1)
     public SecurityFilterChain integrationSecurityFilterChain(HttpSecurity http,
                                                               JwtDecoder integrationJwtDecoder) throws Exception {
-        http.securityMatcher(INTEGRATION_PATH)
+        RequestMatcher integrationOnly = new AndRequestMatcher(
+                PathPatternRequestMatcher.withDefaults().matcher(INTEGRATION_PATH),
+                new NegatedRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(WEBHOOK_PATH)));
+
+        http.securityMatcher(integrationOnly)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(CsrfConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
