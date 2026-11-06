@@ -3,6 +3,7 @@ package com.justjava.ams.accountant.service;
 import com.justjava.ams.accountant.dto.GeneralLedgerDTO;
 import com.justjava.ams.accountant.entity.ChartOfAccounts;
 import com.justjava.ams.accountant.entity.GeneralLedger;
+import com.justjava.ams.accountant.entity.FiscalPeriod;
 import com.justjava.ams.accountant.entity.JournalLine;
 import com.justjava.ams.accountant.entity.ManualJournal;
 import com.justjava.ams.accountant.repository.ChartOfAccountsRepository;
@@ -157,6 +158,55 @@ public class GeneralLedgerService {
         return postedEntries.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public void validatePayrollTransactionLimit(Long organizationId, BigDecimal amount) {
+        try {
+            moduleControlService.requireTransactionWithinLimit(
+                    organizationId, ModuleControl.ModuleType.GENERAL_LEDGER, amount);
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode().value() == HttpStatus.CONFLICT.value()) {
+                throw new com.justjava.ams.integration.exception.IntegrationApiException(
+                        HttpStatus.UNPROCESSABLE_ENTITY,
+                        "TRANSACTION_LIMIT_EXCEEDED",
+                        "Journal exceeds the configured General Ledger transaction limit",
+                        true);
+            }
+            throw ex;
+        }
+    }
+
+    public void postPayrollJournalEntries(
+            com.justjava.ams.integration.entity.PayrollJournal journal,
+            List<com.justjava.ams.integration.entity.PayrollJournalLine> lines,
+            FiscalPeriod fiscalPeriod) {
+        String journalNumber = "PAY-" + journal.getExternalReference();
+        String batchId = postingBatchId(GeneralLedger.SourceType.PAYROLL_JOURNAL, journal.getId());
+        LocalDateTime postedAt = journal.getPostedAt();
+        for (com.justjava.ams.integration.entity.PayrollJournalLine line : lines) {
+            if (line.getDebitAmount().compareTo(BigDecimal.ZERO) > 0) {
+                generalLedgerRepository.save(postedEntryBuilder(
+                                line.getAccount(), journalNumber, journal.getJournalDate(),
+                                GeneralLedger.DebitCredit.DEBIT, line.getDebitAmount(),
+                                journal.getNarration() != null ? journal.getNarration() : line.getNarration(),
+                                line.getNarration(), null, GeneralLedger.SourceType.PAYROLL_JOURNAL,
+                                journal.getId(), batchId, journal.getClientId(), postedAt)
+                        .referenceNumber(journal.getExternalReference())
+                        .fiscalPeriod(fiscalPeriod)
+                        .build());
+            }
+            if (line.getCreditAmount().compareTo(BigDecimal.ZERO) > 0) {
+                generalLedgerRepository.save(postedEntryBuilder(
+                                line.getAccount(), journalNumber, journal.getJournalDate(),
+                                GeneralLedger.DebitCredit.CREDIT, line.getCreditAmount(),
+                                journal.getNarration() != null ? journal.getNarration() : line.getNarration(),
+                                line.getNarration(), null, GeneralLedger.SourceType.PAYROLL_JOURNAL,
+                                journal.getId(), batchId, journal.getClientId(), postedAt)
+                        .referenceNumber(journal.getExternalReference())
+                        .fiscalPeriod(fiscalPeriod)
+                        .build());
+            }
+        }
     }
 
     public GeneralLedgerDTO getEntry(Long entryId) {
@@ -569,7 +619,7 @@ public class GeneralLedgerService {
 
     private ModuleControl.ModuleType moduleTypeForSource(GeneralLedger.SourceType sourceType) {
         return switch (sourceType) {
-            case MANUAL_JOURNAL, YEAR_END_CLOSE -> ModuleControl.ModuleType.GENERAL_LEDGER;
+            case MANUAL_JOURNAL, PAYROLL_JOURNAL, YEAR_END_CLOSE -> ModuleControl.ModuleType.GENERAL_LEDGER;
             case PURCHASE_INVOICE, EXPENSE, SUPPLIER_PAYMENT, EXPENSE_PAYMENT -> ModuleControl.ModuleType.ACCOUNTS_PAYABLE;
             case CUSTOMER_INVOICE, CUSTOMER_PAYMENT -> ModuleControl.ModuleType.ACCOUNTS_RECEIVABLE;
             case FIXED_ASSET, FIXED_ASSET_DEPRECIATION -> ModuleControl.ModuleType.FIXED_ASSETS;

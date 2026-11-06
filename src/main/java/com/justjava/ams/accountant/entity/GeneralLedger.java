@@ -119,6 +119,7 @@ public class GeneralLedger {
 
     public enum SourceType {
         MANUAL_JOURNAL,
+        PAYROLL_JOURNAL,
         CUSTOMER_INVOICE,
         PURCHASE_INVOICE,
         EXPENSE,
@@ -131,4 +132,3 @@ public class GeneralLedger {
         YEAR_END_CLOSE
     }
 }
-

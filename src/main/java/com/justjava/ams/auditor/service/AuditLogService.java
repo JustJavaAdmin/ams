@@ -33,6 +33,7 @@ public class AuditLogService {
             "BankReconciliation",
             "BankStatementLine",
             "ApprovalRule",
+            "PayrollJournal",
             // Stage 2 entity types
             "ModuleControl",
             "TrialBalance",
