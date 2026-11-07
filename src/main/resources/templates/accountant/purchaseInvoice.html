@@ -364,6 +364,79 @@
     </main>
 </div>
 
+<div id="paymentModal" class="hidden fixed inset-0 z-[60] bg-slate-900/45 backdrop-blur-[2px]">
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                        <span class="material-symbols-outlined text-[22px]">payments</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline-sm text-headline-sm text-primary">Record supplier payment</h3>
+                        <p id="paymentModalSubtitle" class="text-body-sm text-slate-500">Invoice summary</p>
+                    </div>
+                </div>
+                <button id="closePaymentModalBtn" type="button" class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-700" aria-label="Close payment form">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+
+            <div id="paymentErrorBanner" class="hidden mx-6 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-body-sm text-red-700">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-[18px] text-red-600">error</span>
+                    <div>
+                        <p class="font-semibold">Payment could not be processed</p>
+                        <p id="paymentErrorMessage" class="mt-1 text-red-700/90">Please review the details and try again.</p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="paymentForm" class="space-y-5 p-6">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center justify-between text-body-sm text-slate-500">
+                        <span>Outstanding balance</span>
+                        <span id="paymentOutstanding" class="font-semibold text-primary">NGN 0.00</span>
+                    </div>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-1.5 sm:col-span-2">
+                        <label for="paymentBankAccount" class="block font-body-sm font-semibold text-slate-700">Bank account</label>
+                        <select id="paymentBankAccount" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-slate-100" required>
+                            <option value="">Select bank account...</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="paymentDate" class="block font-body-sm font-semibold text-slate-700">Payment date</label>
+                        <input id="paymentDate" type="date" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-slate-100" required>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="paymentAmount" class="block font-body-sm font-semibold text-slate-700">Amount</label>
+                        <div class="relative">
+                            <span class="pointer-events-none absolute left-3 top-2.5 text-slate-500">₦</span>
+                            <input id="paymentAmount" type="number" min="0.01" step="0.01" inputmode="decimal" class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-8 pr-3 text-body-md focus:border-primary focus:ring-2 focus:ring-slate-100" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="paymentNotes" class="block font-body-sm font-semibold text-slate-700">Notes</label>
+                    <textarea id="paymentNotes" rows="3" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-slate-100" placeholder="Optional memo for the payment"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                    <p id="paymentFormStatus" class="text-body-sm text-slate-500">Review the payment before submitting.</p>
+                    <div class="flex gap-3">
+                        <button id="cancelPaymentBtn" type="button" class="h-11 rounded-lg border border-slate-200 bg-white px-4 font-bold text-slate-600 transition hover:bg-slate-50">Cancel</button>
+                        <button type="submit" class="h-11 rounded-lg bg-primary px-5 font-bold text-white transition hover:opacity-90">Record Payment</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     let currentOrgId = null;
     let expenseAccounts = [];
@@ -700,33 +773,177 @@
       });
     }
 
-    async function recordInvoicePayment(invoiceId) {
+    let activePaymentInvoice = null;
+
+    function showPaymentError(messageText) {
+      const banner = document.getElementById('paymentErrorBanner');
+      const msg = document.getElementById('paymentErrorMessage');
+      banner.classList.remove('hidden');
+      msg.textContent = messageText;
+    }
+
+    function clearPaymentError() {
+      document.getElementById('paymentErrorBanner').classList.add('hidden');
+      document.getElementById('paymentErrorMessage').textContent = '';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').classList.add('hidden');
+      activePaymentInvoice = null;
+      document.getElementById('paymentForm').reset();
+      clearPaymentError();
+      document.getElementById('paymentFormStatus').textContent = 'Review the payment before submitting.';
+      document.getElementById('paymentFormStatus').className = 'text-body-sm text-slate-500';
+    }
+
+    function openPaymentModal(invoice) {
       if (!bankAccounts.length) {
         setStatus('Create a bank account before recording supplier payments.', 'error');
         return;
       }
-      const bankAccount = bankAccounts[0];
-      const amount = window.prompt('Payment amount');
-      if (!amount || Number(amount) <= 0) {
-        setStatus('Payment amount must be positive.', 'error');
+
+      activePaymentInvoice = invoice;
+      const outstanding = Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0));
+      const bankAccountSelect = document.getElementById('paymentBankAccount');
+      bankAccountSelect.innerHTML = '<option value="">Select bank account...</option>' + bankAccounts.map(account => `
+        <option value="${account.id}">${account.bankName || 'Bank'} - ${account.accountNumber || 'Account'}${account.currency ? ` (${account.currency})` : ''}</option>
+      `).join('');
+      bankAccountSelect.value = String(bankAccounts[0]?.id || '');
+
+      document.getElementById('paymentModalSubtitle').textContent = `${invoice.purchaseOrderNumber || 'Invoice'} • ${invoice.vendorName || 'Supplier'}`;
+      document.getElementById('paymentOutstanding').textContent = `NGN ${formatCurrency(outstanding)}`;
+      document.getElementById('paymentAmount').value = '';
+      document.getElementById('paymentDate').value = today();
+      document.getElementById('paymentNotes').value = `Supplier payment for ${invoice.purchaseOrderNumber || 'invoice'} from ${bankAccounts[0]?.bankName || 'selected bank account'}`;
+      clearPaymentError();
+      document.getElementById('paymentFormStatus').textContent = `Outstanding balance: NGN ${formatCurrency(outstanding)}`;
+      document.getElementById('paymentFormStatus').className = 'text-body-sm text-slate-500';
+      document.getElementById('paymentModal').classList.remove('hidden');
+    }
+
+    function updatePaymentOutstandingPreview() {
+      if (!activePaymentInvoice) return;
+      const amountInput = document.getElementById('paymentAmount');
+      const displayedOutstanding = document.getElementById('paymentOutstanding');
+      const statusText = document.getElementById('paymentFormStatus');
+      const invoiceOutstanding = Math.max(0, Number(activePaymentInvoice.totalAmount || 0) - Number(activePaymentInvoice.amountPaid || 0));
+      const enteredAmount = Number(amountInput.value || 0);
+      const remainingAfterPayment = Math.max(0, invoiceOutstanding - enteredAmount);
+      displayedOutstanding.textContent = `NGN ${formatCurrency(remainingAfterPayment)}`;
+
+      if (enteredAmount > 0) {
+        statusText.textContent = enteredAmount > invoiceOutstanding
+          ? `Payment exceeds outstanding balance by NGN ${formatCurrency(enteredAmount - invoiceOutstanding)}.`
+          : `Remaining after this payment: NGN ${formatCurrency(remainingAfterPayment)}`;
+        statusText.className = enteredAmount > invoiceOutstanding ? 'text-body-sm text-red-600' : 'text-body-sm text-slate-500';
+      } else {
+        statusText.textContent = `Outstanding balance: NGN ${formatCurrency(invoiceOutstanding)}`;
+        statusText.className = 'text-body-sm text-slate-500';
+      }
+    }
+
+    function formatApiError(rawError) {
+      if (!rawError) return 'Something went wrong while processing the payment. Please try again.';
+
+      let message = rawError.message || rawError.error || rawError.title || String(rawError);
+      if (typeof message === 'object') {
+        message = JSON.stringify(message);
+      }
+
+      const lower = String(message).toLowerCase();
+      if (lower.includes('requires approval') || lower.includes('approval')) {
+        return 'This payment needs to be approved through the payment run workflow before it can be recorded.';
+      }
+      if (lower.includes('payment run')) {
+        return 'Supplier payments are processed through the payment run workflow. Please create or approve a payment run for this invoice.';
+      }
+      if (lower.includes('exceeds') || lower.includes('greater than') || lower.includes('cannot exceed')) {
+        return 'The payment amount is higher than the outstanding balance on this invoice.';
+      }
+      if (lower.includes('bank')) {
+        return 'Please select a valid bank account before submitting the payment.';
+      }
+      if (lower.includes('positive') || lower.includes('amount')) {
+        return 'Enter a valid payment amount greater than zero.';
+      }
+      if (lower.includes('date')) {
+        return 'Please select a valid payment date.';
+      }
+
+      return 'The payment could not be processed. Please review the details and try again.';
+    }
+
+    async function recordInvoicePayment(invoiceId) {
+      const invoice = (await apiJson(`/api/accountant/purchase-invoices/${invoiceId}`)) || null;
+      if (!invoice) {
+        setStatus('Payment details could not be loaded.', 'error');
         return;
       }
+      openPaymentModal(invoice);
+    }
+
+    document.getElementById('paymentForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activePaymentInvoice) return;
+
+      const bankAccountId = Number(document.getElementById('paymentBankAccount').value || 0);
+      const paymentDate = document.getElementById('paymentDate').value;
+      const amount = Number(document.getElementById('paymentAmount').value || 0);
+      const notes = document.getElementById('paymentNotes').value.trim();
+      const outstanding = Math.max(0, Number(activePaymentInvoice.totalAmount || 0) - Number(activePaymentInvoice.amountPaid || 0));
+
+      if (!bankAccountId) {
+        showPaymentError('Please select a valid bank account before submitting the payment.');
+        document.getElementById('paymentFormStatus').textContent = 'Select a bank account to continue.';
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
+        return;
+      }
+      if (!paymentDate) {
+        showPaymentError('Please choose a valid payment date.');
+        document.getElementById('paymentFormStatus').textContent = 'Choose a payment date.';
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
+        return;
+      }
+      if (!amount || amount <= 0) {
+        showPaymentError('Enter a valid payment amount greater than zero.');
+        document.getElementById('paymentFormStatus').textContent = 'Enter a positive payment amount.';
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
+        return;
+      }
+      if (amount > outstanding + 0.01) {
+        showPaymentError(`The payment amount is higher than the outstanding balance of NGN ${formatCurrency(outstanding)}.`);
+        document.getElementById('paymentFormStatus').textContent = `Payment cannot exceed NGN ${formatCurrency(outstanding)}.`;
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
+        return;
+      }
+
       try {
-        await apiJson(`/api/accountant/purchase-invoices/${invoiceId}/payments`, {
+        await apiJson(`/api/accountant/purchase-invoices/${activePaymentInvoice.id}/payments`, {
           method: 'PATCH',
           body: JSON.stringify({
-            amount: Number(amount),
-            bankAccountId: bankAccount.id,
-            paymentDate: today(),
-            notes: `Supplier payment from ${bankAccount.bankName || 'selected bank account'}`
+            amount,
+            bankAccountId,
+            paymentDate,
+            notes: notes || `Supplier payment from ${bankAccounts.find(account => Number(account.id) === bankAccountId)?.bankName || 'selected bank account'}`
           })
         });
+        closePaymentModal();
         setStatus('Supplier payment recorded.');
         await loadInvoices();
       } catch (err) {
-        setStatus(`Payment failed: ${err.message}`, 'error');
+        const friendlyMessage = formatApiError(err);
+        showPaymentError(friendlyMessage);
+        document.getElementById('paymentFormStatus').textContent = 'Payment could not be completed.';
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
       }
-    }
+    });
+
+    document.getElementById('closePaymentModalBtn').addEventListener('click', closePaymentModal);
+    document.getElementById('cancelPaymentBtn').addEventListener('click', closePaymentModal);
+    document.getElementById('paymentAmount').addEventListener('input', updatePaymentOutstandingPreview);
+    document.getElementById('paymentModal').addEventListener('click', (event) => {
+      if (event.target.id === 'paymentModal') closePaymentModal();
+    });
 
     document.getElementById('invoice-items').addEventListener('input', updateTotals);
     document.getElementById('taxJurisdictionSelect').addEventListener('change', updateTotals);
