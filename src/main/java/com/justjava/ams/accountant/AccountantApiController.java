@@ -11,6 +11,7 @@ import com.justjava.ams.accountant.dto.ManualJournalCreateRequest;
 import com.justjava.ams.accountant.dto.ManualJournalDTO;
 import com.justjava.ams.accountant.dto.CustomerInvoiceDTO;
 import com.justjava.ams.accountant.dto.CustomerDTO;
+import com.justjava.ams.accountant.dto.PurchaseInvoiceOcrResult;
 import com.justjava.ams.accountant.dto.BankAccountDTO;
 import com.justjava.ams.accountant.dto.BankReconciliationCreateRequest;
 import com.justjava.ams.accountant.dto.BankReconciliationDTO;
@@ -46,6 +47,7 @@ import com.justjava.ams.accountant.service.ManualJournalService;
 import com.justjava.ams.accountant.service.PaymentRunService;
 import com.justjava.ams.accountant.service.PaymentScheduleService;
 import com.justjava.ams.accountant.service.PurchaseInvoiceService;
+import com.justjava.ams.accountant.service.PurchaseInvoiceOcrService;
 import com.justjava.ams.accountant.service.ExpenseService;
 import com.justjava.ams.accountant.service.ReceivablesCollectionService;
 import com.justjava.ams.accountant.service.SupplierStatementService;
@@ -75,6 +77,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -95,6 +98,7 @@ public class AccountantApiController {
     private final BankAccountService bankAccountService;
     private final BankReconciliationService bankReconciliationService;
     private final ExpenseService expenseService;
+    private final PurchaseInvoiceOcrService purchaseInvoiceOcrService;
     private final DepreciationJournalImportService depreciationJournalImportService;
     private final TaxJurisdictionService taxJurisdictionService;
     private final PaymentScheduleService paymentScheduleService;
@@ -542,6 +546,16 @@ public class AccountantApiController {
     @GetMapping("/customer-invoices/documents/{documentId}/download")
     public ResponseEntity<byte[]> downloadCustomerInvoiceDocument(@PathVariable Long documentId) {
         return invoiceDownload(invoiceDocumentService.getCustomerInvoiceDocumentContent(documentId));
+    }
+
+    @PostMapping(value = "/purchase-invoices/ocr", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public PurchaseInvoiceOcrResult extractPurchaseInvoiceOcr(
+            @RequestParam("file") MultipartFile file) {
+        try {
+            return purchaseInvoiceOcrService.extractFromImage(file.getBytes(), file.getOriginalFilename());
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invoice OCR failed: " + ex.getMessage(), ex);
+        }
     }
 
     @GetMapping("/purchase-invoices/org/{organizationId}")
