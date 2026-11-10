@@ -7,6 +7,7 @@ import com.justjava.ams.common.dto.OrganizationDTO;
 import com.justjava.ams.common.dto.OrganizationUpdateRequest;
 import com.justjava.ams.common.entity.Organization;
 import com.justjava.ams.common.repository.OrganizationRepository;
+import com.justjava.ams.integration.service.PayrollEntitlementBootstrapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final AuditLogService auditLogService;
+    private final PayrollEntitlementBootstrapService payrollEntitlementBootstrapService;
 
     public OrganizationDTO createOrganization(OrganizationCreateRequest request) {
         String name = normalizeRequired(request.getName(), "Organization name is required");
@@ -53,6 +55,7 @@ public class OrganizationService {
                 .build();
 
         Organization saved = organizationRepository.save(organization);
+        payrollEntitlementBootstrapService.ensureEntitlementForSingleOrganization();
         OrganizationDTO dto = mapToDTO(saved);
         log(saved.getId(), saved.getId(), "CREATE", null, dto.toString(), "Created organization " + saved.getName());
         return dto;

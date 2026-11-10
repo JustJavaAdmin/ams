@@ -48,6 +48,12 @@ spring:
             authorization-grant-type: authorization_code
             scope: openid, profile, email
 
+ams:
+  bootstrap:
+    payroll-entitlement:
+            enabled: ${AMS_BOOTSTRAP_PAYROLL_ENTITLEMENT_ENABLED:true}
+            client-id: ${AMS_BOOTSTRAP_PAYROLL_ENTITLEMENT_CLIENT_ID:jjeip-ams}
+
 # Flowable BPMN Engine Configuration
 flowable:
   async-executor-activate: true

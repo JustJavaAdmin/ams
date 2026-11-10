@@ -68,12 +68,11 @@ public class AccountantController {
     @GetMapping("/fixedAssets")
     public String fixedAssets(Model model) {
         model.addAttribute("organizations", organizationRepository.findAll());
-        return "accountant/fixedAssets";
+        return "accountant/depreciationJournals";
     }
 
     @GetMapping("/depreciationJournals")
     public String depreciationJournals(Model model) {
-        model.addAttribute("organizations", organizationRepository.findAll());
-        return "accountant/depreciationJournals";
+        return "redirect:/accountant/fixedAssets";
     }
 }
