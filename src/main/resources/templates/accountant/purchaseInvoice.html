@@ -148,80 +148,34 @@
         <section class="w-[40%] sticky top-24 h-[calc(100vh-140px)]">
             <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col h-full shadow-sm">
                 <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <span class="font-label-md text-label-md text-slate-600">PREVIEW: INV-2023-089.PDF</span>
+                    <span id="invoiceImageLabel" class="font-label-md text-label-md text-slate-600">UPLOAD INVOICE IMAGE</span>
                     <div class="flex gap-2">
-                        <button class="p-1 hover:bg-white rounded transition-colors material-symbols-outlined text-slate-500">zoom_in</button>
-                        <button class="p-1 hover:bg-white rounded transition-colors material-symbols-outlined text-slate-500">zoom_out</button>
-                        <button class="p-1 hover:bg-white rounded transition-colors material-symbols-outlined text-slate-500">download</button>
+                        <button id="uploadInvoiceBtn" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-body-sm font-semibold text-slate-700 hover:border-slate-300">
+                            <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                            Upload
+                        </button>
                     </div>
                 </div>
-                <div class="flex-grow p-8 relative overflow-y-auto bg-slate-200/30 flex justify-center">
-                    <div class="bg-white w-full max-w-[500px] min-h-[700px] shadow-lg p-10 relative font-serif text-[10px] leading-tight text-slate-800">
-                        <div class="ocr-highlight" style="top: 40px; left: 40px; width: 120px; height: 18px;"></div> <div class="ocr-highlight" style="top: 40px; right: 40px; width: 80px; height: 24px;"></div> <div class="ocr-highlight" style="top: 140px; left: 40px; width: 150px; height: 60px;"></div> <div class="ocr-highlight active" style="top: 615px; right: 40px; width: 100px; height: 20px;"></div> <div class="ocr-highlight" style="top: 400px; left: 40px; width: 420px; height: 100px;"></div> <div class="flex justify-between items-start mb-12">
+                <input id="invoiceUploadInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden">
+                <div id="invoicePreviewDropzone" class="flex-grow p-6 relative overflow-hidden bg-slate-200/30 flex items-center justify-center">
+                    <div id="invoicePreviewEmpty" class="w-full h-full min-h-[640px] border-2 border-dashed border-slate-300 rounded-2xl bg-white/70 flex flex-col items-center justify-center gap-4 text-center p-6">
+                        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                            <span class="material-symbols-outlined text-[30px]">upload</span>
+                        </div>
                         <div>
-                            <div class="font-bold text-lg mb-1 tracking-tighter">Oluwa Logistics Ltd.</div>
-                            <div class="text-slate-500 leading-normal">
-                                No. 12, Admiralty Way<br>
-                                Lekki Phase 1, Lagos<br>
-                                Nigeria
-                            </div>
+                            <p class="font-headline-sm text-headline-sm text-slate-700">Upload supplier invoice</p>
+                            <p class="mt-2 text-body-sm text-slate-500">PNG, JPG, or WEBP files work best for OCR extraction.</p>
                         </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold uppercase tracking-widest text-slate-400 mb-2">Invoice</div>
-                            <div class="font-bold">INV-2023-089</div>
-                            <div class="text-slate-500">August 24, 2023</div>
-                        </div>
+                        <button id="selectInvoiceBtn" type="button" class="rounded-lg bg-primary px-5 py-2.5 text-body-sm font-bold text-white">Select invoice</button>
                     </div>
-                        <div class="mb-12">
-                            <div class="font-bold uppercase text-slate-400 mb-2 border-b border-slate-100 pb-1">Bill To</div>
-                            <div class="font-bold">AMS Nigeria Corporate Services</div>
-                            <div class="text-slate-500 leading-normal">
-                                4th Floor, Heritage House<br>
-                                Victoria Island, Lagos
+                    <div id="invoicePreviewLoaded" class="hidden relative w-full h-full min-h-[640px] overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                        <img id="invoicePreviewImage" class="h-full w-full object-contain bg-slate-50" alt="Supplier invoice preview" />
+                        <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm">
+                            <div>
+                                <p id="invoicePreviewName" class="text-body-sm font-bold text-slate-700">invoice.png</p>
+                                <p id="invoicePreviewStatus" class="text-[11px] text-slate-500">Awaiting OCR extraction</p>
                             </div>
-                        </div>
-                        <table class="w-full mb-12">
-                            <thead class="border-b-2 border-slate-800">
-                            <tr class="text-left font-bold uppercase">
-                                <th class="py-2">Description</th>
-                                <th class="py-2 text-right">Qty</th>
-                                <th class="py-2 text-right">Price</th>
-                                <th class="py-2 text-right">Total</th>
-                            </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                            <tr>
-                                <td class="py-3">Bulk Courier Services - Lagos Central</td>
-                                <td class="py-3 text-right">1</td>
-                                <td class="py-3 text-right">₦ 45,000.00</td>
-                                <td class="py-3 text-right">₦ 45,000.00</td>
-                            </tr>
-                            <tr>
-                                <td class="py-3">International Document Clearance</td>
-                                <td class="py-3 text-right">2</td>
-                                <td class="py-3 text-right">₦ 12,500.00</td>
-                                <td class="py-3 text-right">₦ 25,000.00</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                        <div class="flex justify-end pt-4 border-t-2 border-slate-800">
-                            <div class="w-1/2 space-y-2">
-                                <div class="flex justify-between text-slate-500">
-                                    <span class="">Subtotal</span>
-                                    <span class="">₦ 70,000.00</span>
-                                </div>
-                                <div class="flex justify-between text-slate-500">
-                                    <span class="">VAT (7.5%)</span>
-                                    <span class="">₦ 5,250.00</span>
-                                </div>
-                                <div class="flex justify-between font-bold text-sm pt-2 border-t border-slate-100">
-                                    <span class="">Total Amount</span>
-                                    <span class="">₦ 75,250.00</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-20 text-center text-slate-400 italic">
-                            Thank you for your business. Please remit within 14 days.
+                            <button id="replaceInvoiceBtn" type="button" class="rounded-lg border border-slate-200 px-3 py-1.5 text-body-sm font-semibold text-slate-700">Replace</button>
                         </div>
                     </div>
                 </div>
@@ -364,6 +318,79 @@
     </main>
 </div>
 
+<div id="paymentModal" class="hidden fixed inset-0 z-[60] bg-slate-900/45 backdrop-blur-[2px]">
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                        <span class="material-symbols-outlined text-[22px]">payments</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline-sm text-headline-sm text-primary">Record supplier payment</h3>
+                        <p id="paymentModalSubtitle" class="text-body-sm text-slate-500">Invoice summary</p>
+                    </div>
+                </div>
+                <button id="closePaymentModalBtn" type="button" class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-700" aria-label="Close payment form">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+
+            <div id="paymentErrorBanner" class="hidden mx-6 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-body-sm text-red-700">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-[18px] text-red-600">error</span>
+                    <div>
+                        <p class="font-semibold">Payment could not be processed</p>
+                        <p id="paymentErrorMessage" class="mt-1 text-red-700/90">Please review the details and try again.</p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="paymentForm" class="space-y-5 p-6">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center justify-between text-body-sm text-slate-500">
+                        <span>Outstanding balance</span>
+                        <span id="paymentOutstanding" class="font-semibold text-primary">NGN 0.00</span>
+                    </div>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-1.5 sm:col-span-2">
+                        <label for="paymentBankAccount" class="block font-body-sm font-semibold text-slate-700">Bank account</label>
+                        <select id="paymentBankAccount" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-slate-100" required>
+                            <option value="">Select bank account...</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="paymentDate" class="block font-body-sm font-semibold text-slate-700">Payment date</label>
+                        <input id="paymentDate" type="date" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-slate-100" required>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="paymentAmount" class="block font-body-sm font-semibold text-slate-700">Amount</label>
+                        <div class="relative">
+                            <span class="pointer-events-none absolute left-3 top-2.5 text-slate-500">₦</span>
+                            <input id="paymentAmount" type="number" min="0.01" step="0.01" inputmode="decimal" class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-8 pr-3 text-body-md focus:border-primary focus:ring-2 focus:ring-slate-100" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="paymentNotes" class="block font-body-sm font-semibold text-slate-700">Notes</label>
+                    <textarea id="paymentNotes" rows="3" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-slate-100" placeholder="Optional memo for the payment"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                    <p id="paymentFormStatus" class="text-body-sm text-slate-500">Review the payment before submitting.</p>
+                    <div class="flex gap-3">
+                        <button id="cancelPaymentBtn" type="button" class="h-11 rounded-lg border border-slate-200 bg-white px-4 font-bold text-slate-600 transition hover:bg-slate-50">Cancel</button>
+                        <button type="submit" class="h-11 rounded-lg bg-primary px-5 font-bold text-white transition hover:opacity-90">Record Payment</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     let currentOrgId = null;
     let expenseAccounts = [];
@@ -371,6 +398,7 @@
     let taxJurisdictions = [];
     let bankAccounts = [];
     let editingInvoiceId = null;
+    let invoiceImagePreview = null;
 
     function formatCurrency(value) {
       return new Intl.NumberFormat('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
@@ -399,20 +427,94 @@
       return new Date().toISOString().slice(0, 10);
     }
 
-    document.querySelectorAll('.ocr-highlight').forEach(highlight => {
-      highlight.addEventListener('mouseenter', () => {
-        highlight.classList.add('active');
-        highlight.style.borderColor = '#000';
-        highlight.style.background = 'rgba(0,0,0,0.12)';
-      });
-      highlight.addEventListener('mouseleave', () => {
-        if (!highlight.classList.contains('active-fixed')) {
-          highlight.classList.remove('active');
-          highlight.style.borderColor = 'rgba(56, 72, 93, 0.3)';
-          highlight.style.background = 'rgba(56, 72, 93, 0.05)';
+    function applyOcrResult(ocrResult) {
+      const vendorSelect = document.getElementById('vendorSelect');
+      if (ocrResult.vendorName && vendors.some(v => v.legalName.toLowerCase() === ocrResult.vendorName.toLowerCase())) {
+        const vendor = vendors.find(v => v.legalName.toLowerCase() === ocrResult.vendorName.toLowerCase());
+        if (vendor) vendorSelect.value = String(vendor.id);
+      }
+      if (ocrResult.purchaseOrderNumber) document.getElementById('purchaseOrderNumber').value = ocrResult.purchaseOrderNumber;
+      if (ocrResult.purchaseDate) document.getElementById('purchaseDate').value = ocrResult.purchaseDate;
+      if (ocrResult.dueDate) document.getElementById('dueDate').value = ocrResult.dueDate;
+      if (ocrResult.vendorAddress) {
+        document.getElementById('newVendorBillingAddress').value = ocrResult.vendorAddress;
+      }
+      if (ocrResult.vendorEmail) {
+        document.getElementById('newVendorEmail').value = ocrResult.vendorEmail;
+      }
+      if (ocrResult.vendorPhone) {
+        document.getElementById('newVendorPhone').value = ocrResult.vendorPhone;
+      }
+      if (ocrResult.lineItems && ocrResult.lineItems.length) {
+        const tbody = document.getElementById('invoice-items');
+        tbody.innerHTML = '';
+        ocrResult.lineItems.forEach((line, index) => {
+          const row = tbody.children[0]?.cloneNode(true) || document.createElement('tr');
+          row.innerHTML = `
+            <td class="p-3">
+              <input class="w-full border-none p-0 focus:ring-0 bg-transparent" type="text" placeholder="Item description" value="${(line.description || '').replace(/"/g, '&quot;')}">
+            </td>
+            <td class="p-3">
+              <select class="line-account-select w-full border-none p-0 focus:ring-0 bg-transparent text-slate-600">
+                <option value="">Select expense account...</option>
+              </select>
+            </td>
+            <td class="p-3 text-center"><input class="qty-input w-16 text-center border-none p-0 bg-transparent" type="number" min="0" value="${Number(line.quantity || 1)}"></td>
+            <td class="p-3 text-right"><input class="unit-input w-28 text-right border-none p-0 bg-transparent" type="number" min="0" step="0.01" value="${Number(line.unitPrice || 0)}"></td>
+            <td class="p-3 text-right font-bold">${formatCurrency(Number(line.lineTotal || 0))}</td>
+          `;
+          tbody.appendChild(row);
+        });
+        populateLineAccountSelects();
+      }
+      if (ocrResult.subtotal != null) {
+        const totalDisplay = document.getElementById('purchaseTotalDisplay');
+        if (totalDisplay) totalDisplay.value = formatCurrency(Number(ocrResult.totalAmount || ocrResult.subtotal || 0));
+      }
+      updateTotals();
+      setStatus('Invoice image uploaded and OCR fields applied.');
+    }
+
+    async function handleInvoiceUpload(file) {
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      const previewName = document.getElementById('invoicePreviewName');
+      const previewStatus = document.getElementById('invoicePreviewStatus');
+      previewName.textContent = file.name;
+      previewStatus.textContent = 'Uploading invoice...';
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        document.getElementById('invoicePreviewImage').src = event.target.result;
+        document.getElementById('invoicePreviewEmpty').classList.add('hidden');
+        document.getElementById('invoicePreviewLoaded').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+
+      setStatus('Uploading invoice and running OCR extraction...', 'info');
+      console.log('[UI] Starting invoice upload and OCR extraction for:', file.name);
+
+      try {
+        const response = await fetch('/api/accountant/purchase-invoices/ocr', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || 'OCR extraction failed');
         }
-      });
-    });
+        const ocrResult = await response.json();
+        console.log('[UI] OCR response payload:', ocrResult);
+        invoiceImagePreview = { name: file.name, url: URL.createObjectURL(file) };
+        applyOcrResult(ocrResult);
+        previewStatus.textContent = 'OCR extraction complete';
+        setStatus('Invoice image processed successfully with OCR. Review the extracted fields.', 'info');
+      } catch (error) {
+        console.error('[UI] OCR extraction failed:', error);
+        previewStatus.textContent = 'Upload failed';
+        setStatus(`OCR failed: ${error.message}`, 'error');
+      }
+    }
 
     const inputs = document.querySelectorAll('input, select');
     inputs.forEach(input => {
@@ -700,33 +802,177 @@
       });
     }
 
-    async function recordInvoicePayment(invoiceId) {
+    let activePaymentInvoice = null;
+
+    function showPaymentError(messageText) {
+      const banner = document.getElementById('paymentErrorBanner');
+      const msg = document.getElementById('paymentErrorMessage');
+      banner.classList.remove('hidden');
+      msg.textContent = messageText;
+    }
+
+    function clearPaymentError() {
+      document.getElementById('paymentErrorBanner').classList.add('hidden');
+      document.getElementById('paymentErrorMessage').textContent = '';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').classList.add('hidden');
+      activePaymentInvoice = null;
+      document.getElementById('paymentForm').reset();
+      clearPaymentError();
+      document.getElementById('paymentFormStatus').textContent = 'Review the payment before submitting.';
+      document.getElementById('paymentFormStatus').className = 'text-body-sm text-slate-500';
+    }
+
+    function openPaymentModal(invoice) {
       if (!bankAccounts.length) {
         setStatus('Create a bank account before recording supplier payments.', 'error');
         return;
       }
-      const bankAccount = bankAccounts[0];
-      const amount = window.prompt('Payment amount');
-      if (!amount || Number(amount) <= 0) {
-        setStatus('Payment amount must be positive.', 'error');
+
+      activePaymentInvoice = invoice;
+      const outstanding = Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0));
+      const bankAccountSelect = document.getElementById('paymentBankAccount');
+      bankAccountSelect.innerHTML = '<option value="">Select bank account...</option>' + bankAccounts.map(account => `
+        <option value="${account.id}">${account.bankName || 'Bank'} - ${account.accountNumber || 'Account'}${account.currency ? ` (${account.currency})` : ''}</option>
+      `).join('');
+      bankAccountSelect.value = String(bankAccounts[0]?.id || '');
+
+      document.getElementById('paymentModalSubtitle').textContent = `${invoice.purchaseOrderNumber || 'Invoice'} • ${invoice.vendorName || 'Supplier'}`;
+      document.getElementById('paymentOutstanding').textContent = `NGN ${formatCurrency(outstanding)}`;
+      document.getElementById('paymentAmount').value = '';
+      document.getElementById('paymentDate').value = today();
+      document.getElementById('paymentNotes').value = `Supplier payment for ${invoice.purchaseOrderNumber || 'invoice'} from ${bankAccounts[0]?.bankName || 'selected bank account'}`;
+      clearPaymentError();
+      document.getElementById('paymentFormStatus').textContent = `Outstanding balance: NGN ${formatCurrency(outstanding)}`;
+      document.getElementById('paymentFormStatus').className = 'text-body-sm text-slate-500';
+      document.getElementById('paymentModal').classList.remove('hidden');
+    }
+
+    function updatePaymentOutstandingPreview() {
+      if (!activePaymentInvoice) return;
+      const amountInput = document.getElementById('paymentAmount');
+      const displayedOutstanding = document.getElementById('paymentOutstanding');
+      const statusText = document.getElementById('paymentFormStatus');
+      const invoiceOutstanding = Math.max(0, Number(activePaymentInvoice.totalAmount || 0) - Number(activePaymentInvoice.amountPaid || 0));
+      const enteredAmount = Number(amountInput.value || 0);
+      const remainingAfterPayment = Math.max(0, invoiceOutstanding - enteredAmount);
+      displayedOutstanding.textContent = `NGN ${formatCurrency(remainingAfterPayment)}`;
+
+      if (enteredAmount > 0) {
+        statusText.textContent = enteredAmount > invoiceOutstanding
+          ? `Payment exceeds outstanding balance by NGN ${formatCurrency(enteredAmount - invoiceOutstanding)}.`
+          : `Remaining after this payment: NGN ${formatCurrency(remainingAfterPayment)}`;
+        statusText.className = enteredAmount > invoiceOutstanding ? 'text-body-sm text-red-600' : 'text-body-sm text-slate-500';
+      } else {
+        statusText.textContent = `Outstanding balance: NGN ${formatCurrency(invoiceOutstanding)}`;
+        statusText.className = 'text-body-sm text-slate-500';
+      }
+    }
+
+    function formatApiError(rawError) {
+      if (!rawError) return 'Something went wrong while processing the payment. Please try again.';
+
+      let message = rawError.message || rawError.error || rawError.title || String(rawError);
+      if (typeof message === 'object') {
+        message = JSON.stringify(message);
+      }
+
+      const lower = String(message).toLowerCase();
+      if (lower.includes('requires approval') || lower.includes('approval')) {
+        return 'This payment needs to be approved through the payment run workflow before it can be recorded.';
+      }
+      if (lower.includes('payment run')) {
+        return 'Supplier payments are processed through the payment run workflow. Please create or approve a payment run for this invoice.';
+      }
+      if (lower.includes('exceeds') || lower.includes('greater than') || lower.includes('cannot exceed')) {
+        return 'The payment amount is higher than the outstanding balance on this invoice.';
+      }
+      if (lower.includes('bank')) {
+        return 'Please select a valid bank account before submitting the payment.';
+      }
+      if (lower.includes('positive') || lower.includes('amount')) {
+        return 'Enter a valid payment amount greater than zero.';
+      }
+      if (lower.includes('date')) {
+        return 'Please select a valid payment date.';
+      }
+
+      return 'The payment could not be processed. Please review the details and try again.';
+    }
+
+    async function recordInvoicePayment(invoiceId) {
+      const invoice = (await apiJson(`/api/accountant/purchase-invoices/${invoiceId}`)) || null;
+      if (!invoice) {
+        setStatus('Payment details could not be loaded.', 'error');
         return;
       }
+      openPaymentModal(invoice);
+    }
+
+    document.getElementById('paymentForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activePaymentInvoice) return;
+
+      const bankAccountId = Number(document.getElementById('paymentBankAccount').value || 0);
+      const paymentDate = document.getElementById('paymentDate').value;
+      const amount = Number(document.getElementById('paymentAmount').value || 0);
+      const notes = document.getElementById('paymentNotes').value.trim();
+      const outstanding = Math.max(0, Number(activePaymentInvoice.totalAmount || 0) - Number(activePaymentInvoice.amountPaid || 0));
+
+      if (!bankAccountId) {
+        showPaymentError('Please select a valid bank account before submitting the payment.');
+        document.getElementById('paymentFormStatus').textContent = 'Select a bank account to continue.';
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
+        return;
+      }
+      if (!paymentDate) {
+        showPaymentError('Please choose a valid payment date.');
+        document.getElementById('paymentFormStatus').textContent = 'Choose a payment date.';
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
+        return;
+      }
+      if (!amount || amount <= 0) {
+        showPaymentError('Enter a valid payment amount greater than zero.');
+        document.getElementById('paymentFormStatus').textContent = 'Enter a positive payment amount.';
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
+        return;
+      }
+      if (amount > outstanding + 0.01) {
+        showPaymentError(`The payment amount is higher than the outstanding balance of NGN ${formatCurrency(outstanding)}.`);
+        document.getElementById('paymentFormStatus').textContent = `Payment cannot exceed NGN ${formatCurrency(outstanding)}.`;
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
+        return;
+      }
+
       try {
-        await apiJson(`/api/accountant/purchase-invoices/${invoiceId}/payments`, {
+        await apiJson(`/api/accountant/purchase-invoices/${activePaymentInvoice.id}/payments`, {
           method: 'PATCH',
           body: JSON.stringify({
-            amount: Number(amount),
-            bankAccountId: bankAccount.id,
-            paymentDate: today(),
-            notes: `Supplier payment from ${bankAccount.bankName || 'selected bank account'}`
+            amount,
+            bankAccountId,
+            paymentDate,
+            notes: notes || `Supplier payment from ${bankAccounts.find(account => Number(account.id) === bankAccountId)?.bankName || 'selected bank account'}`
           })
         });
+        closePaymentModal();
         setStatus('Supplier payment recorded.');
         await loadInvoices();
       } catch (err) {
-        setStatus(`Payment failed: ${err.message}`, 'error');
+        const friendlyMessage = formatApiError(err);
+        showPaymentError(friendlyMessage);
+        document.getElementById('paymentFormStatus').textContent = 'Payment could not be completed.';
+        document.getElementById('paymentFormStatus').className = 'text-body-sm text-red-600';
       }
-    }
+    });
+
+    document.getElementById('closePaymentModalBtn').addEventListener('click', closePaymentModal);
+    document.getElementById('cancelPaymentBtn').addEventListener('click', closePaymentModal);
+    document.getElementById('paymentAmount').addEventListener('input', updatePaymentOutstandingPreview);
+    document.getElementById('paymentModal').addEventListener('click', (event) => {
+      if (event.target.id === 'paymentModal') closePaymentModal();
+    });
 
     document.getElementById('invoice-items').addEventListener('input', updateTotals);
     document.getElementById('taxJurisdictionSelect').addEventListener('change', updateTotals);
@@ -737,6 +983,14 @@
     document.getElementById('saveDraftBtn').addEventListener('click', () => saveDraft().catch(() => {}));
     document.getElementById('postInvoiceBtn').addEventListener('click', postInvoice);
     document.getElementById('refreshInvoicesBtn').addEventListener('click', loadInvoices);
+    document.getElementById('uploadInvoiceBtn').addEventListener('click', () => document.getElementById('invoiceUploadInput').click());
+    document.getElementById('selectInvoiceBtn').addEventListener('click', () => document.getElementById('invoiceUploadInput').click());
+    document.getElementById('replaceInvoiceBtn').addEventListener('click', () => document.getElementById('invoiceUploadInput').click());
+    document.getElementById('invoiceUploadInput').addEventListener('change', (event) => {
+      const [file] = event.target.files || [];
+      if (file) handleInvoiceUpload(file);
+      event.target.value = '';
+    });
     document.getElementById('purchaseDate').value = today();
     document.getElementById('dueDate').value = today();
     loadContext().catch(err => setStatus(`Load failed: ${err.message}`, 'error'));
