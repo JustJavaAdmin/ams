@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Depreciation Journal Imports | AMS Pro</title>
+    <title>Fixed Assets | AMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -48,11 +48,23 @@
 <div class="flex-grow flex flex-col min-w-0">
     <header class="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-40">
         <div class="flex items-center justify-between w-full px-outer-padding h-16">
-            <span class="font-headline-sm text-headline-sm text-primary">Depreciation Journal Imports</span>
+            <span class="font-headline-sm text-headline-sm text-primary">Fixed Assets</span>
         </div>
     </header>
 
     <main class="px-outer-padding py-gutter max-w-7xl mx-auto w-full space-y-gutter">
+        <section class="bg-white border border-outline-variant rounded-lg p-card-padding">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[28px]">inventory_2</span>
+                </div>
+                <div class="max-w-3xl">
+                    <h1 class="font-headline-sm text-headline-sm mb-2">Asset records and depreciation calculations are maintained externally</h1>
+                    <p class="text-secondary text-body-md">Use this workspace to import depreciation journals produced by your fixed asset system, review their history, and continue each linked journal through AMS approval and posting.</p>
+                </div>
+            </div>
+        </section>
+
         <div id="pageAlert" class="hidden">
             <div id="pageAlertInner" class="flex items-start gap-3 px-4 py-3 rounded-lg border text-body-md font-semibold">
                 <span id="pageAlertIcon" class="material-symbols-outlined text-[18px] mt-0.5"></span>
@@ -82,7 +94,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter items-start">
             <section class="bg-white border border-outline-variant rounded-lg p-card-padding lg:col-span-1">
-                <h2 class="font-headline-sm text-headline-sm mb-5">Upload Journal</h2>
+                <h2 class="font-headline-sm text-headline-sm mb-5">Depreciation Journals</h2>
                 <form id="importForm" class="space-y-5">
                     <div class="space-y-2">
                         <label for="journalDate" class="font-label-md text-secondary uppercase">Journal Date</label>
