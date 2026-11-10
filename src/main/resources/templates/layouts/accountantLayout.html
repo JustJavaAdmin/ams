@@ -40,11 +40,18 @@
                 <span class="font-body-md text-body-md">Customer Invoices</span>
             </a>
 
+            <a th:href="@{/accountant/invoiceBuilder}"
+               class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
+               th:classappend="${activeTab == 'invoiceBuilder'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">
+               <span class="material-symbols-outlined mr-3">design_services</span>
+               <span class="font-body-md text-body-md">Invoice Builder</span>
+            </a>
+
             <a th:href="@{/accountant/receivablesCollections}"
                class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
                th:classappend="${activeTab == 'receivablesCollections'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">
-                <span class="material-symbols-outlined mr-3">support_agent</span>
-                <span class="font-body-md text-body-md">Receivables Collections</span>
+               <span class="material-symbols-outlined mr-3">support_agent</span>
+               <span class="font-body-md text-body-md">Receivables Collections</span>
             </a>
 
             <a th:href="@{/accountant/cashAndBank}"

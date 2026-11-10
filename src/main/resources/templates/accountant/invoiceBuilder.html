@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Invoice Builder | AMS</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container": "#eceef0",
+                        "on-surface": "#191c1e",
+                        "primary": "#111827",
+                        "secondary": "#505f76",
+                        "outline-variant": "#cfc4c5",
+                        "background": "#f7f9fb",
+                        "accent": "#2f5bea",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff"
+                    },
+                    fontFamily: { sans: ["Hanken Grotesk", "system-ui", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root { --accent: #2f5bea; --line: #e3e6ea; --ink: #111827; --muted: #5b6677; }
+        body { font-family: 'Hanken Grotesk', system-ui, sans-serif; color: var(--ink); }
+        * { box-sizing: border-box; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; line-height: 1; display: inline-block; font-size: 20px; }
+        :where(button, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        /* ---------- Layout ---------- */
+        .builder-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+        @media (min-width: 1280px) {
+            .builder-grid { grid-template-columns: 272px minmax(0, 1fr) 320px; align-items: start; gap: 20px; }
+            .side-sticky { position: sticky; top: 92px; max-height: calc(100vh - 112px); overflow-y: auto; }
+        }
+        .panel { background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+        .panel-title { font-size: 15px; font-weight: 700; }
+        .panel-sub { font-size: 13px; color: var(--muted); }
+
+        /* ---------- Toolkit ---------- */
+        .tool-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+        @media (min-width: 1280px) { .tool-list { flex-direction: column; overflow: visible; } }
+        .tool-btn { display: flex; align-items: center; gap: 10px; flex: none; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; font-size: 14px; font-weight: 600; text-align: left; transition: border-color .15s, background .15s; }
+        .tool-btn:hover { border-color: var(--ink); background: #f8fafc; }
+        .tool-btn .add { margin-left: auto; color: var(--muted); display: none; }
+        @media (min-width: 1280px) { .tool-btn { width: 100%; } .tool-btn .add { display: inline-block; } }
+        .preset-btn { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; font-size: 13px; font-weight: 600; text-align: left; transition: border-color .15s; }
+        .preset-btn:hover { border-color: var(--ink); }
+        .preset-btn .dots { display: flex; gap: 4px; }
+        .preset-btn .dots i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); display: block; }
+        .layer-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 10px; border-radius: 10px; font-size: 13px; text-align: left; color: var(--muted); }
+        .layer-row:hover { background: #f2f4f6; }
+        .layer-row[aria-current="true"] { background: #eaf0ff; color: var(--ink); font-weight: 600; }
+        .layer-row span.txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ---------- Canvas ---------- */
+        .toolbar-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; min-width: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 13px; font-weight: 600; transition: background .15s, opacity .15s; }
+        .toolbar-btn:hover:not(:disabled) { background: #f2f4f6; }
+        .toolbar-btn:disabled { opacity: .4; cursor: not-allowed; }
+        .toolbar-btn[aria-pressed="true"] { background: #eaf0ff; border-color: #b9c9fb; color: #1d3fb8; }
+        .workspace { background-color: #eef1f5; background-image: radial-gradient(#d3d9e2 1px, transparent 1px); background-size: 18px 18px; border-radius: 12px; padding: 16px; overflow: auto; height: clamp(420px, calc(100vh - 230px), 860px); }
+        .paper { position: relative; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(15,23,42,.08), 0 12px 32px rgba(15,23,42,.12); overflow: hidden; touch-action: manipulation; }
+        .invoice-block { position: absolute; display: flex; padding: 0; cursor: grab; user-select: none; touch-action: none; outline: 1px dashed transparent; outline-offset: 0; transition: outline-color .12s; }
+        .invoice-block:hover { outline-color: rgba(47,91,234,.45); }
+        .invoice-block.selected { outline: 2px solid var(--accent); cursor: grabbing; }
+        .blk-content { width: 100%; height: 100%; overflow: hidden; border-radius: inherit; display: flex; align-items: center; padding: calc(var(--u) * 8px) calc(var(--u) * 10px); line-height: 1.35; }
+        .is-table .blk-content, .is-divider .blk-content { padding: 0; }
+        .is-table .blk-content { align-items: flex-start; }
+        .blk-text { width: 100%; white-space: pre-line; overflow-wrap: anywhere; }
+        .tbl { display: grid; width: 100%; grid-auto-rows: min-content; }
+        .tbl > div { padding: calc(var(--u) * 8px) calc(var(--u) * 10px); border-bottom: 1px solid rgba(148,163,184,.35); overflow-wrap: anywhere; }
+        .tbl .th { background: rgba(15,23,42,.05); font-weight: 700; font-size: .85em; }
+        .tbl .num { text-align: right; }
+        .tot-row { display: flex; justify-content: space-between; gap: 12px; padding: calc(var(--u) * 3px) 0; }
+        .tot-row.last { margin-top: calc(var(--u) * 4px); padding-top: calc(var(--u) * 8px); border-top: 1px solid rgba(15,23,42,.2); font-weight: 800; }
+        .empty-hint { opacity: .5; font-style: italic; }
+        .resize-handle { display: none; position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px; background: #fff; border: 2px solid var(--accent); border-radius: 4px; cursor: nwse-resize; }
+        .invoice-block.selected .resize-handle { display: block; }
+        .resize-handle::after { content: ""; position: absolute; inset: -10px; }
+        .is-preview .invoice-block { outline: none !important; cursor: default; }
+        .is-preview .resize-handle { display: none !important; }
+
+        /* ---------- Inspector ---------- */
+        .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+        .num-input, .sel-input, .txt-input { width: 100%; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 8px 10px; font-size: 14px; }
+        .num-input:focus, .sel-input:focus, .txt-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,91,234,.15); }
+        .section-title { font-size: 13px; font-weight: 700; margin: 0 0 10px; }
+        .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+        .seg button { width: 38px; height: 36px; display: grid; place-items: center; color: var(--muted); }
+        .seg button + button { border-left: 1px solid var(--line); }
+        .seg button[aria-pressed="true"] { background: #eaf0ff; color: #1d3fb8; }
+        .color-input { height: 38px; width: 100%; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; }
+        .color-input:disabled { opacity: .35; cursor: not-allowed; }
+        input[type="range"] { accent-color: var(--accent); width: 100%; }
+        .insp-divider { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
+        @media (max-width: 1279px) {
+            #inspector { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; border-radius: 20px 20px 0 0; border-bottom: 0; box-shadow: 0 -12px 32px rgba(15,23,42,.18); }
+            #inspector[data-has="0"] { display: none; }
+            #inspector .insp-body { max-height: 52vh; overflow-y: auto; }
+            #inspector[data-open="0"] .insp-body { display: none; }
+            main { padding-bottom: 88px; }
+        }
+
+        /* ---------- Toast ---------- */
+        #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 24px); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 80; display: flex; align-items: center; gap: 8px; }
+        #toast.show { opacity: 1; transform: translate(-50%, 0); }
+        @media (max-width: 1279px) { #toast { bottom: 96px; } }
+        dialog { border: 0; border-radius: 16px; padding: 24px; max-width: 400px; width: calc(100% - 32px); box-shadow: 0 24px 60px rgba(15,23,42,.3); }
+        dialog::backdrop { background: rgba(15,23,42,.45); }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex">
+<aside th:replace="~{layouts/accountantLayout :: sidebar('invoiceBuilder')}"></aside>
+
+<div class="flex-grow flex flex-col min-w-0">
+    <header class="bg-white border-b border-outline-variant w-full px-4 sm:px-8 py-3 sticky top-0 z-40">
+        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <div class="min-w-0">
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-primary">Invoice builder</h1>
+                <p class="text-sm text-secondary flex items-center gap-2">
+                    <span class="hidden sm:inline">Design the template every customer invoice follows.</span>
+                    <span id="saveStatus" class="inline-flex items-center gap-1.5 font-semibold" role="status"></span>
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <select id="organizationSelect" aria-label="Organization" class="sel-input !w-auto flex-1 md:flex-none md:min-w-[200px]">
+                    <option th:each="org : ${organizations}" th:value="${org.id}" th:text="${org.name}">Organization</option>
+                </select>
+                <button id="previewBtn" type="button" class="toolbar-btn" aria-pressed="false"><span class="material-symbols-outlined">visibility</span><span class="hidden sm:inline">Preview</span></button>
+                <button id="resetTemplateBtn" type="button" class="toolbar-btn"><span class="material-symbols-outlined">restart_alt</span><span class="hidden sm:inline">Reset</span></button>
+                <button id="saveTemplateBtn" type="button" class="inline-flex items-center gap-2 h-9 px-4 rounded-[10px] bg-primary text-on-primary text-sm font-bold hover:opacity-90">
+                    <span class="material-symbols-outlined">save</span>Save template
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="p-4 sm:p-8 w-full max-w-[1680px] mx-auto">
+        <div class="builder-grid">
+
+            <!-- Toolkit -->
+            <aside class="panel p-4 side-sticky" aria-label="Layout toolkit">
+                <h2 class="panel-title">Add a block</h2>
+                <p class="panel-sub mb-3 hidden xl:block">Click to add, then drag it into place.</p>
+                <div id="toolList" class="tool-list mt-2 xl:mt-0"></div>
+
+                <div class="mt-5 hidden sm:block">
+                    <h3 class="section-title">Brand theme</h3>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <label class="field-label text-[11px]">Primary<input id="themePrimaryInput" type="color" class="color-input mt-1"></label>
+                        <label class="field-label text-[11px]">Secondary<input id="themeSecondaryInput" type="color" class="color-input mt-1"></label>
+                        <label class="field-label text-[11px]">Accent<input id="themeAccentInput" type="color" class="color-input mt-1"></label>
+                        <label class="field-label text-[11px]">Text<input id="themeTextInput" type="color" class="color-input mt-1"></label>
+                    </div>
+                    <div class="mt-2">
+                        <label class="field-label text-[11px]">Background<input id="themeBgInput" type="color" class="color-input mt-1"></label>
+                    </div>
+                </div>
+
+                <div class="mt-5 hidden sm:block">
+                    <h3 class="section-title">Style presets</h3>
+                    <div id="presetList" class="grid grid-cols-3 xl:grid-cols-1 gap-2"></div>
+                </div>
+
+                <div class="mt-5 hidden xl:block">
+                    <h3 class="section-title">Layers</h3>
+                    <div id="layerList" class="space-y-0.5"></div>
+                </div>
+            </aside>
+
+            <!-- Canvas -->
+            <section class="panel p-3 min-w-0" aria-label="Template canvas">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2">
+                        <button id="undoBtn" type="button" class="toolbar-btn" title="Undo (Ctrl+Z)" aria-label="Undo"><span class="material-symbols-outlined">undo</span></button>
+                        <button id="redoBtn" type="button" class="toolbar-btn" title="Redo (Ctrl+Y)" aria-label="Redo"><span class="material-symbols-outlined">redo</span></button>
+                        <button id="snapBtn" type="button" class="toolbar-btn" aria-pressed="true" title="Snap to grid"><span class="material-symbols-outlined">grid_on</span><span class="hidden sm:inline">Snap</span></button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="zoomOutBtn" type="button" class="toolbar-btn" aria-label="Zoom out"><span class="material-symbols-outlined">remove</span></button>
+                        <button id="zoomLabel" type="button" class="toolbar-btn !min-w-[64px]" title="Fit to screen">100%</button>
+                        <button id="zoomInBtn" type="button" class="toolbar-btn" aria-label="Zoom in"><span class="material-symbols-outlined">add</span></button>
+                    </div>
+                </div>
+                <div id="workspace" class="workspace">
+                    <div id="invoiceCanvas" class="paper"></div>
+                </div>
+                <p class="text-xs text-secondary mt-2 px-1 hidden md:block">Tip: drag to move, pull the corner to resize, double-click to edit text. Arrow keys nudge, Delete removes, Ctrl+Z undoes.</p>
+            </section>
+
+            <!-- Inspector -->
+            <aside id="inspector" class="panel side-sticky" data-has="0" data-open="0" aria-label="Block inspector">
+                <div class="flex items-center justify-between gap-2 p-4 pb-3">
+                    <button id="inspectorToggle" type="button" class="flex items-center gap-2 min-w-0 text-left xl:pointer-events-none" aria-expanded="false">
+                        <span id="inspIcon" class="material-symbols-outlined">tune</span>
+                        <span id="inspTitle" class="panel-title truncate">Inspector</span>
+                        <span class="material-symbols-outlined xl:hidden" id="inspChevron">expand_less</span>
+                    </button>
+                    <div class="flex gap-1.5">
+                        <button type="button" id="duplicateBlockBtn" class="toolbar-btn !h-8 !px-2" title="Duplicate (Ctrl+D)" aria-label="Duplicate block"><span class="material-symbols-outlined">content_copy</span></button>
+                        <button type="button" id="deleteBlockBtn" class="toolbar-btn !h-8 !px-2 !text-error !border-error/30" title="Delete" aria-label="Delete block"><span class="material-symbols-outlined">delete</span></button>
+                    </div>
+                </div>
+
+                <div class="insp-body px-4 pb-4">
+                    <div id="inspectorEmpty" class="panel-sub py-8 text-center">
+                        <span class="material-symbols-outlined !text-[32px] block mb-2 opacity-50">ads_click</span>
+                        Select a block on the canvas to edit it.
+                    </div>
+
+                    <div id="inspectorPanel" class="hidden">
+                        <div id="textGroup">
+                            <label class="field-label" for="blockTextInput">Content</label>
+                            <textarea id="blockTextInput" rows="4" class="txt-input"></textarea>
+                            <p id="textHint" class="text-xs text-secondary mt-1.5"></p>
+                        </div>
+
+                        <hr class="insp-divider">
+                        <h3 class="section-title">Position and size (%)</h3>
+                        <div class="grid grid-cols-4 gap-2">
+                            <label class="field-label">X<input id="blockXInput" type="number" min="0" max="100" step="1" class="num-input mt-1"></label>
+                            <label class="field-label">Y<input id="blockYInput" type="number" min="0" max="100" step="1" class="num-input mt-1"></label>
+                            <label class="field-label">W<input id="blockWInput" type="number" min="6" max="100" step="1" class="num-input mt-1"></label>
+                            <label class="field-label">H<input id="blockHInput" type="number" min="1" max="100" step="1" class="num-input mt-1"></label>
+                        </div>
+                        <div class="flex gap-2 mt-3">
+                            <button type="button" id="forwardBtn" class="toolbar-btn flex-1"><span class="material-symbols-outlined">flip_to_front</span>Forward</button>
+                            <button type="button" id="backwardBtn" class="toolbar-btn flex-1"><span class="material-symbols-outlined">flip_to_back</span>Back</button>
+                        </div>
+
+                        <div id="typeGroup">
+                            <hr class="insp-divider">
+                            <h3 class="section-title">Text</h3>
+                            <div class="grid grid-cols-2 gap-3 items-end">
+                                <label class="field-label">Size
+                                    <input id="fontSizeInput" type="number" min="8" max="72" step="1" class="num-input mt-1">
+                                </label>
+                                <label class="field-label">Weight
+                                    <select id="fontWeightInput" class="sel-input mt-1">
+                                        <option value="400">Regular</option>
+                                        <option value="500">Medium</option>
+                                        <option value="600">Semibold</option>
+                                        <option value="700">Bold</option>
+                                        <option value="800">Extra bold</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="mt-3">
+                                <span class="field-label">Alignment</span>
+                                <div class="seg" id="alignSeg" role="group" aria-label="Text alignment">
+                                    <button type="button" data-align="left" aria-label="Align left"><span class="material-symbols-outlined">format_align_left</span></button>
+                                    <button type="button" data-align="center" aria-label="Align center"><span class="material-symbols-outlined">format_align_center</span></button>
+                                    <button type="button" data-align="right" aria-label="Align right"><span class="material-symbols-outlined">format_align_right</span></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="insp-divider">
+                        <h3 class="section-title">Appearance</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="field-label" id="textColorWrap">Text color<input id="textColorInput" type="color" class="color-input mt-1"></label>
+                            <label class="field-label">Fill<input id="bgColorInput" type="color" class="color-input mt-1"></label>
+                        </div>
+                        <label class="flex items-center gap-2 mt-2 text-sm cursor-pointer w-fit">
+                            <input id="noFillInput" type="checkbox" class="rounded border-outline-variant text-accent"> No fill
+                        </label>
+                        <label class="field-label mt-3">Corner radius
+                            <input id="radiusInput" type="range" min="0" max="32" step="1" class="mt-1">
+                        </label>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+</div>
+
+<div id="toast" role="status" aria-live="polite"><span class="material-symbols-outlined">check_circle</span><span id="toastText"></span></div>
+
+<dialog id="resetDialog">
+    <h2 class="panel-title text-lg mb-1">Reset this template?</h2>
+    <p class="panel-sub mb-5">This brings back the default layout for the selected organization. You can still undo it before saving.</p>
+    <div class="flex justify-end gap-2">
+        <button type="button" id="resetCancel" class="toolbar-btn">Keep my layout</button>
+        <button type="button" id="resetConfirm" class="inline-flex items-center h-9 px-4 rounded-[10px] bg-error text-white text-sm font-bold">Reset template</button>
+    </div>
+</dialog>
+
+<script>
+    /* ================= Setup ================= */
+    const $ = (id) => document.getElementById(id);
+    const paper = $('invoiceCanvas');
+    const workspace = $('workspace');
+    const orgSelect = $('organizationSelect');
+    const inspector = $('inspector');
+    const PAPER_RATIO = 1.414;
+    const BASE_WIDTH = 900; // design width: font sizes are authored against this
+    const storageKey = (orgId) => `ams.invoice-builder.${orgId || 'default'}`;
+
+    const TYPES = {
+        company:  { label: 'Company header', icon: 'apartment',         hint: 'Your business name or letterhead.' },
+        meta:     { label: 'Invoice details', icon: 'receipt_long',     hint: 'One detail per line: number, issue date, due date.' },
+        customer: { label: 'Customer',        icon: 'person',           hint: 'One line each: label, name, address, email.' },
+        table:    { label: 'Billing table',   icon: 'table_rows_narrow', hint: 'One row per line, columns split with |. The first row is the header.' },
+        totals:   { label: 'Totals',          icon: 'payments',         hint: 'Write "Label: value" on each line. The last line is emphasised.' },
+        notes:    { label: 'Notes',           icon: 'notes',            hint: 'Payment terms, bank details or a thank-you message.' },
+        divider:  { label: 'Divider',         icon: 'horizontal_rule',  hint: '' }
+    };
+
+    const defaultTheme = () => ({
+        primary: '#111827',
+        secondary: '#505f76',
+        accent: '#2f5bea',
+        text: '#111827',
+        background: '#f7f9fb'
+    });
+    let orgId = orgSelect.value || null;
+    let state = { zoom: 1, blocks: [], selectedId: null, snap: true, preview: false, dirty: false, sheetOpen: false, theme: defaultTheme() };
+    const els = new Map();
+
+    const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+    const round1 = (v) => Math.round(v * 10) / 10;
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const randomId = () => `block-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    const find = (id) => state.blocks.find((b) => b.id === id) || null;
+    const selected = () => find(state.selectedId);
+
+    /* ================= Block defaults ================= */
+    function baseBlock(type) {
+        const c = { id: randomId(), type, x: 6, y: 6, w: 32, h: 10, fontSize: 18, fontWeight: 600, color: '#101828', bg: 'transparent', radius: 0, align: 'left', text: '' };
+        switch (type) {
+            case 'company':  return { ...c, x: 8, y: 6, w: 38, h: 12, fontSize: 28, fontWeight: 800, text: 'LedgerPrecise Studio Ltd' };
+            case 'meta':     return { ...c, x: 64, y: 8, w: 28, h: 12, fontSize: 16, text: 'Invoice # INV-1001\nIssue: 12 Aug 2026\nDue: 26 Aug 2026', align: 'right', bg: '#f8fafc', radius: 12 };
+            case 'customer': return { ...c, x: 8, y: 24, w: 40, h: 14, fontSize: 15, fontWeight: 500, text: 'Bill To\nAcme Holdings\n24 River Road, Lagos\nhello@acmeholdings.ng', bg: '#f8fafc', radius: 12 };
+            case 'table':    return { ...c, x: 8, y: 44, w: 84, h: 20, fontSize: 13, fontWeight: 500, text: 'Item|Qty|Rate|Amount\nWebsite design|2|₦350,000|₦700,000\nBrand consultancy|1|₦650,000|₦650,000', bg: '#ffffff', radius: 8 };
+            case 'totals':   return { ...c, x: 62, y: 70, w: 30, h: 18, text: 'Subtotal: ₦1,350,000\nTax: ₦101,250\nTotal: ₦1,451,250', bg: '#f8fafc', radius: 12 };
+            case 'notes':    return { ...c, x: 8, y: 70, w: 42, h: 16, fontSize: 15, fontWeight: 500, text: 'Payment terms: Net 30 days\nBank: FirstBank Plc - 0001234567\nThank you for your business.', bg: '#fff7ed', radius: 12 };
+            case 'divider':  return { ...c, x: 8, y: 66, w: 84, h: 1.5, bg: '#111827' };
+            default:         return c;
+        }
+    }
+    const defaultTemplate = () => ['company', 'meta', 'customer', 'table', 'divider', 'notes', 'totals'].map(baseBlock);
+
+    const PRESETS = {
+        minimal:   { label: 'Minimal',   dots: ['#111827', '#f8fafc', '#fff7ed'],
+            company: { fontSize: 24, color: '#111827' }, meta: { bg: '#f8fafc', color: '#111827' }, customer: { bg: '#f8fafc', color: '#111827' }, table: { bg: '#ffffff' }, totals: { bg: '#f8fafc' }, notes: { bg: '#fff7ed' } },
+        corporate: { label: 'Corporate', dots: ['#0f172a', '#edf2ff', '#eff6ff'],
+            company: { fontSize: 32, color: '#0f172a' }, meta: { bg: '#edf2ff', color: '#1e293b' }, customer: { bg: '#f8fafc', color: '#1f2937' }, table: { bg: '#ffffff' }, totals: { bg: '#eef2ff', color: '#111827' }, notes: { bg: '#eff6ff' } },
+        premium:   { label: 'Premium',   dots: ['#78350f', '#fef3c7', '#fdf2f8'],
+            company: { fontSize: 34, color: '#1f2937' }, meta: { bg: '#fef3c7', color: '#78350f' }, customer: { bg: '#fefce8', color: '#1f2937' }, table: { bg: '#fffdf5' }, totals: { bg: '#fdf2f8', color: '#111827' }, notes: { bg: '#fff7ed' } }
+    };
+
+    /* ================= History ================= */
+    let hist = [], hi = -1, recTimer = null;
+    const snapshot = () => JSON.stringify(state.blocks);
+    function record() {
+        clearTimeout(recTimer);
+        const s = snapshot();
+        if (s === hist[hi]) return;
+        hist = hist.slice(0, hi + 1);
+        hist.push(s);
+        if (hist.length > 80) hist.shift();
+        hi = hist.length - 1;
+        updateUndoUi();
+    }
+    function scheduleRecord() { markDirty(true); clearTimeout(recTimer); recTimer = setTimeout(record, 350); updateUndoUi(); }
+    function resetHistory() { hist = [snapshot()]; hi = 0; updateUndoUi(); }
+    function loadSnapshot(s) {
+        state.blocks = JSON.parse(s);
+        if (!find(state.selectedId)) state.selectedId = null;
+        renderBlocks(); syncInspector(); markDirty(true); updateUndoUi();
+    }
+    function undo() { record(); if (hi > 0) { hi--; loadSnapshot(hist[hi]); } }
+    function redo() { record(); if (hi < hist.length - 1) { hi++; loadSnapshot(hist[hi]); } }
+    function updateUndoUi() {
+        $('undoBtn').disabled = !(hi > 0 || snapshot() !== hist[hi]);
+        $('redoBtn').disabled = !(hi < hist.length - 1);
+    }
+
+    /* ================= Persistence ================= */
+    // Swap these two functions for fetch() calls if templates should live on the server.
+    async function apiJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options
+        });
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || response.statusText);
+        }
+        if (response.status === 204) return null;
+        return response.json();
+    }
+
+    async function saveTemplate() {
+        record();
+        try {
+            const template = { v: 1, updated: Date.now(), blocks: state.blocks, theme: state.theme, templateName: 'default' };
+            const saved = await apiJson(`/api/accountant/invoice-templates/org/${orgId}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    organizationId: Number(orgId),
+                    templateName: 'default',
+                    blocks: JSON.stringify(template.blocks),
+                    theme: JSON.stringify(template.theme)
+                })
+            });
+            localStorage.setItem(storageKey(orgId), JSON.stringify(template));
+            markDirty(false, new Date(saved?.updatedAt ? saved.updatedAt : Date.now()));
+            toast('Template saved');
+        } catch (e) {
+            try {
+                const template = { v: 1, updated: Date.now(), blocks: state.blocks, theme: state.theme };
+                localStorage.setItem(storageKey(orgId), JSON.stringify(template));
+                markDirty(false, new Date());
+                toast('Template saved locally');
+            } catch (err) {
+                toast('Could not save template.', 'error');
+            }
+        }
+    }
+    async function restoreTemplate() {
+        let raw = null, updated = null;
+        try {
+            raw = JSON.parse(localStorage.getItem(storageKey(orgId)) || 'null');
+            if (Array.isArray(raw)) { state.blocks = raw; }
+            else if (raw && Array.isArray(raw.blocks)) { state.blocks = raw.blocks; updated = raw.updated; state.theme = { ...defaultTheme(), ...(raw.theme || {}) }; }
+            else { state.blocks = defaultTemplate(); state.theme = defaultTheme(); }
+        } catch (e) {
+            state.blocks = defaultTemplate(); state.theme = defaultTheme();
+        }
+        try {
+            if (orgId) {
+                const serverTemplate = await apiJson(`/api/accountant/invoice-templates/org/${orgId}?templateName=default`);
+                if (serverTemplate && serverTemplate.blocks) {
+                    state.blocks = JSON.parse(serverTemplate.blocks || '[]');
+                    state.theme = { ...defaultTheme(), ...(serverTemplate.theme ? JSON.parse(serverTemplate.theme) : {}) };
+                    updated = serverTemplate.updatedAt || Date.now();
+                }
+            }
+        } catch (e) {
+            // Fall back to local storage if server is unavailable.
+        }
+        if (!Array.isArray(state.blocks) || !state.blocks.length) {
+            state.blocks = defaultTemplate();
+        }
+        state.blocks = state.blocks.map((b) => ({ ...baseBlock(b.type), ...b }));
+        state.selectedId = null;
+        syncThemeInputs();
+        renderBlocks(); syncInspector(); resetHistory();
+        markDirty(false, updated ? new Date(updated) : null);
+    }
+    function syncThemeInputs() {
+        const theme = state.theme || defaultTheme();
+        $('themePrimaryInput').value = theme.primary || '#111827';
+        $('themeSecondaryInput').value = theme.secondary || '#505f76';
+        $('themeAccentInput').value = theme.accent || '#2f5bea';
+        $('themeTextInput').value = theme.text || '#111827';
+        $('themeBgInput').value = theme.background || '#f7f9fb';
+        const root = document.documentElement;
+        root.style.setProperty('--accent', theme.accent || '#2f5bea');
+        root.style.setProperty('--ink', theme.text || '#111827');
+        root.style.setProperty('--muted', theme.secondary || '#505f76');
+        root.style.setProperty('--line', theme.primary ? hexAlpha(theme.primary, 0.18) : '#e3e6ea');
+        document.body.style.background = theme.background || '#f7f9fb';
+        const paperBg = theme.background || '#f7f9fb';
+        const workspaceEl = $('workspace');
+        if (workspaceEl) workspaceEl.style.backgroundColor = paperBg;
+    }
+    function hexAlpha(hex, alpha) {
+        const normal = hex.replace('#', '');
+        const full = normal.length === 3 ? normal.split('').map((c) => c + c).join('') : normal;
+        const num = parseInt(full, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    function markDirty(isDirty, savedAt) {
+        state.dirty = isDirty;
+        const el = $('saveStatus');
+        if (isDirty) el.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span><span class="text-amber-700">Unsaved changes</span>';
+        else if (savedAt) el.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span><span class="text-emerald-700">Saved ' + savedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</span>';
+        else el.innerHTML = '<span class="text-secondary font-medium">Default template</span>';
+    }
+
+    /* ================= Rendering ================= */
+    function contentHtml(b) {
+        const text = b.text || '';
+        switch (b.type) {
+            case 'divider': return '';
+            case 'table': {
+                const rows = text.split('\n').map((r) => r.trim()).filter(Boolean).map((r) => r.split('|').map((c) => c.trim()));
+                if (!rows.length) return '<div class="empty-hint blk-text">Add rows in the inspector</div>';
+                const cols = Math.max(...rows.map((r) => r.length));
+                const tpl = `grid-template-columns:1.8fr ${'1fr '.repeat(cols - 1)}`;
+                return `<div class="tbl" style="${tpl}">` + rows.map((r, ri) =>
+                    Array.from({ length: cols }, (_, ci) => `<div class="${ri === 0 ? 'th' : 'td'}${ci > 0 ? ' num' : ''}">${esc(r[ci] || '')}</div>`).join('')
+                ).join('') + '</div>';
+            }
+            case 'totals': {
+                const lines = text.split('\n').filter((l) => l.trim());
+                if (!lines.length) return '<div class="empty-hint blk-text">Add totals in the inspector</div>';
+                return '<div style="width:100%">' + lines.map((l, i) => {
+                    const k = l.indexOf(':');
+                    const label = k > -1 ? l.slice(0, k) : l;
+                    const value = k > -1 ? l.slice(k + 1).trim() : '';
+                    return `<div class="tot-row${i === lines.length - 1 && lines.length > 1 ? ' last' : ''}"><span>${esc(label)}</span><span>${esc(value)}</span></div>`;
+                }).join('') + '</div>';
+            }
+            default:
+                return text.trim() ? `<div class="blk-text">${esc(text)}</div>` : '<div class="blk-text empty-hint">Empty block</div>';
+        }
+    }
+
+    function paintBlock(el, b, index) {
+        const s = el.style;
+        s.left = b.x + '%'; s.top = b.y + '%'; s.width = b.w + '%'; s.height = b.h + '%';
+        s.zIndex = index + 1;
+        s.fontSize = `calc(var(--u) * ${b.fontSize}px)`;
+        s.fontWeight = b.fontWeight;
+        s.color = b.color;
+        s.background = b.bg;
+        s.borderRadius = `calc(var(--u) * ${b.radius}px)`;
+        el.className = `invoice-block is-${b.type}${b.id === state.selectedId ? ' selected' : ''}`;
+        const content = el.firstElementChild;
+        content.style.textAlign = b.align;
+        content.style.justifyContent = b.align === 'center' ? 'center' : b.align === 'right' ? 'flex-end' : 'flex-start';
+        const html = contentHtml(b);
+        if (el._html !== html) { content.innerHTML = html; el._html = html; }
+        el.setAttribute('aria-label', TYPES[b.type]?.label || 'Block');
+    }
+
+    function renderBlocks() {
+        const ids = new Set(state.blocks.map((b) => b.id));
+        els.forEach((el, id) => { if (!ids.has(id)) { el.remove(); els.delete(id); } });
+        state.blocks.forEach((b, i) => {
+            let el = els.get(b.id);
+            if (!el) {
+                el = document.createElement('div');
+                el.dataset.id = b.id;
+                el.tabIndex = 0;
+                el.innerHTML = '<div class="blk-content"></div><span class="resize-handle" aria-hidden="true"></span>';
+                paper.appendChild(el);
+                els.set(b.id, el);
+                bindBlock(el);
+            }
+            paintBlock(el, b, i);
+        });
+        renderLayers();
+    }
+
+    function renderLayers() {
+        $('layerList').innerHTML = [...state.blocks].reverse().map((b) => {
+            const first = (b.text || '').split('\n')[0] || TYPES[b.type].label;
+            return `<button type="button" class="layer-row" data-layer="${b.id}" aria-current="${b.id === state.selectedId}">
+                    <span class="material-symbols-outlined !text-[18px]">${TYPES[b.type].icon}</span><span class="txt">${esc(first.slice(0, 28))}</span></button>`;
+        }).join('');
+    }
+
+    function layoutPaper() {
+        const avail = Math.max(280, workspace.clientWidth - 32);
+        const w = Math.min(avail, 1100) * state.zoom;
+        paper.style.width = w + 'px';
+        paper.style.height = (w / PAPER_RATIO) + 'px';
+        paper.style.setProperty('--u', (w / BASE_WIDTH).toFixed(4));
+        $('zoomLabel').textContent = Math.round(state.zoom * 100) + '%';
+    }
+    function setZoom(z) { state.zoom = clamp(Math.round(z * 100) / 100, 0.5, 2); layoutPaper(); }
+
+    /* ================= Selection & inspector ================= */
+    function select(id) {
+        state.selectedId = id;
+        els.forEach((el, bid) => el.classList.toggle('selected', bid === id));
+        syncInspector();
+        renderLayers();
+    }
+
+    function syncInspector(skipId) {
+        const b = selected();
+        inspector.dataset.has = b ? '1' : '0';
+        $('inspectorEmpty').classList.toggle('hidden', !!b);
+        $('inspectorPanel').classList.toggle('hidden', !b);
+        if (!b) { $('inspTitle').textContent = 'Inspector'; $('inspIcon').textContent = 'tune'; return; }
+        const meta = TYPES[b.type];
+        $('inspTitle').textContent = meta.label;
+        $('inspIcon').textContent = meta.icon;
+        const set = (id, v) => { if (id !== skipId) $(id).value = v; };
+        set('blockTextInput', b.text || '');
+        set('blockXInput', round1(b.x)); set('blockYInput', round1(b.y));
+        set('blockWInput', round1(b.w)); set('blockHInput', round1(b.h));
+        set('fontSizeInput', b.fontSize); set('fontWeightInput', String(b.fontWeight));
+        set('textColorInput', normalizeColor(b.color || '#111827'));
+        set('bgColorInput', normalizeColor(b.bg === 'transparent' ? '#ffffff' : b.bg));
+        set('radiusInput', b.radius || 0);
+        $('noFillInput').checked = b.bg === 'transparent';
+        $('bgColorInput').disabled = b.bg === 'transparent';
+        $('textGroup').classList.toggle('hidden', b.type === 'divider');
+        $('typeGroup').classList.toggle('hidden', b.type === 'divider');
+        $('textColorWrap').classList.toggle('hidden', b.type === 'divider');
+        $('textHint').textContent = meta.hint;
+        $('alignSeg').querySelectorAll('button').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.align === b.align)));
+        $('forwardBtn').disabled = state.blocks.indexOf(b) === state.blocks.length - 1;
+        $('backwardBtn').disabled = state.blocks.indexOf(b) === 0;
+    }
+
+    function normalizeColor(color) {
+        if (/^#[0-9a-f]{6}$/i.test(color)) return color;
+        if (/^#[0-9a-f]{3}$/i.test(color)) return '#' + color.slice(1).split('').map((c) => c + c).join('');
+        const t = document.createElement('div'); t.style.color = color; document.body.appendChild(t);
+        const rgb = getComputedStyle(t).color; t.remove();
+        const hex = (rgb.match(/\d+/g) || [255, 255, 255]).slice(0, 3).map((n) => Number(n).toString(16).padStart(2, '0')).join('');
+        return '#' + hex;
+    }
+
+    function patch(changes, fromInputId) {
+        const b = selected();
+        if (!b) return;
+        Object.assign(b, changes);
+        const el = els.get(b.id);
+        paintBlock(el, b, state.blocks.indexOf(b));
+        syncInspector(fromInputId);
+        renderLayers();
+        scheduleRecord();
+    }
+
+    function setSheet(open) {
+        state.sheetOpen = open;
+        inspector.dataset.open = open ? '1' : '0';
+        $('inspectorToggle').setAttribute('aria-expanded', String(open));
+        $('inspChevron').textContent = open ? 'expand_more' : 'expand_less';
+    }
+
+    /* ================= Block actions ================= */
+    function addBlock(type) {
+        const b = baseBlock(type);
+        state.blocks.push(b);
+        renderBlocks(); select(b.id); scheduleRecord();
+        toast(`${TYPES[type].label} added`);
+    }
+    function duplicateSelected() {
+        const b = selected(); if (!b) return;
+        const d = { ...b, id: randomId(), x: clamp(b.x + 3, 0, 100 - b.w), y: clamp(b.y + 3, 0, 100 - b.h) };
+        state.blocks.push(d);
+        renderBlocks(); select(d.id); scheduleRecord();
+    }
+    function deleteSelected() {
+        if (!state.selectedId) return;
+        state.blocks = state.blocks.filter((b) => b.id !== state.selectedId);
+        state.selectedId = null;
+        renderBlocks(); syncInspector(); scheduleRecord();
+    }
+    function reorder(dir) {
+        const i = state.blocks.findIndex((b) => b.id === state.selectedId);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= state.blocks.length) return;
+        [state.blocks[i], state.blocks[j]] = [state.blocks[j], state.blocks[i]];
+        renderBlocks(); syncInspector(); scheduleRecord();
+    }
+    function applyPreset(name) {
+        const p = PRESETS[name]; if (!p) return;
+        state.blocks.forEach((b) => Object.assign(b, p[b.type] || {}));
+        renderBlocks(); syncInspector(); scheduleRecord();
+        toast(`${p.label} style applied`);
+    }
+
+    /* ================= Drag & resize ================= */
+    let g = null;
+    function bindBlock(el) {
+        const id = el.dataset.id;
+        el.addEventListener('pointerdown', (e) => {
+            if (state.preview || e.button > 0) return;
+            select(id);
+            const b = find(id), r = paper.getBoundingClientRect();
+            g = { id, resize: e.target.classList.contains('resize-handle'), sx: e.clientX, sy: e.clientY, ox: b.x, oy: b.y, ow: b.w, oh: b.h, pw: r.width, ph: r.height, moved: false };
+            el.setPointerCapture(e.pointerId);
+        });
+        el.addEventListener('pointermove', (e) => {
+            if (!g || g.id !== id) return;
+            if (!g.moved && Math.hypot(e.clientX - g.sx, e.clientY - g.sy) < 3) return;
+            g.moved = true;
+            const b = find(id);
+            const dx = (e.clientX - g.sx) / g.pw * 100, dy = (e.clientY - g.sy) / g.ph * 100;
+            const sn = (v) => state.snap ? Math.round(v / 2) * 2 : v;
+            if (g.resize) {
+                b.w = round1(clamp(sn(g.ow + dx), 6, 100 - b.x));
+                b.h = round1(clamp(sn(g.oh + dy), 1, 100 - b.y));
+            } else {
+                b.x = round1(clamp(sn(g.ox + dx), 0, 100 - b.w));
+                b.y = round1(clamp(sn(g.oy + dy), 0, 100 - b.h));
+            }
+            paintBlock(el, b, state.blocks.indexOf(b));
+            syncInspector();
+        });
+        const end = () => { if (g && g.moved) scheduleRecord(); g = null; };
+        el.addEventListener('pointerup', end);
+        el.addEventListener('pointercancel', end);
+        el.addEventListener('dblclick', () => {
+            if (state.preview || !find(id) || find(id).type === 'divider') return;
+            select(id); setSheet(true);
+            const t = $('blockTextInput'); t.focus(); t.select();
+        });
+    }
+    paper.addEventListener('pointerdown', (e) => { if (e.target === paper) select(null); });
+
+    /* ================= Wiring ================= */
+    function buildStaticUi() {
+        $('toolList').innerHTML = Object.entries(TYPES).map(([type, m]) =>
+            `<button type="button" class="tool-btn" data-add-type="${type}"><span class="material-symbols-outlined">${m.icon}</span>${m.label}<span class="material-symbols-outlined add">add</span></button>`).join('');
+        $('presetList').innerHTML = Object.entries(PRESETS).map(([k, p]) =>
+            `<button type="button" class="preset-btn" data-preset="${k}"><span class="dots">${p.dots.map((c) => `<i style="background:${c}"></i>`).join('')}</span>${p.label}</button>`).join('');
+    }
+
+    function bindUi() {
+        $('toolList').addEventListener('click', (e) => { const b = e.target.closest('[data-add-type]'); if (b) addBlock(b.dataset.addType); });
+        $('presetList').addEventListener('click', (e) => { const b = e.target.closest('[data-preset]'); if (b) applyPreset(b.dataset.preset); });
+        $('layerList').addEventListener('click', (e) => { const b = e.target.closest('[data-layer]'); if (b) select(b.dataset.layer); });
+
+        const onNum = (id, key, min, max) => $(id).addEventListener('input', (e) => {
+            if (e.target.value === '') return;
+            patch({ [key]: clamp(Number(e.target.value), min, max) }, id);
+        });
+        $('blockTextInput').addEventListener('input', (e) => patch({ text: e.target.value }, 'blockTextInput'));
+        onNum('blockXInput', 'x', 0, 100); onNum('blockYInput', 'y', 0, 100);
+        onNum('blockWInput', 'w', 6, 100); onNum('blockHInput', 'h', 1, 100);
+        onNum('fontSizeInput', 'fontSize', 8, 72);
+        $('fontWeightInput').addEventListener('change', (e) => patch({ fontWeight: Number(e.target.value) }));
+        $('textColorInput').addEventListener('input', (e) => patch({ color: e.target.value }, 'textColorInput'));
+        $('bgColorInput').addEventListener('input', (e) => patch({ bg: e.target.value }, 'bgColorInput'));
+        $('noFillInput').addEventListener('change', (e) => patch({ bg: e.target.checked ? 'transparent' : normalizeColor($('bgColorInput').value) }));
+        $('radiusInput').addEventListener('input', (e) => patch({ radius: Number(e.target.value) }, 'radiusInput'));
+        $('themePrimaryInput').addEventListener('input', (e) => { state.theme.primary = e.target.value; syncThemeInputs(); scheduleRecord(); });
+        $('themeSecondaryInput').addEventListener('input', (e) => { state.theme.secondary = e.target.value; syncThemeInputs(); scheduleRecord(); });
+        $('themeAccentInput').addEventListener('input', (e) => { state.theme.accent = e.target.value; syncThemeInputs(); scheduleRecord(); });
+        $('themeTextInput').addEventListener('input', (e) => { state.theme.text = e.target.value; syncThemeInputs(); scheduleRecord(); });
+        $('themeBgInput').addEventListener('input', (e) => { state.theme.background = e.target.value; syncThemeInputs(); scheduleRecord(); });
+        $('alignSeg').addEventListener('click', (e) => { const b = e.target.closest('[data-align]'); if (b) patch({ align: b.dataset.align }); });
+        $('forwardBtn').addEventListener('click', () => reorder(1));
+        $('backwardBtn').addEventListener('click', () => reorder(-1));
+        $('duplicateBlockBtn').addEventListener('click', duplicateSelected);
+        $('deleteBlockBtn').addEventListener('click', deleteSelected);
+        $('inspectorToggle').addEventListener('click', () => setSheet(!state.sheetOpen));
+
+        $('undoBtn').addEventListener('click', undo);
+        $('redoBtn').addEventListener('click', redo);
+        $('snapBtn').addEventListener('click', () => { state.snap = !state.snap; $('snapBtn').setAttribute('aria-pressed', String(state.snap)); });
+        $('zoomInBtn').addEventListener('click', () => setZoom(state.zoom + 0.1));
+        $('zoomOutBtn').addEventListener('click', () => setZoom(state.zoom - 0.1));
+        $('zoomLabel').addEventListener('click', () => setZoom(1));
+        $('previewBtn').addEventListener('click', () => {
+            state.preview = !state.preview;
+            $('previewBtn').setAttribute('aria-pressed', String(state.preview));
+            $('previewBtn').lastElementChild.textContent = state.preview ? 'Edit' : 'Preview';
+            paper.classList.toggle('is-preview', state.preview);
+            if (state.preview) select(null);
+        });
+
+        $('saveTemplateBtn').addEventListener('click', saveTemplate);
+        $('resetTemplateBtn').addEventListener('click', () => $('resetDialog').showModal());
+        $('resetCancel').addEventListener('click', () => $('resetDialog').close());
+        $('resetConfirm').addEventListener('click', () => {
+            state.blocks = defaultTemplate(); state.selectedId = null;
+            renderBlocks(); syncInspector(); scheduleRecord(); record();
+            $('resetDialog').close(); toast('Template reset');
+        });
+
+        let prevOrg = orgId;
+        orgSelect.addEventListener('change', () => {
+            if (state.dirty && !confirm('You have unsaved changes. Switch organization and discard them?')) { orgSelect.value = prevOrg; return; }
+            orgId = prevOrg = orgSelect.value;
+            restoreTemplate();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const tag = (e.target.tagName || '').toLowerCase();
+            const typing = ['input', 'textarea', 'select'].includes(tag);
+            const mod = e.ctrlKey || e.metaKey;
+            if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); saveTemplate(); return; }
+            if (typing) return;
+            if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+            if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+            if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); return; }
+            const b = selected();
+            if (!b) return;
+            if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteSelected(); }
+            else if (e.key === 'Escape') select(null);
+            else if (e.key.startsWith('Arrow')) {
+                e.preventDefault();
+                const step = e.shiftKey ? 5 : 1;
+                const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+                const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+                patch({ x: round1(clamp(b.x + dx, 0, 100 - b.w)), y: round1(clamp(b.y + dy, 0, 100 - b.h)) });
+            }
+        });
+
+        window.addEventListener('beforeunload', (e) => { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
+        new ResizeObserver(layoutPaper).observe(workspace);
+    }
+
+    /* ================= Toast ================= */
+    let toastTimer;
+    function toast(msg, kind) {
+        const t = $('toast');
+        $('toastText').textContent = msg;
+        t.firstElementChild.textContent = kind === 'error' ? 'error' : 'check_circle';
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    /* ================= Init ================= */
+    buildStaticUi();
+    bindUi();
+    layoutPaper();
+    restoreTemplate();
+</script>
+</body>
+</html>

@@ -314,6 +314,8 @@ public class PaymentRunService {
                 .purchaseInvoiceId(invoice.getId())
                 .vendorId(vendor != null ? vendor.getId() : null)
                 .vendorName(vendor != null ? vendor.getLegalName() : invoice.getVendorName())
+                .vendorAccountName(vendor != null ? vendor.getAccountName() : null)
+                .vendorAccountNumber(vendor != null ? vendor.getAccountNumber() : null)
                 .purchaseOrderNumber(invoice.getPurchaseOrderNumber())
                 .amount(item.getAmount())
                 .status(item.getStatus().name())

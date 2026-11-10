@@ -473,16 +473,26 @@
     async function loadContext() {
         currentOrgId = document.getElementById('organizationSelect').value;
         if (!currentOrgId) return;
-        const [accounts, customerRows, taxRows, bankRows] = await Promise.all([
+        const [accounts, customerRows, taxRows, bankRows, template] = await Promise.all([
             apiJson(`/api/accountant/chart-of-accounts/org/${currentOrgId}`),
             apiJson(`/api/accountant/customers/org/${currentOrgId}`),
             apiJson(`/api/accountant/tax-jurisdictions/org/${currentOrgId}`),
-            apiJson(`/api/accountant/bank-accounts/org/${currentOrgId}`)
+            apiJson(`/api/accountant/bank-accounts/org/${currentOrgId}`),
+            apiJson(`/api/accountant/invoice-templates/org/${currentOrgId}?templateName=default`).catch(() => null)
         ]);
         revenueAccounts = (accounts || []).filter(account => account.accountType === 'REVENUE');
         customers = customerRows || [];
         taxJurisdictions = taxRows || [];
         bankAccounts = bankRows || [];
+        if (template) {
+            const theme = template.theme ? JSON.parse(template.theme) : null;
+            if (theme && theme.accent) {
+                document.documentElement.style.setProperty('--brand-accent', theme.accent);
+                document.documentElement.style.setProperty('--brand-primary', theme.primary || '#111827');
+                const saveButton = document.getElementById('postInvoiceBtn');
+                if (saveButton) saveButton.style.background = theme.primary || '#111827';
+            }
+        }
         const customerSelect = document.getElementById('customerSelect');
         customerSelect.innerHTML = customers.length
             ? '<option value="">Select Customer...</option>' + customers.map(customer => `<option value="${customer.id}">${customer.customerCode} - ${customer.legalName}</option>`).join('')

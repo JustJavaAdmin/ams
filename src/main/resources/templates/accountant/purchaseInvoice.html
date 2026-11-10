@@ -249,6 +249,8 @@
                         <input id="newVendorPhone" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Phone">
                         <input id="newVendorTaxId" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Tax ID">
                         <input id="newVendorPaymentTerms" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Payment terms">
+                        <input id="newVendorAccountName" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Account name">
+                        <input id="newVendorAccountNumber" class="bg-white border border-slate-200 rounded-lg h-10 px-3" placeholder="Account number">
                     </div>
                     <textarea id="newVendorBillingAddress" class="mt-3 w-full bg-white border border-slate-200 rounded-lg p-3" rows="2" placeholder="Billing address"></textarea>
                     <div class="flex justify-end gap-2 mt-3">
@@ -438,6 +440,12 @@
       if (ocrResult.dueDate) document.getElementById('dueDate').value = ocrResult.dueDate;
       if (ocrResult.vendorAddress) {
         document.getElementById('newVendorBillingAddress').value = ocrResult.vendorAddress;
+      }
+      if (ocrResult.vendorAccountName) {
+        document.getElementById('newVendorAccountName').value = ocrResult.vendorAccountName;
+      }
+      if (ocrResult.vendorAccountNumber) {
+        document.getElementById('newVendorAccountNumber').value = ocrResult.vendorAccountNumber;
       }
       if (ocrResult.vendorEmail) {
         document.getElementById('newVendorEmail').value = ocrResult.vendorEmail;
@@ -707,7 +715,7 @@
     }
 
     function resetVendorForm() {
-      ['newVendorCode', 'newVendorLegalName', 'newVendorEmail', 'newVendorPhone', 'newVendorTaxId', 'newVendorPaymentTerms', 'newVendorBillingAddress']
+      ['newVendorCode', 'newVendorLegalName', 'newVendorEmail', 'newVendorPhone', 'newVendorTaxId', 'newVendorPaymentTerms', 'newVendorAccountName', 'newVendorAccountNumber', 'newVendorBillingAddress']
         .forEach(id => document.getElementById(id).value = '');
       document.getElementById('vendorFormPanel').classList.add('hidden');
     }
@@ -721,6 +729,8 @@
         phone: document.getElementById('newVendorPhone').value.trim() || null,
         taxId: document.getElementById('newVendorTaxId').value.trim() || null,
         paymentTerms: document.getElementById('newVendorPaymentTerms').value.trim() || null,
+        accountName: document.getElementById('newVendorAccountName').value.trim() || null,
+        accountNumber: document.getElementById('newVendorAccountNumber').value.trim() || null,
         billingAddress: document.getElementById('newVendorBillingAddress').value.trim() || null,
         active: true
       };

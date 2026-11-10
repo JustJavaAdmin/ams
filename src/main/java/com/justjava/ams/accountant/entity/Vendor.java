@@ -48,6 +48,12 @@ public class Vendor {
     private String paymentTerms;
 
     @Column
+    private String accountName;
+
+    @Column
+    private String accountNumber;
+
+    @Column
     private String bankDetails;
 
     @Column(nullable = false)

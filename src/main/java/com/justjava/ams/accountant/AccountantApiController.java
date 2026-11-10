@@ -11,6 +11,7 @@ import com.justjava.ams.accountant.dto.ManualJournalCreateRequest;
 import com.justjava.ams.accountant.dto.ManualJournalDTO;
 import com.justjava.ams.accountant.dto.CustomerInvoiceDTO;
 import com.justjava.ams.accountant.dto.CustomerDTO;
+import com.justjava.ams.accountant.dto.InvoiceTemplateDTO;
 import com.justjava.ams.accountant.dto.PurchaseInvoiceOcrResult;
 import com.justjava.ams.accountant.dto.BankAccountDTO;
 import com.justjava.ams.accountant.dto.BankReconciliationCreateRequest;
@@ -40,6 +41,7 @@ import com.justjava.ams.accountant.service.GeneralLedgerService;
 import com.justjava.ams.accountant.service.BankAccountService;
 import com.justjava.ams.accountant.service.BankReconciliationService;
 import com.justjava.ams.accountant.service.ChartOfAccountsService;
+import com.justjava.ams.accountant.service.InvoiceTemplateService;
 import com.justjava.ams.accountant.service.CustomerInvoiceService;
 import com.justjava.ams.accountant.service.CustomerService;
 import com.justjava.ams.accountant.service.DepreciationJournalImportService;
@@ -107,6 +109,7 @@ public class AccountantApiController {
     private final ReceivablesCollectionService receivablesCollectionService;
     private final InvoiceDocumentService invoiceDocumentService;
     private final InvoiceDeliveryService invoiceDeliveryService;
+    private final InvoiceTemplateService invoiceTemplateService;
 
     @GetMapping("/manual-journals/org/{organizationId}")
     public List<ManualJournalDTO> getManualJournals(@PathVariable Long organizationId) {
@@ -460,6 +463,20 @@ public class AccountantApiController {
             @PathVariable Long organizationId,
             @Valid @RequestBody CustomerDTO request) {
         return customerService.createCustomer(organizationId, request);
+    }
+
+    @GetMapping("/invoice-templates/org/{organizationId}")
+    public InvoiceTemplateDTO getInvoiceTemplate(@PathVariable Long organizationId,
+                                               @RequestParam(defaultValue = "default") String templateName) {
+        return invoiceTemplateService.getTemplate(organizationId, templateName);
+    }
+
+    @PostMapping("/invoice-templates/org/{organizationId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public InvoiceTemplateDTO saveInvoiceTemplate(
+            @PathVariable Long organizationId,
+            @Valid @RequestBody InvoiceTemplateDTO request) {
+        return invoiceTemplateService.upsertTemplate(organizationId, request);
     }
 
     @PostMapping("/customer-invoices/org/{organizationId}")

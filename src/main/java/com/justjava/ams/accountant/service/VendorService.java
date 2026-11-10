@@ -37,6 +37,8 @@ public class VendorService {
                 .billingAddress(dto.getBillingAddress())
                 .taxId(dto.getTaxId())
                 .paymentTerms(dto.getPaymentTerms())
+                .accountName(dto.getAccountName())
+                .accountNumber(dto.getAccountNumber())
                 .bankDetails(dto.getBankDetails())
                 .active(dto.getActive() != null ? dto.getActive() : true)
                 .build();
@@ -62,6 +64,8 @@ public class VendorService {
                 .billingAddress(vendor.getBillingAddress())
                 .taxId(vendor.getTaxId())
                 .paymentTerms(vendor.getPaymentTerms())
+                .accountName(vendor.getAccountName())
+                .accountNumber(vendor.getAccountNumber())
                 .bankDetails(vendor.getBankDetails())
                 .active(vendor.getActive())
                 .createdAt(vendor.getCreatedAt())

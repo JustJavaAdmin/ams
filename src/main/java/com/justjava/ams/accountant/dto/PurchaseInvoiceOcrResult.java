@@ -17,6 +17,8 @@ import java.util.List;
 public class PurchaseInvoiceOcrResult {
     private String purchaseOrderNumber;
     private String vendorName;
+    private String vendorAccountName;
+    private String vendorAccountNumber;
     private String vendorEmail;
     private String vendorPhone;
     private String vendorAddress;

@@ -69,11 +69,12 @@ public class PurchaseInvoiceOcrService {
     private PurchaseInvoiceOcrResult extractWithOpenAi(byte[] fileBytes, String filename) {
         String dataUrl = "data:" + detectMimeType(filename) + ";base64," + Base64.getEncoder().encodeToString(fileBytes);
         String prompt = "You are extracting data from a supplier invoice image. Use the visual content to recover the most accurate values possible. " +
-                "Return a strict JSON object with exactly these fields: purchaseOrderNumber, vendorName, vendorEmail, vendorPhone, vendorAddress, purchaseDate, dueDate, subtotal, totalAmount, notes, rawText, lineItems. " +
+                "Return a strict JSON object with exactly these fields: purchaseOrderNumber, vendorName, vendorAccountName, vendorAccountNumber, vendorEmail, vendorPhone, vendorAddress, purchaseDate, dueDate, subtotal, totalAmount, notes, rawText, lineItems. " +
                 "For lineItems use objects with fields description, quantity, unitPrice, lineTotal, accountName. " +
                 "Do not guess extra fields. If a field is not visible, use null. Dates must be ISO yyyy-MM-dd. " +
                 "Numbers must be plain numeric JSON values without currency symbols or commas. " +
                 "Use careful reasoning and prefer invoice header details for vendor and invoice number. " +
+                "If the invoice contains vendor bank account information, capture the account name and account number in vendorAccountName and vendorAccountNumber. " +
                 "The rawText field should include all clearly readable invoice text. " +
                 "Return only valid JSON, with no markdown fences and no explanatory text.";
 

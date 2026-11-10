@@ -18,6 +18,8 @@ public class VendorDTO {
     private String billingAddress;
     private String taxId;
     private String paymentTerms;
+    private String accountName;
+    private String accountNumber;
     private String bankDetails;
     private Boolean active;
     private LocalDateTime createdAt;

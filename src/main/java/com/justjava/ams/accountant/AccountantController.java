@@ -47,6 +47,12 @@ public class AccountantController {
         return "accountant/customerInvoicing";
     }
 
+    @GetMapping("/invoiceBuilder")
+    public String invoiceBuilder(Model model) {
+        model.addAttribute("organizations", organizationRepository.findAll());
+        return "accountant/invoiceBuilder";
+    }
+
     @GetMapping("/receivablesCollections")
     public String receivablesCollections(Model model) {
         model.addAttribute("organizations", organizationRepository.findAll());

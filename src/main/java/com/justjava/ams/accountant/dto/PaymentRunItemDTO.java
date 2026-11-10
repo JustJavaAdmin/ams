@@ -16,6 +16,8 @@ public class PaymentRunItemDTO {
     private Long purchaseInvoiceId;
     private Long vendorId;
     private String vendorName;
+    private String vendorAccountName;
+    private String vendorAccountNumber;
     private String purchaseOrderNumber;
     private BigDecimal amount;
     private String status;
