@@ -22,6 +22,13 @@
                 <span class="font-body-md text-body-md">Approvals Hub</span>
             </a>
 
+            <a th:href="@{/cfo/postedJournals}"
+               class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
+               th:classappend="${activeTab == 'postedJournals'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">
+                <span class="material-symbols-outlined mr-3">receipt_long</span>
+                <span class="font-body-md text-body-md">Posted Journals</span>
+            </a>
+
             <a th:href="@{/cfo/trialBalance}"
                class="flex items-center px-4 py-3 rounded-lg mx-2 my-1 transition-all"
                th:classappend="${activeTab == 'trialBalance'} ? 'bg-secondary-fixed text-on-secondary-fixed-variant font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'">

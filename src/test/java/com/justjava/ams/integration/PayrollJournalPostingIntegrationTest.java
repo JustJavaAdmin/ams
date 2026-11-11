@@ -203,6 +203,32 @@ class PayrollJournalPostingIntegrationTest {
     }
 
     @Test
+    void postedJournalListAndDetailAreOrganizationScopedAndIncludePayrollRows() {
+        Fixture fixture = fixture();
+        Fixture otherOrganization = fixture();
+        PayrollJournalRequest request = request(fixture.accountCode());
+        PayrollJournalResponse posted = postingService.post(
+                fixture.organizationId(), key(request), request, caller());
+        String batchId = generalLedgerRepository.findBySourceTypeAndSourceId(
+                        GeneralLedger.SourceType.PAYROLL_JOURNAL, posted.journalId())
+                .get(0).getPostingBatchId();
+
+        var page = generalLedgerService.getPostedJournalSummaries(
+                fixture.organizationId(), PERIOD_END, PERIOD_END, 0, 25);
+        var detail = generalLedgerService.getPostedJournalDetail(fixture.organizationId(), batchId);
+
+        assertThat(page.totalElements()).isEqualTo(1);
+        assertThat(page.journals().get(0).sourceType()).isEqualTo("PAYROLL_JOURNAL");
+        assertThat(page.journals().get(0).journalNumber()).isEqualTo("PAY-" + request.getJournalReference());
+        assertThat(page.journals().get(0).totalDebits()).isEqualByComparingTo("100.00");
+        assertThat(detail.lines()).hasSize(2);
+        assertThatThrownBy(() -> generalLedgerService.getPostedJournalDetail(
+                otherOrganization.organizationId(), batchId))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .hasMessageContaining("Posted journal not found");
+    }
+
+    @Test
     void changedRequestUnderSameKeyConflictsWithoutChangingStoredPosting() {
         Fixture fixture = fixture();
         PayrollJournalRequest request = request(fixture.accountCode());

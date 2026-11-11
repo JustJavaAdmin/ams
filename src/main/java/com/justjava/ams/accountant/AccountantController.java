@@ -29,6 +29,12 @@ public class AccountantController {
         return "accountant/manualJournal";
     }
 
+    @GetMapping("/postedJournals")
+    public String postedJournals(Model model) {
+        model.addAttribute("isAccountantView", true);
+        return "accountant/postedJournals";
+    }
+
     @GetMapping("/purchaseInvoice")
     public String purchaseInvoice(Model model) {
         model.addAttribute("organizations", organizationRepository.findAll());
