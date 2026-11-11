@@ -56,6 +56,10 @@ public class Oauth2SecurityConfig {
                     authorize.requestMatchers("/api/financeAdmin/**").access((authentication, context) ->
                             new AuthorizationDecision(authenticationManager.isFinanceAdmin()));
 
+                    authorize.requestMatchers("/api/posted-journals/**").access((authentication, context) ->
+                            new AuthorizationDecision(authenticationManager.isAccountant()
+                                    || authenticationManager.isCfo()));
+
                     authorize.requestMatchers("/api/system-admin/**").access((authentication, context) ->
                             new AuthorizationDecision(authenticationManager.isSystemAdmin()));
 

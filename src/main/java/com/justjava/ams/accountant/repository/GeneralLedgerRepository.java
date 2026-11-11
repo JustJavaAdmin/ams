@@ -4,6 +4,8 @@ import com.justjava.ams.accountant.entity.GeneralLedger;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -18,6 +20,49 @@ public interface GeneralLedgerRepository extends JpaRepository<GeneralLedger, Lo
     List<GeneralLedger> findByJournalNumberAndStatus(String journalNumber, GeneralLedger.TransactionStatus status);
     List<GeneralLedger> findByTransactionDateBetween(LocalDate startDate, LocalDate endDate);
     boolean existsByAccountIdAndStatus(Long accountId, GeneralLedger.TransactionStatus status);
+
+    @Query(value = """
+            select gl.posting_batch_id as "postingBatchId",
+                   min(gl.journal_number) as "journalNumber",
+                   min(gl.source_type) as "sourceType",
+                   min(gl.source_id) as "sourceId",
+                   min(gl.transaction_date) as "journalDate",
+                   max(gl.reference_number) as "referenceNumber",
+                   max(gl.posted_by) as "postedBy",
+                   max(gl.posted_at) as "postedAt",
+                   count(*) as "lineCount",
+                   sum(case when gl.debit_credit = 'DEBIT' then gl.amount else 0 end) as "totalDebits",
+                   sum(case when gl.debit_credit = 'CREDIT' then gl.amount else 0 end) as "totalCredits"
+            from general_ledger gl
+            join chart_of_accounts coa on coa.id = gl.account_id
+            where coa.organization_id = :organizationId
+              and gl.status = 'POSTED'
+              and gl.posting_batch_id is not null
+              and gl.transaction_date between :fromDate and :toDate
+            group by gl.posting_batch_id
+            order by max(gl.posted_at) desc nulls last, min(gl.id) desc
+            """,
+            countQuery = """
+                    select count(*) from (
+                        select gl.posting_batch_id
+                        from general_ledger gl
+                        join chart_of_accounts coa on coa.id = gl.account_id
+                        where coa.organization_id = :organizationId
+                          and gl.status = 'POSTED'
+                          and gl.posting_batch_id is not null
+                          and gl.transaction_date between :fromDate and :toDate
+                        group by gl.posting_batch_id
+                    ) posted_journals
+                    """,
+            nativeQuery = true)
+    Page<PostedJournalSummaryProjection> findPostedJournalSummaries(
+            @Param("organizationId") Long organizationId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate,
+            Pageable pageable);
+
+    List<GeneralLedger> findByAccount_Organization_IdAndPostingBatchIdAndStatusOrderByIdAsc(
+            Long organizationId, String postingBatchId, GeneralLedger.TransactionStatus status);
 
     // Bank reconciliation queries
     @Query("SELECT gl FROM GeneralLedger gl WHERE gl.transactionDate = :txDate AND gl.amount = :amount")

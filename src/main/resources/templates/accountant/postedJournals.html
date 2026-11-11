@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Posted Journals | AMS</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#d3e4fe",
+                        "outline": "#7e7576",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-tertiary-fixed": "#131b2e",
+                        "background": "#f7f9fb",
+                        "primary": "#000000",
+                        "on-surface": "#191c1e",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#5e5e5e",
+                        "primary-fixed": "#e2e2e2",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "on-primary-container": "#848484",
+                        "on-background": "#191c1e",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary-container": "#131b2e",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary-container": "#d0e1fb",
+                        "outline-variant": "#cfc4c5",
+                        "on-secondary-container": "#54647a",
+                        "on-primary-fixed": "#1b1b1b",
+                        "tertiary": "#000000",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-highest": "#e0e3e5",
+                        "primary-container": "#1b1b1b",
+                        "on-secondary-fixed": "#0b1c30",
+                        "tertiary-fixed": "#dae2fd",
+                        "surface-container-high": "#e6e8ea",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "on-tertiary-fixed-variant": "#3f465c",
+                        "secondary": "#505f76",
+                        "surface-variant": "#e0e3e5",
+                        "on-surface-variant": "#4c4546",
+                        "on-primary-fixed-variant": "#474747",
+                        "inverse-primary": "#c6c6c6",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#7c839b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "outer-padding": "32px",
+                        "card-padding": "24px",
+                        "gutter": "24px",
+                        "stack-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "currency-display": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "currency-display": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f7f9fb;
+            font-family: 'Hanken Grotesk', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .fine-border { border: 1px solid #e2e8f0; }
+        .tabular { font-variant-numeric: tabular-nums; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 60;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-panel { animation: modalIn 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.985); }
+            to   { opacity: 1; transform: none; }
+        }
+        body.modal-open { overflow: hidden; }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 0, 0, 0.15);
+            border-top-color: #000;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+        }
+        .spinner-light {
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: #fff;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Row skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #eceef0 25%, #f7f9fb 50%, #eceef0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.2s linear infinite;
+            border-radius: 6px;
+            height: 14px;
+        }
+        @keyframes shimmer { to { background-position: -200% 0; } }
+
+        @media (prefers-reduced-motion: reduce) {
+            .modal-panel, .skeleton, .spinner { animation: none; }
+        }
+    </style>
+</head>
+<body class="text-on-background min-h-screen flex">
+
+<th:block th:if="${isAccountantView}">
+    <aside th:replace="~{layouts/accountantLayout :: sidebar('postedJournals')}"></aside>
+</th:block>
+<th:block th:unless="${isAccountantView}">
+    <aside th:replace="~{layouts/cfoLayout :: sidebar('postedJournals')}"></aside>
+</th:block>
+
+<div class="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen">
+
+    <!-- ═══ TOP NAV ═══ -->
+    <nav class="sticky top-0 z-40 bg-background flex justify-between items-center w-full px-outer-padding py-6">
+        <div class="flex flex-col">
+            <h1 class="font-headline-md text-headline-md font-bold text-primary">Posted Journals</h1>
+            <p class="font-body-md text-body-md text-secondary">Review journals posted to the General Ledger, including manual entries and payroll integrations.</p>
+        </div>
+    </nav>
+
+    <main class="px-outer-padding pb-outer-padding space-y-gutter">
+
+        <!-- ═══ PAGE-LEVEL ALERTS ═══ -->
+        <div id="pageSuccess" class="hidden items-start gap-3 bg-green-50 border border-green-200 text-green-800 rounded-xl px-5 py-4 font-body-md text-body-md" role="status">
+            <span class="material-symbols-outlined text-[18px] mt-0.5 shrink-0">check_circle</span>
+            <span id="pageSuccessMsg"></span>
+        </div>
+        <div id="pageError" class="hidden items-start gap-3 bg-error-container border border-red-200 text-on-error-container rounded-xl px-5 py-4 font-body-md text-body-md" role="alert">
+            <span class="material-symbols-outlined text-[18px] mt-0.5 shrink-0">error</span>
+            <span id="pageErrorMsg" class="flex-1"></span>
+            <button type="button" id="pageErrorClose" class="shrink-0 -mr-1 p-0.5 rounded-full hover:bg-white/40 transition-colors" aria-label="Dismiss message">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+
+        <!-- ═══ FILTER TOOLBAR ═══ -->
+        <section class="bg-surface-container-lowest p-card-padding rounded-xl fine-border space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <div class="md:col-span-4">
+                    <label for="organizationSelector" class="font-label-md text-label-md text-secondary uppercase flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-[16px]">corporate_fare</span> Organization
+                    </label>
+                    <select id="organizationSelector" class="w-full pl-3 pr-8 py-2.5 bg-surface border border-outline-variant rounded-lg font-body-md text-primary focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                        <option value="">Loading organizations...</option>
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label for="fromDate" class="font-label-md text-label-md text-secondary uppercase block mb-1.5">From</label>
+                    <input id="fromDate" type="date" class="w-full px-3 py-2.5 bg-surface border border-outline-variant rounded-lg font-body-md text-primary focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                </div>
+                <div class="md:col-span-3">
+                    <label for="toDate" class="font-label-md text-label-md text-secondary uppercase block mb-1.5">To</label>
+                    <input id="toDate" type="date" class="w-full px-3 py-2.5 bg-surface border border-outline-variant rounded-lg font-body-md text-primary focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                </div>
+                <div class="md:col-span-2">
+                    <button id="loadJournals" type="button" class="w-full bg-primary text-on-primary font-bold px-5 py-2.5 rounded-lg text-body-sm hover:opacity-90 transition-opacity active:scale-95 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">search</span>
+                        <span id="loadJournalsLabel">Load journals</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="font-label-md text-label-md text-secondary uppercase">Quick range</span>
+                <div class="flex flex-wrap gap-2 bg-surface p-1 rounded-lg border border-slate-100" id="presetGroup">
+                    <button type="button" data-preset="month" class="preset-btn px-4 py-1.5 font-body-md rounded-md transition-colors">This month</button>
+                    <button type="button" data-preset="lastMonth" class="preset-btn px-4 py-1.5 font-body-md rounded-md transition-colors">Last month</button>
+                    <button type="button" data-preset="quarter" class="preset-btn px-4 py-1.5 font-body-md rounded-md transition-colors">This quarter</button>
+                    <button type="button" data-preset="year" class="preset-btn px-4 py-1.5 font-body-md rounded-md transition-colors">This year</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ SUMMARY CARDS ═══ -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+            <div class="bg-surface-container-lowest p-card-padding rounded-xl fine-border flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="font-label-md text-label-md text-secondary uppercase">Posted Journals</span>
+                    <span class="material-symbols-outlined text-secondary text-[20px]">receipt_long</span>
+                </div>
+                <div>
+                    <h2 id="cardCount" class="font-currency-display text-currency-display text-primary tabular">&mdash;</h2>
+                    <p id="cardCountNote" class="font-body-sm text-body-sm text-secondary mt-1">In the selected date range</p>
+                </div>
+            </div>
+            <div class="bg-surface-container-lowest p-card-padding rounded-xl fine-border flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="font-label-md text-label-md text-secondary uppercase">Debits on this page</span>
+                    <span class="material-symbols-outlined text-secondary text-[20px]">south_west</span>
+                </div>
+                <div>
+                    <h2 id="cardDebits" class="font-currency-display text-currency-display text-primary tabular">&mdash;</h2>
+                    <p class="font-body-sm text-body-sm text-secondary mt-1">Total of the journals listed below</p>
+                </div>
+            </div>
+            <div class="bg-surface-container-lowest p-card-padding rounded-xl fine-border flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="font-label-md text-label-md text-secondary uppercase">Credits on this page</span>
+                    <span class="material-symbols-outlined text-secondary text-[20px]">north_east</span>
+                </div>
+                <div>
+                    <h2 id="cardCredits" class="font-currency-display text-currency-display text-primary tabular">&mdash;</h2>
+                    <p id="cardBalanceChip" class="font-body-sm text-body-sm text-secondary mt-1">Total of the journals listed below</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ JOURNAL TABLE ═══ -->
+        <section class="bg-surface-container-lowest rounded-xl fine-border overflow-hidden">
+            <div class="p-card-padding flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-slate-100">
+                <div>
+                    <h3 class="font-headline-sm text-headline-sm text-primary">Journal Register</h3>
+                    <span id="tableSubtitle" class="font-body-sm text-body-sm text-secondary">Choose an organization and date range.</span>
+                </div>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">filter_list</span>
+                    <input id="pageSearch" type="text" placeholder="Filter this page..." aria-label="Filter journals on this page"
+                           class="pl-9 pr-4 py-2 w-full sm:w-64 bg-surface border border-outline-variant rounded-lg font-body-md text-primary focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                    <tr class="bg-surface text-secondary font-label-md text-label-md uppercase tracking-wider border-b border-slate-100">
+                        <th class="px-card-padding py-4">Journal</th>
+                        <th class="px-card-padding py-4">Date</th>
+                        <th class="px-card-padding py-4">Source / Reference</th>
+                        <th class="px-card-padding py-4">Posted by</th>
+                        <th class="px-card-padding py-4 text-right">Debits (&#8358;)</th>
+                        <th class="px-card-padding py-4 text-right">Credits (&#8358;)</th>
+                        <th class="px-card-padding py-4 w-12"><span class="sr-only">Open</span></th>
+                    </tr>
+                    </thead>
+                    <tbody id="journalRows" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+
+            <div class="px-card-padding py-4 bg-surface-container-low flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-t border-slate-100">
+                <span id="paginationLabel" class="font-body-sm text-body-sm text-secondary"></span>
+                <div class="flex items-center gap-3">
+                    <span id="pageLabel" class="font-body-sm text-body-sm text-secondary"></span>
+                    <div class="flex gap-2">
+                        <button id="previousPage" type="button" aria-label="Previous page" class="p-1.5 border border-outline-variant rounded bg-white hover:bg-surface-container-low transition-colors disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+                            <span class="material-symbols-outlined text-sm">chevron_left</span>
+                        </button>
+                        <button id="nextPage" type="button" aria-label="Next page" class="p-1.5 border border-outline-variant rounded bg-white hover:bg-surface-container-low transition-colors disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+                            <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODAL: Journal detail
+════════════════════════════════════════════════════════════ -->
+<div id="detailModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-panel bg-white rounded-xl shadow-xl w-full max-w-5xl flex flex-col max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <div class="flex justify-between items-start gap-4 px-6 py-5 border-b border-slate-100">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-3">
+                    <h2 id="detailTitle" class="font-headline-sm text-headline-sm text-primary">Journal</h2>
+                    <span id="detailSourceBadge"></span>
+                </div>
+                <p id="detailSubtitle" class="font-body-sm text-body-sm text-secondary mt-0.5"></p>
+            </div>
+            <button type="button" id="detailCloseX" class="p-1 rounded-full hover:bg-surface-container-low transition-colors shrink-0" aria-label="Close journal details">
+                <span class="material-symbols-outlined text-secondary">close</span>
+            </button>
+        </div>
+
+        <div id="detailMeta" class="px-6 py-4 border-b border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div><span class="font-label-md text-label-md text-secondary uppercase block mb-1">Journal date</span><span id="dmDate" class="font-body-md text-body-md text-primary"></span></div>
+            <div><span class="font-label-md text-label-md text-secondary uppercase block mb-1">Posted by</span><span id="dmPostedBy" class="font-body-md text-body-md text-primary"></span></div>
+            <div><span class="font-label-md text-label-md text-secondary uppercase block mb-1">Reference</span><span id="dmReference" class="font-body-md text-body-md text-primary break-all"></span></div>
+            <div><span class="font-label-md text-label-md text-secondary uppercase block mb-1">Lines</span><span id="dmLines" class="font-body-md text-body-md text-primary"></span></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-6 py-4 min-h-[160px]">
+            <div id="detailLoading" class="hidden text-center py-10 text-secondary font-body-md">
+                <div class="spinner inline-block mr-2"></div> Loading journal lines&hellip;
+            </div>
+            <div id="detailError" class="hidden bg-error-container text-on-error-container rounded-lg px-4 py-3 font-body-sm text-body-sm mb-3 flex items-start gap-3">
+                <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+                <span id="detailErrorMsg" class="flex-1"></span>
+                <button type="button" id="detailRetry" class="underline font-semibold shrink-0">Try again</button>
+            </div>
+            <div id="detailTableWrap" class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                    <tr class="bg-surface text-secondary font-label-md text-label-md uppercase tracking-wider border-b border-slate-100">
+                        <th class="px-3 py-3">Account</th>
+                        <th class="px-3 py-3">Description</th>
+                        <th class="px-3 py-3">Reference</th>
+                        <th class="px-3 py-3">Fiscal period</th>
+                        <th class="px-3 py-3 text-right">Debit (&#8358;)</th>
+                        <th class="px-3 py-3 text-right">Credit (&#8358;)</th>
+                    </tr>
+                    </thead>
+                    <tbody id="detailRows" class="divide-y divide-slate-100 text-body-sm text-primary font-body-md"></tbody>
+                    <tfoot class="border-t-2 border-slate-200 font-bold">
+                    <tr>
+                        <td colspan="4" class="px-3 py-3">
+                            <span class="font-label-md text-label-md text-secondary uppercase">Totals</span>
+                            <span id="detailBalanceChip" class="ml-3 align-middle"></span>
+                        </td>
+                        <td class="px-3 py-3 text-right text-[14px] tabular" id="detailTotalDebit">0.00</td>
+                        <td class="px-3 py-3 text-right text-[14px] tabular" id="detailTotalCredit">0.00</td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3 px-6 py-5 border-t border-slate-100">
+            <a id="manualJournalLink" class="hidden px-5 py-2.5 rounded-lg bg-primary text-on-primary font-bold text-body-sm hover:opacity-90 transition-opacity active:scale-95 items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                Open manual journal
+            </a>
+            <button type="button" id="detailCloseBtn" class="px-5 py-2.5 rounded-lg border border-outline-variant text-secondary font-body-md hover:bg-surface-container-low transition-colors">Close</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // ─────────────────────────────────────────────────────────
+    // Constants & state
+    // ─────────────────────────────────────────────────────────
+    const IS_ACCOUNTANT_VIEW = /*[[${isAccountantView}]]*/ false;
+    const ORG_SESSION_KEY = 'ams.selectedOrganizationId';
+    const PAGE_SIZE = 25;
+
+    let selectedOrganizationId = null;
+    let currentPage = 0;
+    let totalPages = 0;
+    let totalElements = 0;
+    let pageJournals = [];     // journals on the current server page
+    let listSeq = 0;           // guards against out-of-order list responses
+    let detailSeq = 0;         // guards against out-of-order detail responses
+    let activeDetailJournal = null;
+    let lastFocusedElement = null;
+    let successTimer = null;
+
+    // ─────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    function esc(value) {
+        const d = document.createElement('div');
+        d.textContent = String(value == null ? '' : value);
+        return d.innerHTML;
+    }
+
+    function formatAmount(value) {
+        return new Intl.NumberFormat('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            .format(Number(value || 0));
+    }
+
+    function formatDate(raw) {
+        if (!raw) return '\u2014';
+        const value = String(raw).substring(0, 10);
+        const parts = value.split('-').map(Number);
+        if (parts.length !== 3 || parts.some(Number.isNaN)) return String(raw);
+        return new Intl.DateTimeFormat('en-NG', { day: '2-digit', month: 'short', year: 'numeric' })
+            .format(new Date(parts[0], parts[1] - 1, parts[2]));
+    }
+
+    function toInputDate(date) {
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    }
+
+    function initials(name) {
+        if (!name) return 'SY';
+        return String(name).trim().split(/\s+/).map(p => p[0]).join('').toUpperCase().slice(0, 2);
+    }
+
+    function prettySource(type) {
+        if (!type) return 'Unknown';
+        return String(type).toLowerCase().split('_')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
+    function sourceBadge(type) {
+        const label = esc(prettySource(type));
+        const t = String(type || '').toUpperCase();
+        let cls = 'bg-slate-100 text-slate-700';
+        if (t === 'MANUAL_JOURNAL') cls = 'bg-secondary-fixed text-on-secondary-fixed-variant';
+        else if (t.indexOf('PAYROLL') !== -1) cls = 'bg-green-100 text-green-800';
+        else if (t.indexOf('INVOICE') !== -1 || t.indexOf('PAYMENT') !== -1) cls = 'bg-tertiary-fixed text-on-tertiary-fixed-variant';
+        return '<span class="inline-block px-2.5 py-0.5 rounded-full font-body-sm text-body-sm font-semibold whitespace-nowrap ' + cls + '">' + label + '</span>';
+    }
+
+    function balanceChip(debits, credits) {
+        const diff = Math.abs(Number(debits || 0) - Number(credits || 0));
+        if (diff < 0.005) {
+            return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 font-body-sm text-body-sm font-semibold"><span class="material-symbols-outlined text-[14px]">check_circle</span>Balanced</span>';
+        }
+        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container font-body-sm text-body-sm font-semibold"><span class="material-symbols-outlined text-[14px]">warning</span>Out by ' + formatAmount(diff) + '</span>';
+    }
+
+    async function getJson(url) {
+        const response = await fetch(url, { credentials: 'same-origin' });
+        if (!response.ok) {
+            let message = 'Request failed (' + response.status + ')';
+            try {
+                const error = await response.json();
+                message = error.message || error.error || message;
+            } catch (_) {
+                // Keep the status-only message when the server does not return JSON.
+            }
+            throw new Error(message);
+        }
+        return response.json();
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Page alerts
+    // ─────────────────────────────────────────────────────────
+    function clearAlerts() {
+        $('pageError').classList.add('hidden');
+        $('pageError').classList.remove('flex');
+        $('pageSuccess').classList.add('hidden');
+        $('pageSuccess').classList.remove('flex');
+    }
+
+    function showError(message) {
+        clearAlerts();
+        $('pageErrorMsg').textContent = message;
+        $('pageError').classList.remove('hidden');
+        $('pageError').classList.add('flex');
+    }
+
+    function showSuccess(message) {
+        clearAlerts();
+        $('pageSuccessMsg').textContent = message;
+        $('pageSuccess').classList.remove('hidden');
+        $('pageSuccess').classList.add('flex');
+        clearTimeout(successTimer);
+        successTimer = setTimeout(clearAlerts, 4000);
+    }
+
+    $('pageErrorClose').addEventListener('click', clearAlerts);
+
+    // ─────────────────────────────────────────────────────────
+    // Date presets
+    // ─────────────────────────────────────────────────────────
+    function setPresetActive(name) {
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            const active = btn.dataset.preset === name;
+            btn.classList.toggle('bg-white', active);
+            btn.classList.toggle('text-primary', active);
+            btn.classList.toggle('font-bold', active);
+            btn.classList.toggle('shadow-sm', active);
+            btn.classList.toggle('border', active);
+            btn.classList.toggle('border-slate-200/50', active);
+            btn.classList.toggle('text-secondary', !active);
+            btn.classList.toggle('font-medium', !active);
+        });
+    }
+
+    function applyPreset(name) {
+        const now = new Date();
+        let from;
+        let to = now;
+        if (name === 'month') {
+            from = new Date(now.getFullYear(), now.getMonth(), 1);
+        } else if (name === 'lastMonth') {
+            from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            to = new Date(now.getFullYear(), now.getMonth(), 0);
+        } else if (name === 'quarter') {
+            from = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        } else {
+            from = new Date(now.getFullYear(), 0, 1);
+        }
+        $('fromDate').value = toInputDate(from);
+        $('toDate').value = toInputDate(to);
+        setPresetActive(name);
+    }
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            applyPreset(btn.dataset.preset);
+            await safeLoad(0);
+        });
+    });
+
+    ['fromDate', 'toDate'].forEach(id => $(id).addEventListener('change', () => setPresetActive(null)));
+
+    // ─────────────────────────────────────────────────────────
+    // Table rendering
+    // ─────────────────────────────────────────────────────────
+    function renderMessageRow(icon, title, hint) {
+        $('journalRows').innerHTML =
+            '<tr><td colspan="7" class="px-card-padding py-14 text-center">' +
+            '<div class="flex flex-col items-center gap-2 text-secondary">' +
+            '<span class="material-symbols-outlined text-[36px] text-outline">' + icon + '</span>' +
+            '<p class="font-body-md text-body-md text-primary font-semibold">' + esc(title) + '</p>' +
+            (hint ? '<p class="font-body-sm text-body-sm">' + esc(hint) + '</p>' : '') +
+            '</div></td></tr>';
+    }
+
+    function renderSkeleton() {
+        let html = '';
+        for (let i = 0; i < 6; i++) {
+            html += '<tr>' +
+                '<td class="px-card-padding py-4"><div class="skeleton w-28"></div></td>' +
+                '<td class="px-card-padding py-4"><div class="skeleton w-24"></div></td>' +
+                '<td class="px-card-padding py-4"><div class="skeleton w-40"></div></td>' +
+                '<td class="px-card-padding py-4"><div class="skeleton w-24"></div></td>' +
+                '<td class="px-card-padding py-4"><div class="skeleton w-20 ml-auto"></div></td>' +
+                '<td class="px-card-padding py-4"><div class="skeleton w-20 ml-auto"></div></td>' +
+                '<td class="px-card-padding py-4"></td></tr>';
+        }
+        $('journalRows').innerHTML = html;
+    }
+
+    function matchesSearch(journal, term) {
+        if (!term) return true;
+        const haystack = [journal.journalNumber, journal.sourceType, prettySource(journal.sourceType),
+            journal.referenceNumber, journal.postedBy, journal.journalDate].join(' ').toLowerCase();
+        return haystack.indexOf(term) !== -1;
+    }
+
+    function renderRows() {
+        const term = $('pageSearch').value.trim().toLowerCase();
+        const visible = pageJournals.filter(j => matchesSearch(j, term));
+        const body = $('journalRows');
+
+        if (!pageJournals.length) {
+            renderMessageRow('inbox', 'No posted journals found', 'Try widening the date range or choosing another organization.');
+            return;
+        }
+        if (!visible.length) {
+            renderMessageRow('search_off', 'No journals match your filter', 'Clear the filter to see all ' + pageJournals.length + ' journals on this page.');
+            return;
+        }
+
+        body.innerHTML = visible.map(journal => {
+            const idx = pageJournals.indexOf(journal);
+            const reference = journal.referenceNumber
+                ? '<span class="font-label-md text-label-md text-secondary ml-2">' + esc(journal.referenceNumber) + '</span>' : '';
+            const poster = journal.postedBy
+                ? '<div class="flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant text-[11px] font-bold flex items-center justify-center shrink-0">' + esc(initials(journal.postedBy)) + '</span><span class="font-body-md text-body-md text-primary">' + esc(journal.postedBy) + '</span></div>'
+                : '<span class="text-secondary font-body-md">System</span>';
+            return '<tr class="journal-row cursor-pointer hover:bg-surface-container-low transition-colors" data-index="' + idx + '">' +
+                '<td class="px-card-padding py-4 font-label-md text-label-md text-primary font-semibold whitespace-nowrap">' + esc(journal.journalNumber || '\u2014') + '</td>' +
+                '<td class="px-card-padding py-4 font-body-md text-body-md text-secondary whitespace-nowrap">' + esc(formatDate(journal.journalDate)) + '</td>' +
+                '<td class="px-card-padding py-4 whitespace-nowrap">' + sourceBadge(journal.sourceType) + reference + '</td>' +
+                '<td class="px-card-padding py-4">' + poster + '</td>' +
+                '<td class="px-card-padding py-4 text-right font-body-md text-body-md text-primary tabular whitespace-nowrap">' + formatAmount(journal.totalDebits) + '</td>' +
+                '<td class="px-card-padding py-4 text-right font-body-md text-body-md text-primary tabular whitespace-nowrap">' + formatAmount(journal.totalCredits) + '</td>' +
+                '<td class="px-card-padding py-4 text-right"><button type="button" class="p-1 rounded-full hover:bg-surface-container-high transition-colors" aria-label="View details for ' + esc(journal.journalNumber || 'journal') + '"><span class="material-symbols-outlined text-secondary text-[20px]">chevron_right</span></button></td>' +
+                '</tr>';
+        }).join('');
+
+        const label = term
+            ? 'Showing ' + visible.length + ' of ' + pageJournals.length + ' journals on this page'
+            : '';
+        $('tableSubtitle').textContent = label || (totalElements + ' posted journal(s) \u00b7 ' + formatDate($('fromDate').value) + ' to ' + formatDate($('toDate').value));
+    }
+
+    $('journalRows').addEventListener('click', event => {
+        const row = event.target.closest('tr.journal-row');
+        if (!row) return;
+        openDetail(pageJournals[Number(row.dataset.index)]);
+    });
+
+    $('pageSearch').addEventListener('input', renderRows);
+
+    function renderSummary() {
+        let debits = 0;
+        let credits = 0;
+        pageJournals.forEach(j => {
+            debits += Number(j.totalDebits || 0);
+            credits += Number(j.totalCredits || 0);
+        });
+        $('cardCount').textContent = String(totalElements);
+        $('cardCountNote').textContent = totalElements === 1 ? '1 journal in the selected date range' : 'In the selected date range';
+        $('cardDebits').textContent = '\u20A6' + formatAmount(debits);
+        $('cardCredits').textContent = '\u20A6' + formatAmount(credits);
+        $('cardBalanceChip').innerHTML = pageJournals.length ? balanceChip(debits, credits) : 'Total of the journals listed below';
+    }
+
+    function renderPagination() {
+        const start = totalElements === 0 ? 0 : currentPage * PAGE_SIZE + 1;
+        const end = Math.min((currentPage + 1) * PAGE_SIZE, totalElements);
+        $('paginationLabel').textContent = totalElements === 0 ? 'No journals to show' : 'Showing ' + start + '\u2013' + end + ' of ' + totalElements;
+        $('pageLabel').textContent = totalPages === 0 ? '' : 'Page ' + (currentPage + 1) + ' of ' + totalPages;
+        $('previousPage').disabled = currentPage <= 0;
+        $('nextPage').disabled = totalPages === 0 || currentPage + 1 >= totalPages;
+    }
+
+    function setLoading(isLoading) {
+        const btn = $('loadJournals');
+        btn.disabled = isLoading;
+        btn.classList.toggle('opacity-70', isLoading);
+        $('loadJournalsLabel').textContent = isLoading ? 'Loading\u2026' : 'Load journals';
+        if (isLoading) {
+            $('previousPage').disabled = true;
+            $('nextPage').disabled = true;
+            renderSkeleton();
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Data loading
+    // ─────────────────────────────────────────────────────────
+    async function loadOrganizations() {
+        const selector = $('organizationSelector');
+        const organizations = await getJson('/api/organizations');
+        selector.replaceChildren();
+
+        if (!organizations.length) {
+            selector.innerHTML = '<option value="">No organizations</option>';
+            renderMessageRow('corporate_fare', 'No organizations found', 'Create an organization before viewing posted journals.');
+            renderPagination();
+            return;
+        }
+
+        organizations.forEach(organization => {
+            const option = document.createElement('option');
+            option.value = organization.id;
+            option.textContent = organization.name;
+            selector.appendChild(option);
+        });
+
+        const storedId = sessionStorage.getItem(ORG_SESSION_KEY);
+        const preferredId = new URLSearchParams(location.search).get('organizationId');
+        const selected = organizations.find(org => String(org.id) === String(preferredId))
+            || organizations.find(org => String(org.id) === String(storedId))
+            || organizations[0];
+
+        selector.value = selected.id;
+        selectedOrganizationId = Number(selected.id);
+        sessionStorage.setItem(ORG_SESSION_KEY, selectedOrganizationId);
+
+        applyPreset('month');
+        await loadJournals(0);
+    }
+
+    async function loadJournals(page) {
+        if (!selectedOrganizationId) return;
+
+        const fromDate = $('fromDate').value;
+        const toDate = $('toDate').value;
+        if (!fromDate || !toDate) {
+            showError('Choose both a start and an end date.');
+            return;
+        }
+        if (fromDate > toDate) {
+            showError('The start date must be on or before the end date.');
+            return;
+        }
+
+        clearAlerts();
+        const seq = ++listSeq;
+        setLoading(true);
+
+        try {
+            const params = new URLSearchParams({ fromDate: fromDate, toDate: toDate, page: String(page), pageSize: String(PAGE_SIZE) });
+            const result = await getJson('/api/posted-journals/organizations/' + selectedOrganizationId + '?' + params.toString());
+            if (seq !== listSeq) return; // a newer request has superseded this one
+
+            currentPage = result.page;
+            totalPages = result.totalPages;
+            totalElements = result.totalElements;
+            pageJournals = result.journals || [];
+
+            $('pageSearch').value = '';
+            $('tableSubtitle').textContent = totalElements + ' posted journal(s) \u00b7 ' + formatDate(fromDate) + ' to ' + formatDate(toDate);
+            renderSummary();
+            renderRows();
+            renderPagination();
+        } catch (error) {
+            if (seq !== listSeq) return;
+            pageJournals = [];
+            totalElements = 0;
+            totalPages = 0;
+            renderSummary();
+            $('tableSubtitle').textContent = 'Could not load journals.';
+            renderMessageRow('cloud_off', 'We could not load the journals', error.message);
+            renderPagination();
+            showError(error.message);
+        } finally {
+            if (seq === listSeq) {
+                $('loadJournals').disabled = false;
+                $('loadJournals').classList.remove('opacity-70');
+                $('loadJournalsLabel').textContent = 'Load journals';
+                renderPagination();
+            }
+        }
+    }
+
+    async function safeLoad(page) {
+        try {
+            await loadJournals(page);
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Detail modal
+    // ─────────────────────────────────────────────────────────
+    function setDetailHeader(journal) {
+        $('detailTitle').textContent = journal.journalNumber || 'Journal';
+        $('detailSourceBadge').innerHTML = sourceBadge(journal.sourceType);
+        $('detailSubtitle').textContent = 'Posted journal \u00b7 ' + formatDate(journal.journalDate);
+        $('dmDate').textContent = formatDate(journal.journalDate);
+        $('dmPostedBy').textContent = journal.postedBy || 'System / client';
+        $('dmReference').textContent = journal.referenceNumber || '\u2014';
+        $('dmLines').textContent = journal.lineCount != null ? String(journal.lineCount) : '\u2014';
+    }
+
+    function resetDetailBody() {
+        $('detailRows').innerHTML = '';
+        $('detailTotalDebit').textContent = '0.00';
+        $('detailTotalCredit').textContent = '0.00';
+        $('detailBalanceChip').innerHTML = '';
+        $('detailError').classList.add('hidden');
+        $('detailError').classList.remove('flex');
+        $('manualJournalLink').classList.add('hidden');
+        $('manualJournalLink').classList.remove('inline-flex');
+    }
+
+    function openModalShell() {
+        lastFocusedElement = document.activeElement;
+        $('detailModal').classList.add('open');
+        $('detailModal').setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        $('detailCloseX').focus();
+    }
+
+    function closeDetail() {
+        detailSeq++; // discard any in-flight response
+        $('detailModal').classList.remove('open');
+        $('detailModal').setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        activeDetailJournal = null;
+        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+            lastFocusedElement.focus();
+        }
+    }
+
+    async function openDetail(journal) {
+        if (!journal) return;
+        activeDetailJournal = journal;
+        resetDetailBody();
+        setDetailHeader(journal);
+        $('detailTableWrap').classList.add('hidden');
+        $('detailLoading').classList.remove('hidden');
+        openModalShell();
+        await fetchDetail(journal);
+    }
+
+    async function fetchDetail(journal) {
+        const seq = ++detailSeq;
+        $('detailError').classList.add('hidden');
+        $('detailError').classList.remove('flex');
+        $('detailLoading').classList.remove('hidden');
+        $('detailTableWrap').classList.add('hidden');
+
+        try {
+            const detail = await getJson('/api/posted-journals/organizations/' + selectedOrganizationId +
+                '/batches/' + encodeURIComponent(journal.postingBatchId));
+            if (seq !== detailSeq) return;
+
+            const header = Object.assign({}, journal, detail.journal || {});
+            setDetailHeader(header);
+
+            const lines = detail.lines || [];
+            let debits = 0;
+            let credits = 0;
+            $('detailRows').innerHTML = lines.length ? lines.map(line => {
+                const isDebit = line.debitCredit === 'DEBIT';
+                if (isDebit) debits += Number(line.amount || 0); else credits += Number(line.amount || 0);
+                return '<tr class="hover:bg-surface-container-low transition-colors">' +
+                    '<td class="px-3 py-3 font-semibold whitespace-nowrap"><span class="font-label-md text-label-md text-secondary mr-2">' + esc(line.accountCode) + '</span>' + esc(line.accountName) + '</td>' +
+                    '<td class="px-3 py-3 text-secondary">' + esc(line.description || '\u2014') + '</td>' +
+                    '<td class="px-3 py-3 text-secondary font-label-md text-label-md">' + esc(line.referenceNumber || '\u2014') + '</td>' +
+                    '<td class="px-3 py-3 text-secondary">' + esc(line.fiscalPeriodId == null ? '\u2014' : line.fiscalPeriodId) + '</td>' +
+                    '<td class="px-3 py-3 text-right tabular whitespace-nowrap">' + (isDebit ? formatAmount(line.amount) : '\u2014') + '</td>' +
+                    '<td class="px-3 py-3 text-right tabular whitespace-nowrap">' + (!isDebit ? formatAmount(line.amount) : '\u2014') + '</td>' +
+                    '</tr>';
+            }).join('') : '<tr><td colspan="6" class="px-3 py-8 text-center text-secondary">This journal has no lines.</td></tr>';
+
+            $('detailTotalDebit').textContent = formatAmount(debits);
+            $('detailTotalCredit').textContent = formatAmount(credits);
+            $('detailBalanceChip').innerHTML = lines.length ? balanceChip(debits, credits) : '';
+
+            const manualLink = $('manualJournalLink');
+            if (IS_ACCOUNTANT_VIEW && header.sourceType === 'MANUAL_JOURNAL' && header.sourceId != null) {
+                manualLink.href = '/accountant/manualJournal?organizationId=' + selectedOrganizationId + '&journalId=' + encodeURIComponent(header.sourceId);
+                manualLink.classList.remove('hidden');
+                manualLink.classList.add('inline-flex');
+            }
+
+            $('detailLoading').classList.add('hidden');
+            $('detailTableWrap').classList.remove('hidden');
+        } catch (error) {
+            if (seq !== detailSeq) return;
+            $('detailLoading').classList.add('hidden');
+            $('detailErrorMsg').textContent = error.message;
+            $('detailError').classList.remove('hidden');
+            $('detailError').classList.add('flex');
+        }
+    }
+
+    $('detailRetry').addEventListener('click', () => { if (activeDetailJournal) fetchDetail(activeDetailJournal); });
+    $('detailCloseX').addEventListener('click', closeDetail);
+    $('detailCloseBtn').addEventListener('click', closeDetail);
+    $('detailModal').addEventListener('mousedown', event => {
+        if (event.target === $('detailModal')) closeDetail();
+    });
+
+    document.addEventListener('keydown', event => {
+        if (!$('detailModal').classList.contains('open')) return;
+        if (event.key === 'Escape') {
+            closeDetail();
+            return;
+        }
+        if (event.key === 'Tab') {
+            const focusable = $('detailModal').querySelectorAll('a[href]:not(.hidden), button:not([disabled])');
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────
+    // Wiring
+    // ─────────────────────────────────────────────────────────
+    $('organizationSelector').addEventListener('change', async event => {
+        selectedOrganizationId = Number(event.target.value) || null;
+        if (selectedOrganizationId) sessionStorage.setItem(ORG_SESSION_KEY, selectedOrganizationId);
+        await safeLoad(0);
+    });
+    $('loadJournals').addEventListener('click', () => safeLoad(0));
+    ['fromDate', 'toDate'].forEach(id => $(id).addEventListener('keydown', event => {
+        if (event.key === 'Enter') safeLoad(0);
+    }));
+    $('previousPage').addEventListener('click', () => safeLoad(currentPage - 1));
+    $('nextPage').addEventListener('click', () => safeLoad(currentPage + 1));
+
+    renderMessageRow('receipt_long', 'Loading journals', '');
+    loadOrganizations().catch(error => {
+        renderMessageRow('cloud_off', 'We could not load organizations', error.message);
+        showError(error.message);
+    });
+</script>
+</body>
+</html>

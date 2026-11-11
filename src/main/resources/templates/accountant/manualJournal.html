@@ -378,7 +378,10 @@
                 return;
             }
             const stored = sessionStorage.getItem(ORG_KEY);
-            const selected = orgs.find(o => String(o.id) === String(stored)) || orgs[0];
+            const requestedOrg = new URLSearchParams(location.search).get('organizationId');
+            const selected = orgs.find(o => String(o.id) === String(requestedOrg))
+                || orgs.find(o => String(o.id) === String(stored))
+                || orgs[0];
             sel.value = selected.id;
             await onOrgChange(selected.id);
         } catch (err) {
@@ -399,6 +402,11 @@
         startNewJournal();
         await Promise.all([loadCOA(), loadBranches(), loadJournalList()]);
         setEditorDisabled(false);
+        const requestedJournal = new URLSearchParams(location.search).get('journalId');
+        if (requestedJournal) {
+            await selectJournal(Number(requestedJournal));
+            history.replaceState({}, '', location.pathname);
+        }
     }
 
     document.getElementById('orgSelector').addEventListener('change', e => onOrgChange(e.target.value));

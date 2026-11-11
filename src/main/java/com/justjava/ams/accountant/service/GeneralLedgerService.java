@@ -1,6 +1,10 @@
 package com.justjava.ams.accountant.service;
 
 import com.justjava.ams.accountant.dto.GeneralLedgerDTO;
+import com.justjava.ams.accountant.dto.PostedJournalDetail;
+import com.justjava.ams.accountant.dto.PostedJournalLine;
+import com.justjava.ams.accountant.dto.PostedJournalPage;
+import com.justjava.ams.accountant.dto.PostedJournalSummary;
 import com.justjava.ams.accountant.entity.ChartOfAccounts;
 import com.justjava.ams.accountant.entity.GeneralLedger;
 import com.justjava.ams.accountant.entity.FiscalPeriod;
@@ -8,6 +12,7 @@ import com.justjava.ams.accountant.entity.JournalLine;
 import com.justjava.ams.accountant.entity.ManualJournal;
 import com.justjava.ams.accountant.repository.ChartOfAccountsRepository;
 import com.justjava.ams.accountant.repository.GeneralLedgerRepository;
+import com.justjava.ams.accountant.repository.PostedJournalSummaryProjection;
 import com.justjava.ams.accountant.repository.JournalLineRepository;
 import com.justjava.ams.accountant.repository.ManualJournalRepository;
 import com.justjava.ams.auditor.dto.AuditLogDTO;
@@ -20,6 +25,8 @@ import com.justjava.ams.financeAdmin.service.ModuleControlService;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,6 +35,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -522,6 +530,104 @@ public class GeneralLedgerService {
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PostedJournalPage getPostedJournalSummaries(
+            Long organizationId, LocalDate fromDate, LocalDate toDate, int page, int pageSize) {
+        if (organizationId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization is required");
+        }
+        if (fromDate == null || toDate == null || fromDate.isAfter(toDate)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid date range is required");
+        }
+        if (fromDate.plusDays(366).isBefore(toDate)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Date range must not exceed 366 days");
+        }
+        int safePageSize = Math.max(1, Math.min(pageSize, 100));
+        int safePage = Math.max(page, 0);
+        var result = generalLedgerRepository.findPostedJournalSummaries(
+                        organizationId,
+                        fromDate,
+                        toDate,
+                        PageRequest.of(safePage, safePageSize, Sort.unsorted()));
+        return new PostedJournalPage(
+                result.map(this::mapPostedJournalSummary).getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalPages(),
+                result.getTotalElements());
+    }
+
+    @Transactional(readOnly = true)
+    public PostedJournalDetail getPostedJournalDetail(Long organizationId, String postingBatchId) {
+        if (organizationId == null || postingBatchId == null || postingBatchId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization and posting batch are required");
+        }
+        List<GeneralLedger> entries =
+                generalLedgerRepository.findByAccount_Organization_IdAndPostingBatchIdAndStatusOrderByIdAsc(
+                        organizationId, postingBatchId, GeneralLedger.TransactionStatus.POSTED);
+        if (entries.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Posted journal not found");
+        }
+        return new PostedJournalDetail(
+                mapPostedJournalSummary(entries),
+                entries.stream().map(this::mapPostedJournalLine).toList());
+    }
+
+    private PostedJournalSummary mapPostedJournalSummary(PostedJournalSummaryProjection projection) {
+        return new PostedJournalSummary(
+                projection.getPostingBatchId(),
+                projection.getJournalNumber(),
+                projection.getSourceType(),
+                projection.getSourceId(),
+                projection.getJournalDate(),
+                projection.getReferenceNumber(),
+                projection.getPostedBy(),
+                projection.getPostedAt(),
+                projection.getLineCount(),
+                projection.getTotalDebits(),
+                projection.getTotalCredits());
+    }
+
+    private PostedJournalSummary mapPostedJournalSummary(List<GeneralLedger> entries) {
+        GeneralLedger first = entries.get(0);
+        BigDecimal totalDebits = entries.stream()
+                .filter(entry -> GeneralLedger.DebitCredit.DEBIT.equals(entry.getDebitCredit()))
+                .map(GeneralLedger::getAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCredits = entries.stream()
+                .filter(entry -> GeneralLedger.DebitCredit.CREDIT.equals(entry.getDebitCredit()))
+                .map(GeneralLedger::getAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new PostedJournalSummary(
+                first.getPostingBatchId(),
+                first.getJournalNumber(),
+                first.getSourceType() != null ? first.getSourceType().name() : null,
+                first.getSourceId(),
+                first.getTransactionDate(),
+                first.getReferenceNumber(),
+                first.getPostedBy(),
+                first.getPostedAt(),
+                (long) entries.size(),
+                totalDebits,
+                totalCredits);
+    }
+
+    private PostedJournalLine mapPostedJournalLine(GeneralLedger entry) {
+        return new PostedJournalLine(
+                entry.getId(),
+                entry.getAccount().getAccountCode(),
+                entry.getAccount().getAccountName(),
+                entry.getDebitCredit().name(),
+                entry.getAmount(),
+                entry.getDescription(),
+                entry.getReferenceNumber(),
+                entry.getFiscalPeriod() != null ? entry.getFiscalPeriod().getId() : null,
+                entry.getTransactionDate(),
+                entry.getPostedBy());
     }
 
     public List<GeneralLedgerDTO> getEntriesByDateRange(LocalDate startDate, LocalDate endDate) {
