@@ -32,6 +32,24 @@ public class NrsIntegrationConfig {
     private String baseUrl;
 
     @Column
+    private String aggregatorId;
+
+    @Column
+    private String secretKeyReference;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private String linkMerchantPath = "/api/v1/remita/firs/aggregator/link-merchants";
+
+    @Builder.Default
+    @Column(nullable = false)
+    private String serviceMode = "BOTH";
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean liveSubmissionEnabled = false;
+
+    @Column
     private String tokenUrl;
 
     @Column

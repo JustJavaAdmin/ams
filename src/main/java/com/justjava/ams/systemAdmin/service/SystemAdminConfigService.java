@@ -40,6 +40,11 @@ public class SystemAdminConfigService {
         }
         if (request.getEnabled() != null) config.setEnabled(request.getEnabled());
         if (request.getBaseUrl() != null) config.setBaseUrl(trimToNull(request.getBaseUrl()));
+        if (request.getAggregatorId() != null) config.setAggregatorId(trimToNull(request.getAggregatorId()));
+        if (isSecretUpdate(request.getSecretKeyReference())) config.setSecretKeyReference(request.getSecretKeyReference().trim());
+        if (request.getLinkMerchantPath() != null) config.setLinkMerchantPath(validateRelativePath(request.getLinkMerchantPath()));
+        if (request.getServiceMode() != null) config.setServiceMode(parseServiceMode(request.getServiceMode()));
+        if (request.getLiveSubmissionEnabled() != null) config.setLiveSubmissionEnabled(request.getLiveSubmissionEnabled());
         if (request.getTokenUrl() != null) config.setTokenUrl(trimToNull(request.getTokenUrl()));
         if (request.getAccessPointProvider() != null) config.setAccessPointProvider(trimToNull(request.getAccessPointProvider()));
         if (request.getClientId() != null) config.setClientId(trimToNull(request.getClientId()));
@@ -64,18 +69,20 @@ public class SystemAdminConfigService {
                     .message("NRS integration is disabled.")
                     .build();
         }
-        if (isBlank(config.getBaseUrl()) || isBlank(config.getTokenUrl()) || isBlank(config.getClientId())
-                || isBlank(config.getClientSecretReference())) {
+        if (isBlank(config.getBaseUrl()) || isBlank(config.getAggregatorId())
+                || isBlank(config.getSecretKeyReference())) {
             return IntegrationHealthDTO.builder()
                     .component("NRS")
                     .status("INCOMPLETE")
-                    .message("Base URL, token URL, client ID, and client secret reference are required before connection testing.")
+                    .message("Base URL, aggregator ID, and secret key reference are required before connection testing.")
                     .build();
         }
         return IntegrationHealthDTO.builder()
                 .component("NRS")
-                .status("CONFIGURED")
-                .message("Configuration is complete. Live NRS connectivity will be enabled by the NRS client implementation phase.")
+                .status(Boolean.TRUE.equals(config.getLiveSubmissionEnabled()) ? "CONFIGURED" : "LIVE_DISABLED")
+                .message(Boolean.TRUE.equals(config.getLiveSubmissionEnabled())
+                        ? "Aggregator configuration is complete."
+                        : "Configuration is complete; live aggregator submission remains disabled.")
                 .build();
     }
 
@@ -308,6 +315,11 @@ public class SystemAdminConfigService {
                 .environment(config.getEnvironment().name())
                 .enabled(config.getEnabled())
                 .baseUrl(config.getBaseUrl())
+                .aggregatorId(config.getAggregatorId())
+                .secretKeyReference(mask(config.getSecretKeyReference(), maskSecrets))
+                .linkMerchantPath(config.getLinkMerchantPath())
+                .serviceMode(config.getServiceMode())
+                .liveSubmissionEnabled(config.getLiveSubmissionEnabled())
                 .tokenUrl(config.getTokenUrl())
                 .accessPointProvider(config.getAccessPointProvider())
                 .clientId(config.getClientId())
@@ -318,6 +330,22 @@ public class SystemAdminConfigService {
                 .updatedBy(config.getUpdatedBy())
                 .updatedAt(config.getUpdatedAt())
                 .build();
+    }
+
+    private String validateRelativePath(String value) {
+        String path = required(value, "Link merchant path is required");
+        if (!path.startsWith("/api/") || path.contains("..") || path.contains("://")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Link merchant path must be a relative API path");
+        }
+        return path;
+    }
+
+    private String parseServiceMode(String value) {
+        String mode = required(value, "Service mode is required").toUpperCase();
+        if (!List.of("APP", "SI", "BOTH", "NONE").contains(mode)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported NRS service mode");
+        }
+        return mode;
     }
 
     private SigningKeyConfigDTO toDTO(SigningKeyConfig config, boolean maskSecrets) {

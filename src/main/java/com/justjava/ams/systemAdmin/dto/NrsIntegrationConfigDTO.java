@@ -13,6 +13,11 @@ public class NrsIntegrationConfigDTO {
     private String environment;
     private Boolean enabled;
     private String baseUrl;
+    private String aggregatorId;
+    private String secretKeyReference;
+    private String linkMerchantPath;
+    private String serviceMode;
+    private Boolean liveSubmissionEnabled;
     private String tokenUrl;
     private String accessPointProvider;
     private String clientId;
