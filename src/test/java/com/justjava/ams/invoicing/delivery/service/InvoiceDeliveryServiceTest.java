@@ -2,6 +2,7 @@ package com.justjava.ams.invoicing.delivery.service;
 
 import com.justjava.ams.accountant.dto.CustomerInvoiceDTO;
 import com.justjava.ams.accountant.service.CustomerInvoiceService;
+import com.justjava.ams.common.repository.UserRepository;
 import com.justjava.ams.invoicing.delivery.entity.InvoiceDispatch;
 import com.justjava.ams.invoicing.delivery.repository.InvoiceDispatchRepository;
 import com.justjava.ams.invoicing.document.dto.InvoiceDocumentDTO;
@@ -13,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -36,6 +38,12 @@ class InvoiceDeliveryServiceTest {
     @Mock
     private InvoiceDispatchRepository invoiceDispatchRepository;
 
+    @Mock
+    private JavaMailSender javaMailSender;
+
+    @Mock
+    private UserRepository userRepository;
+
     private InvoiceDeliveryService invoiceDeliveryService;
 
     @BeforeEach
@@ -43,7 +51,9 @@ class InvoiceDeliveryServiceTest {
         invoiceDeliveryService = new InvoiceDeliveryService(
                 customerInvoiceService,
                 invoiceDocumentService,
-                invoiceDispatchRepository);
+                invoiceDispatchRepository,
+                javaMailSender,
+                userRepository);
     }
 
     @Test
@@ -58,6 +68,9 @@ class InvoiceDeliveryServiceTest {
         });
         when(invoiceDocumentService.generateCustomerInvoiceDocument(10L, "pdf", "tester"))
                 .thenReturn(InvoiceDocumentDTO.builder().id(30L).build());
+        when(invoiceDocumentService.getCustomerInvoiceDocumentContent(30L))
+                .thenReturn(new InvoiceDocumentService.DownloadedInvoiceDocument("customer-invoice-INV-10.pdf", "application/pdf", new byte[] {1, 2, 3}, "abc"));
+        when(javaMailSender.createMimeMessage()).thenReturn(new jakarta.mail.internet.MimeMessage((jakarta.mail.Session) null));
 
         assertThat(invoiceDeliveryService.sendCustomerInvoice(10L, "tester"))
                 .satisfies(dispatch -> {

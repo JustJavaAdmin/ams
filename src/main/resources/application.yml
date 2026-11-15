@@ -3,7 +3,7 @@ spring:
   datasource:
     url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/ams}
     username: ${JDBC_DATABASE_USERNAME:postgres}
-    password: ${JDBC_DATABASE_PASSWORD:alaopost}
+    password: ${JDBC_DATABASE_PASSWORD:rashy0207}
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 30000
@@ -25,6 +25,17 @@ spring:
   jackson:
     deserialization:
       fail-on-unknown-properties: false
+
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:akinrindeakinkunmi2006@gmail.com}
+    password: ${SMTP_PASSWORD:meqxuztxiiqfmqvz}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:true}
+      mail.smtp.starttls.required: ${SMTP_STARTTLS_REQUIRED:true}
+      mail.smtp.from: ${SMTP_FROM:akinrindeakinkunmi2006@gmail.com}
 
   # Multipart Upload Configuration
   servlet:

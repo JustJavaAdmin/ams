@@ -500,8 +500,8 @@ public class AccountantApiController {
     }
 
     @PatchMapping("/customer-invoices/{invoiceId}/send")
-    public CustomerInvoiceDTO sendCustomerInvoice(@PathVariable Long invoiceId) {
-        return customerInvoiceService.generateInvoice(invoiceId);
+    public InvoiceDispatchDTO sendCustomerInvoice(@PathVariable Long invoiceId, Principal principal) {
+        return invoiceDeliveryService.sendCustomerInvoice(invoiceId, getUserName(principal));
     }
 
     @PostMapping("/customer-invoices/{invoiceId}/send")
