@@ -24,7 +24,7 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: >
-          mvn -B clean package jib:build -DskipTests
+          mvn -B clean package jib:build -Dmaven.test.skip=true
           -Djib.to.image=$DOCKER_USERNAME/ams:${{ github.sha }}
           -Djib.to.auth.username=$DOCKER_USERNAME
           -Djib.to.auth.password=$DOCKER_PASSWORD
